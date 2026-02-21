@@ -272,12 +272,12 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">What would you like to do today?</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {quickActions.map((action, i) => (
                   <Link
                     key={action.label}
                     to={action.href}
-                    className={`${CARD} border ${action.border} p-5 flex flex-col group transition-all duration-300 stagger-${i + 1}`}
+                    className={`${CARD} border ${action.border} p-4 sm:p-5 flex flex-col group transition-all duration-300 stagger-${i + 1}`}
                     data-testid={`quick-action-${action.label.toLowerCase().replace(" ", "-")}`}
                   >
                     <div className={`w-9 h-9 rounded-lg ${action.bg} flex items-center justify-center mb-3`}>
