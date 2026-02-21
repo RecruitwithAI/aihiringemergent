@@ -3,6 +3,7 @@ import { useAuth } from "@/App";
 import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap, Menu, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -82,6 +83,11 @@ export default function Navbar() {
           {mobileMenuOpen ? <X className="w-5 h-5" strokeWidth={1.5} /> : <Menu className="w-5 h-5" strokeWidth={1.5} />}
         </button>
 
+        {/* Theme Toggle - Desktop */}
+        <div className="hidden md:block">
+          <ThemeToggle />
+        </div>
+
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -136,6 +142,13 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            
+            {/* Theme Toggle in Mobile Menu */}
+            <div className="pt-2 mt-2 border-t border-white/[0.08]">
+              <div className="px-4 py-2">
+                <ThemeToggle />
+              </div>
+            </div>
           </div>
         </div>
       )}
