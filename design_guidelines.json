@@ -104,10 +104,11 @@
     }
   },
   "gamification_mechanics": {
-    "xp_display": "flex items-center gap-2 text-sm font-bold text-primary",
+    "xp_display": "flex items-center gap-2 text-sm font-semibold text-primary",
     "leaderboard_row": "flex items-center justify-between p-4 bg-white rounded-lg border border-stone-100 hover:border-primary/20 transition-colors",
-    "badge": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-    "upvote_button": "flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-primary transition-colors active:scale-95"
+    "badge": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+    "xp_bar": "bg-primary rounded-full transition-all duration-500",
+    "upvote_button": "flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-primary transition-colors"
   },
   "motion": {
     "hover": "transition-all duration-300 ease-out",
