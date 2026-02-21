@@ -11,7 +11,6 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
-import jwt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -21,21 +20,16 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# JWT Config
-JWT_SECRET = os.environ.get('JWT_SECRET', 'bestplai-secret-key-2026')
-JWT_ALGORITHM = "HS256"
-
 # LLM Config
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# ==================== MODELS ====================
+# ==================== PYDANTIC MODELS ====================
 
 class UserCreate(BaseModel):
     name: str
@@ -45,16 +39,6 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
-
-class UserResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    user_id: str
-    name: str
-    email: str
-    picture: Optional[str] = None
-    points: int = 0
-    badge: str = "Bronze"
-    created_at: Optional[str] = None
 
 class ChallengeCreate(BaseModel):
     title: str
@@ -74,13 +58,14 @@ class AIToolRequest(BaseModel):
 def get_badge(points):
     if points >= 500:
         return "Diamond"
-    elif points >= 200:
+    if points >= 200:
         return "Gold"
-    elif points >= 100:
+    if points >= 100:
         return "Silver"
     return "Bronze"
 
 async def get_current_user(request: Request):
+    # Check cookie first, then Authorization header
     session_token = request.cookies.get("session_token")
     if not session_token:
         auth_header = request.headers.get("Authorization")
@@ -88,11 +73,12 @@ async def get_current_user(request: Request):
             session_token = auth_header.split(" ")[1]
     if not session_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     session = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=401, detail="Invalid session")
-    
+
+    # Timezone-aware expiry check
     expires_at = session.get("expires_at")
     if isinstance(expires_at, str):
         expires_at = datetime.fromisoformat(expires_at)
@@ -100,11 +86,12 @@ async def get_current_user(request: Request):
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     if expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Session expired")
-    
+
     user = await db.users.find_one({"user_id": session["user_id"]}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
+    # Normalize created_at to string
     if "created_at" in user and isinstance(user["created_at"], datetime):
         user["created_at"] = user["created_at"].isoformat()
     user["badge"] = get_badge(user.get("points", 0))
@@ -113,6 +100,12 @@ async def get_current_user(request: Request):
 async def add_points(user_id: str, points: int):
     await db.users.update_one({"user_id": user_id}, {"$inc": {"points": points}})
 
+def make_session_token():
+    return f"session_{uuid.uuid4().hex}"
+
+def make_user_id():
+    return f"user_{uuid.uuid4().hex[:12]}"
+
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register")
@@ -120,32 +113,30 @@ async def register(user: UserCreate, response: Response):
     existing = await db.users.find_one({"email": user.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    user_id = make_user_id()
     now = datetime.now(timezone.utc)
-    
-    user_doc = {
+
+    await db.users.insert_one({
         "user_id": user_id,
         "name": user.name,
         "email": user.email,
         "password_hash": hashed,
         "picture": None,
         "points": 0,
-        "created_at": now.isoformat()
-    }
-    await db.users.insert_one(user_doc)
-    
-    session_token = f"session_{uuid.uuid4().hex}"
+        "created_at": now.isoformat(),
+    })
+
+    session_token = make_session_token()
     await db.user_sessions.insert_one({
         "user_id": user_id,
         "session_token": session_token,
         "expires_at": (now + timedelta(days=7)).isoformat(),
-        "created_at": now.isoformat()
+        "created_at": now.isoformat(),
     })
-    
+
     response.set_cookie(key="session_token", value=session_token, httponly=True, secure=True, samesite="none", path="/", max_age=7*24*60*60)
-    
     return {"user_id": user_id, "name": user.name, "email": user.email, "points": 0, "badge": "Bronze", "picture": None}
 
 @api_router.post("/auth/login")
@@ -153,75 +144,72 @@ async def login(user: UserLogin, response: Response):
     existing = await db.users.find_one({"email": user.email}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
     if not existing.get("password_hash"):
         raise HTTPException(status_code=401, detail="Please use Google login for this account")
-    
     if not bcrypt.checkpw(user.password.encode(), existing["password_hash"].encode()):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     now = datetime.now(timezone.utc)
-    session_token = f"session_{uuid.uuid4().hex}"
+    session_token = make_session_token()
     await db.user_sessions.insert_one({
         "user_id": existing["user_id"],
         "session_token": session_token,
         "expires_at": (now + timedelta(days=7)).isoformat(),
-        "created_at": now.isoformat()
+        "created_at": now.isoformat(),
     })
-    
+
     response.set_cookie(key="session_token", value=session_token, httponly=True, secure=True, samesite="none", path="/", max_age=7*24*60*60)
-    
     return {
         "user_id": existing["user_id"],
         "name": existing["name"],
         "email": existing["email"],
         "points": existing.get("points", 0),
         "badge": get_badge(existing.get("points", 0)),
-        "picture": existing.get("picture")
+        "picture": existing.get("picture"),
     }
 
 @api_router.get("/auth/session")
 async def exchange_session(session_id: str, response: Response):
+    """Exchange a Google OAuth session_id for our own session cookie."""
     async with httpx.AsyncClient() as http_client:
         resp = await http_client.get(
             "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-            headers={"X-Session-ID": session_id}
+            headers={"X-Session-ID": session_id},
         )
     if resp.status_code != 200:
-        raise HTTPException(status_code=401, detail="Invalid session")
-    
+        raise HTTPException(status_code=401, detail="Invalid Google session")
+
     data = resp.json()
     email = data["email"]
     name = data.get("name", "")
     picture = data.get("picture", "")
-    
+
     existing = await db.users.find_one({"email": email}, {"_id": 0})
     if existing:
         user_id = existing["user_id"]
         await db.users.update_one({"user_id": user_id}, {"$set": {"name": name, "picture": picture}})
     else:
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
-        now = datetime.now(timezone.utc)
+        user_id = make_user_id()
         await db.users.insert_one({
             "user_id": user_id,
             "name": name,
             "email": email,
             "picture": picture,
             "points": 0,
-            "created_at": now.isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         })
-    
+
     now = datetime.now(timezone.utc)
-    session_token = f"session_{uuid.uuid4().hex}"
+    session_token = make_session_token()
     await db.user_sessions.insert_one({
         "user_id": user_id,
         "session_token": session_token,
         "expires_at": (now + timedelta(days=7)).isoformat(),
-        "created_at": now.isoformat()
+        "created_at": now.isoformat(),
     })
-    
+
     response.set_cookie(key="session_token", value=session_token, httponly=True, secure=True, samesite="none", path="/", max_age=7*24*60*60)
-    
+
     user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
     if "created_at" in user and isinstance(user["created_at"], datetime):
         user["created_at"] = user["created_at"].isoformat()
@@ -250,17 +238,18 @@ async def logout(request: Request, response: Response):
 async def get_challenges(user=Depends(get_current_user)):
     challenges = await db.challenges.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
     for c in challenges:
-        author = await db.users.find_one({"user_id": c.get("author_id")}, {"_id": 0, "name": 1, "picture": 1, "badge": 1, "points": 1})
-        c["author"] = author or {"name": "Unknown", "picture": None}
-        if c["author"].get("points") is not None:
-            c["author"]["badge"] = get_badge(c["author"]["points"])
-        answers_count = await db.answers.count_documents({"challenge_id": c["challenge_id"]})
-        c["answers_count"] = answers_count
+        author = await db.users.find_one(
+            {"user_id": c.get("author_id")},
+            {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
+        )
+        if author:
+            author["badge"] = get_badge(author.get("points", 0))
+        c["author"] = author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
+        c["answers_count"] = await db.answers.count_documents({"challenge_id": c["challenge_id"]})
     return challenges
 
 @api_router.post("/challenges")
 async def create_challenge(challenge: ChallengeCreate, user=Depends(get_current_user)):
-    now = datetime.now(timezone.utc)
     doc = {
         "challenge_id": f"ch_{uuid.uuid4().hex[:12]}",
         "title": challenge.title,
@@ -269,7 +258,7 @@ async def create_challenge(challenge: ChallengeCreate, user=Depends(get_current_
         "author_id": user["user_id"],
         "upvotes": 0,
         "upvoted_by": [],
-        "created_at": now.isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.challenges.insert_one(doc)
     await add_points(user["user_id"], 5)
@@ -281,18 +270,24 @@ async def get_challenge(challenge_id: str, user=Depends(get_current_user)):
     challenge = await db.challenges.find_one({"challenge_id": challenge_id}, {"_id": 0})
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
-    
-    author = await db.users.find_one({"user_id": challenge.get("author_id")}, {"_id": 0, "name": 1, "picture": 1, "badge": 1, "points": 1})
-    challenge["author"] = author or {"name": "Unknown", "picture": None}
-    if challenge["author"].get("points") is not None:
-        challenge["author"]["badge"] = get_badge(challenge["author"]["points"])
-    
+
+    author = await db.users.find_one(
+        {"user_id": challenge.get("author_id")},
+        {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
+    )
+    if author:
+        author["badge"] = get_badge(author.get("points", 0))
+    challenge["author"] = author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
+
     answers = await db.answers.find({"challenge_id": challenge_id}, {"_id": 0}).sort("upvotes", -1).to_list(100)
     for a in answers:
-        ans_author = await db.users.find_one({"user_id": a.get("author_id")}, {"_id": 0, "name": 1, "picture": 1, "badge": 1, "points": 1})
-        a["author"] = ans_author or {"name": "Unknown", "picture": None}
-        if a["author"].get("points") is not None:
-            a["author"]["badge"] = get_badge(a["author"]["points"])
+        ans_author = await db.users.find_one(
+            {"user_id": a.get("author_id")},
+            {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
+        )
+        if ans_author:
+            ans_author["badge"] = get_badge(ans_author.get("points", 0))
+        a["author"] = ans_author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
     challenge["answers"] = answers
     return challenge
 
@@ -301,8 +296,7 @@ async def create_answer(challenge_id: str, answer: AnswerCreate, user=Depends(ge
     challenge = await db.challenges.find_one({"challenge_id": challenge_id}, {"_id": 0})
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
-    
-    now = datetime.now(timezone.utc)
+
     doc = {
         "answer_id": f"ans_{uuid.uuid4().hex[:12]}",
         "challenge_id": challenge_id,
@@ -310,7 +304,7 @@ async def create_answer(challenge_id: str, answer: AnswerCreate, user=Depends(ge
         "author_id": user["user_id"],
         "upvotes": 0,
         "upvoted_by": [],
-        "created_at": now.isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.answers.insert_one(doc)
     await add_points(user["user_id"], 10)
@@ -322,13 +316,19 @@ async def upvote_challenge(challenge_id: str, user=Depends(get_current_user)):
     challenge = await db.challenges.find_one({"challenge_id": challenge_id}, {"_id": 0})
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
-    
+
     if user["user_id"] in challenge.get("upvoted_by", []):
-        await db.challenges.update_one({"challenge_id": challenge_id}, {"$pull": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": -1}})
+        await db.challenges.update_one(
+            {"challenge_id": challenge_id},
+            {"$pull": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": -1}},
+        )
         await add_points(challenge["author_id"], -3)
         return {"upvoted": False}
-    
-    await db.challenges.update_one({"challenge_id": challenge_id}, {"$push": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": 1}})
+
+    await db.challenges.update_one(
+        {"challenge_id": challenge_id},
+        {"$push": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": 1}},
+    )
     await add_points(challenge["author_id"], 3)
     return {"upvoted": True}
 
@@ -337,13 +337,19 @@ async def upvote_answer(answer_id: str, user=Depends(get_current_user)):
     answer = await db.answers.find_one({"answer_id": answer_id}, {"_id": 0})
     if not answer:
         raise HTTPException(status_code=404, detail="Answer not found")
-    
+
     if user["user_id"] in answer.get("upvoted_by", []):
-        await db.answers.update_one({"answer_id": answer_id}, {"$pull": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": -1}})
+        await db.answers.update_one(
+            {"answer_id": answer_id},
+            {"$pull": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": -1}},
+        )
         await add_points(answer["author_id"], -3)
         return {"upvoted": False}
-    
-    await db.answers.update_one({"answer_id": answer_id}, {"$push": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": 1}})
+
+    await db.answers.update_one(
+        {"answer_id": answer_id},
+        {"$push": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": 1}},
+    )
     await add_points(answer["author_id"], 3)
     return {"upvoted": True}
 
@@ -354,39 +360,36 @@ TOOL_PROMPTS = {
     "search-strategy": "You are a senior executive search strategist. Create a comprehensive Search Strategy for finding the ideal candidate. Include: Target Profile, Industry Mapping, Geographic Scope, Channel Strategy (LinkedIn, networks, databases), Boolean Search Strings, Competitor Companies to Target, Timeline, and KPIs for the search.",
     "candidate-research": "You are a talent intelligence analyst. Research and provide detailed insights about the candidate or candidate profile described. Include: Background Analysis, Career Trajectory, Key Achievements, Leadership Style indicators, Cultural Fit Assessment, Potential Red Flags, and Interview Focus Areas.",
     "dossier": "You are a senior executive recruiter preparing a candidate presentation for a client. Create a professional Candidate Dossier that includes: Executive Summary, Career Overview, Key Accomplishments with metrics, Leadership Competencies, Education & Certifications, Compensation Expectations, Availability, and Recommendation Summary.",
-    "client-research": "You are a business development researcher for an executive search firm. Research the potential client company described. Include: Company Overview, Leadership Team, Recent News & Developments, Growth Trajectory, Culture & Values, Likely Hiring Needs, Key Decision Makers, and Approach Strategy."
+    "client-research": "You are a business development researcher for an executive search firm. Research the potential client company described. Include: Company Overview, Leadership Team, Recent News & Developments, Growth Trajectory, Culture & Values, Likely Hiring Needs, Key Decision Makers, and Approach Strategy.",
 }
 
 @api_router.post("/ai/generate")
 async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
     from emergentintegrations.llm.chat import LlmChat, UserMessage
-    
+
     system_prompt = TOOL_PROMPTS.get(req.tool_type, "You are a helpful recruiting AI assistant.")
-    
+
     chat = LlmChat(
         api_key=EMERGENT_LLM_KEY,
         session_id=f"ai_{user['user_id']}_{uuid.uuid4().hex[:8]}",
-        system_message=system_prompt
+        system_message=system_prompt,
     ).with_model("openai", "gpt-5.2")
-    
+
     full_prompt = req.prompt
     if req.context:
         full_prompt = f"{req.prompt}\n\nAdditional Context: {req.context}"
-    
-    user_message = UserMessage(text=full_prompt)
-    response = await chat.send_message(user_message)
-    
-    # Save to history
-    now = datetime.now(timezone.utc)
+
+    response = await chat.send_message(UserMessage(text=full_prompt))
+
     await db.ai_history.insert_one({
         "history_id": f"hist_{uuid.uuid4().hex[:12]}",
         "user_id": user["user_id"],
         "tool_type": req.tool_type,
         "prompt": req.prompt,
         "response": response,
-        "created_at": now.isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
     })
-    
+
     await add_points(user["user_id"], 2)
     return {"response": response, "tool_type": req.tool_type}
 
@@ -395,11 +398,42 @@ async def get_ai_history(user=Depends(get_current_user)):
     history = await db.ai_history.find({"user_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(50)
     return history
 
-# ==================== LEADERBOARD & PROFILE ====================
+# ==================== DASHBOARD & LEADERBOARD & PROFILE ====================
+
+@api_router.get("/dashboard/stats")
+async def get_dashboard_stats(user=Depends(get_current_user)):
+    total_members = await db.users.count_documents({})
+    total_challenges = await db.challenges.count_documents({})
+    total_answers = await db.answers.count_documents({})
+
+    recent_challenges = await db.challenges.find({}, {"_id": 0}).sort("created_at", -1).to_list(5)
+    for c in recent_challenges:
+        author = await db.users.find_one(
+            {"user_id": c.get("author_id")},
+            {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
+        )
+        if author:
+            author["badge"] = get_badge(author.get("points", 0))
+        c["author"] = author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
+
+    user_rank_list = await db.users.find({}, {"_id": 0, "user_id": 1, "points": 1}).sort("points", -1).to_list(1000)
+    user_rank = next((i + 1 for i, u in enumerate(user_rank_list) if u["user_id"] == user["user_id"]), 0)
+
+    return {
+        "total_members": total_members,
+        "total_challenges": total_challenges,
+        "total_answers": total_answers,
+        "user_points": user.get("points", 0),
+        "user_badge": get_badge(user.get("points", 0)),
+        "user_rank": user_rank,
+        "recent_challenges": recent_challenges,
+    }
 
 @api_router.get("/leaderboard")
 async def get_leaderboard(user=Depends(get_current_user)):
-    users = await db.users.find({}, {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1}).sort("points", -1).to_list(50)
+    users = await db.users.find(
+        {}, {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1}
+    ).sort("points", -1).to_list(50)
     for i, u in enumerate(users):
         u["rank"] = i + 1
         u["badge"] = get_badge(u.get("points", 0))
@@ -410,40 +444,17 @@ async def get_profile_stats(user=Depends(get_current_user)):
     challenges_count = await db.challenges.count_documents({"author_id": user["user_id"]})
     answers_count = await db.answers.count_documents({"author_id": user["user_id"]})
     ai_uses = await db.ai_history.count_documents({"user_id": user["user_id"]})
-    
+
     return {
         "challenges_posted": challenges_count,
         "answers_given": answers_count,
         "ai_tools_used": ai_uses,
         "points": user.get("points", 0),
-        "badge": get_badge(user.get("points", 0))
+        "badge": get_badge(user.get("points", 0)),
     }
 
-@api_router.get("/dashboard/stats")
-async def get_dashboard_stats(user=Depends(get_current_user)):
-    total_members = await db.users.count_documents({})
-    total_challenges = await db.challenges.count_documents({})
-    total_answers = await db.answers.count_documents({})
-    
-    recent_challenges = await db.challenges.find({}, {"_id": 0}).sort("created_at", -1).to_list(5)
-    for c in recent_challenges:
-        author = await db.users.find_one({"user_id": c.get("author_id")}, {"_id": 0, "name": 1, "picture": 1})
-        c["author"] = author or {"name": "Unknown"}
-    
-    user_rank_list = await db.users.find({}, {"_id": 0, "user_id": 1, "points": 1}).sort("points", -1).to_list(1000)
-    user_rank = next((i + 1 for i, u in enumerate(user_rank_list) if u["user_id"] == user["user_id"]), 0)
-    
-    return {
-        "total_members": total_members,
-        "total_challenges": total_challenges,
-        "total_answers": total_answers,
-        "user_points": user.get("points", 0),
-        "user_badge": get_badge(user.get("points", 0)),
-        "user_rank": user_rank,
-        "recent_challenges": recent_challenges
-    }
+# ==================== WIRE UP ====================
 
-# Include router
 app.include_router(api_router)
 
 app.add_middleware(
