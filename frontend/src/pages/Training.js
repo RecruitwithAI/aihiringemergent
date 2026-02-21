@@ -44,27 +44,27 @@ export default function Training() {
         </div>
 
         {/* Training grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {TRAINING_MODULES.map((m, i) => (
             <div
               key={m.id}
-              className={`${CARD} p-6 hover:border-${m.color.split('-')[1]}-500/20 hover:bg-white/[0.06] transition-all duration-300 group`}
+              className={`${CARD} p-5 sm:p-6 hover:border-violet-500/20 hover:bg-white/[0.06] transition-all duration-300 group`}
               style={{ animationDelay: `${i * 0.05}s` }}
               data-testid={`training-module-${m.id}`}
             >
-              <div className={`w-12 h-12 rounded-xl ${m.bg} border ${m.border} flex items-center justify-center mb-4`}>
-                <m.icon className={`w-6 h-6 ${m.color}`} strokeWidth={1.5} />
+              <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl ${m.bg} border ${m.border} flex items-center justify-center mb-3 sm:mb-4`}>
+                <m.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${m.color}`} strokeWidth={1.5} />
               </div>
-              <h3 className="text-base font-semibold text-white font-[Lexend] mb-1 group-hover:text-violet-400 transition-colors duration-200">{m.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed mb-4">{m.desc}</p>
-              <div className="flex items-center gap-3 text-xs text-slate-600 mb-4">
+              <h3 className="text-sm sm:text-base font-semibold text-white font-[Lexend] mb-1 group-hover:text-violet-400 transition-colors duration-200">{m.title}</h3>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mb-3 sm:mb-4">{m.desc}</p>
+              <div className="flex items-center gap-3 text-xs text-slate-600 mb-3 sm:mb-4">
                 <span>{m.duration}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-700" />
                 <span>{m.lessons} lessons</span>
               </div>
               <button
                 onClick={() => handleGoToTraining(m.id)}
-                className="w-full h-10 rounded-full bg-white/[0.05] border border-white/[0.10] text-slate-300 hover:bg-white/[0.10] hover:border-white/[0.15] text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full h-10 rounded-full bg-white/[0.05] border border-white/[0.10] text-slate-300 hover:bg-white/[0.10] hover:border-white/[0.15] text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
                 data-testid={`training-go-btn-${m.id}`}
               >
                 Go to Training <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.5} />
