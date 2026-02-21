@@ -12,7 +12,7 @@ const NAV_LINKS = [
 ];
 
 function UserAvatar({ user, size = "sm" }) {
-  const dims = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  const dims = size === "lg" ? "w-16 h-16 text-xl" : size === "md" ? "w-10 h-10 text-sm" : "w-8 h-8 text-xs";
   if (user?.picture) {
     return <img src={user.picture} alt={user.name} className={`${dims} rounded-full object-cover`} />;
   }
