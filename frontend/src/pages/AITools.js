@@ -48,6 +48,11 @@ export default function AITools() {
   const [editBuffer, setEditBuffer] = useState("");
   const [downloading, setDownloading] = useState(false);
 
+  // History state
+  const [history, setHistory] = useState([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const fileInputRef = useRef(null);
 
   const selectTool = (tool) => {
@@ -56,6 +61,45 @@ export default function AITools() {
     setUploadedFiles([]);
     setIsEditing(false); setEditBuffer(""); setUploadProgress(0);
     setExpandedFileIdx(null);
+  };
+
+  // Fetch history when tool is selected
+  useEffect(() => {
+    if (selectedTool) {
+      fetchHistory();
+    }
+  }, [selectedTool]);
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await axios.get(`${API}/ai/history`, { withCredentials: true });
+      // Filter history for current tool
+      const filtered = res.data.filter(h => h.tool_type === selectedTool.id);
+      setHistory(filtered);
+    } catch (err) {
+      console.error("Failed to load history:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const loadFromHistory = (historyItem) => {
+    setPrompt(historyItem.prompt);
+    setResult(historyItem.response);
+    setHistoryOpen(false);
+    toast.success("Loaded from history");
+  };
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
   };
 
   const removeFile = (index) => {
