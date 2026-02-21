@@ -564,7 +564,7 @@ def _parse_md_to_pdf(content: str) -> bytes:
             pdf.multi_cell(0, 6, safe(clean[4:]))
         elif s.startswith(("- ", "* ")):
             pdf.set_font("Helvetica", "", 10)
-            pdf.cell(5)
+            pdf.set_x(pdf.l_margin + 5)
             pdf.multi_cell(0, 5.5, safe(f"*  {clean[2:]}"))
         else:
             pdf.set_font("Helvetica", "", 10)
