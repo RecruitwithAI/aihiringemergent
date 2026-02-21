@@ -136,18 +136,20 @@
   },
   "instructions_to_main_agent": [
     "CRITICAL: Override the CSS variables in /app/frontend/src/index.css with the values from the 'colors.base' section of this JSON.",
-    "Use the 'gamification_mechanics' section to style the Points, Leaderboard, and Challenge components.",
-    "Implement a 'Light Gamer' aesthetic: use white cards with high-quality borders and shadows on a warm stone background (#FAFAF9).",
-    "Use 'Outfit' font for all headings to give a modern tech feel, and 'Plus Jakarta Sans' for body text.",
-    "For the Training Section, display cards with thumbnail images and a progress bar overlay.",
-    "Ensure all buttons have the 'pill' shape (rounded-full) as defined in components.buttons.",
+    "Use 'Lexend' for headings and 'Atkinson Hyperlegible' for body text — both are accessibility-optimized.",
+    "MINIMALIST: No gradients on backgrounds or cards. No hover-lift animations. No glassmorphism. No noise textures.",
+    "Cards are flat white with 1px stone-200 border. Hover state = border color shift to primary/30 only.",
+    "XP progress bar is a solid bg-primary bar, not a gradient.",
+    "Nav is solid white with a bottom border, no blur effects.",
+    "Generous whitespace: p-6 to p-8 inside cards, py-12 to py-24 between sections.",
+    "Max 2 font weights per element: 400 (regular) and 600 (semibold). Avoid 700/bold except for h1.",
     "Add 'data-testid' to all interactive elements."
   ],
   "universal_guidelines": [
-    "Do not use generic centered layouts. Use Bento grids and asymmetrical layouts where possible.",
-    "Every interaction must have a micro-interaction (hover lift, color shift, shadow expansion).",
-    "Use generous spacing (p-6, p-8) inside cards.",
-    "Never use pure black (#000000). Use Zinc-900 (#18181B) or similar.",
-    "For the AI tools, use a clean, distraction-free interface with a focus on the content generation area."
+    "Keep layouts clean and left-aligned where possible.",
+    "Every interaction has a subtle color transition (200ms), no scale/transform effects.",
+    "Never use pure black (#000000). Use stone-900 (#1C1917).",
+    "For the AI tools, use a clean, distraction-free interface focused on the content generation area.",
+    "Accessibility: ensure minimum 4.5:1 contrast ratio for all text. Use focus-visible rings on all interactive elements."
   ]
 }
