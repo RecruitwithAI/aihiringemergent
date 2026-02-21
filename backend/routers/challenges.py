@@ -12,8 +12,24 @@ router = APIRouter(prefix="/challenges", tags=["challenges"])
 
 
 @router.get("")
-async def get_challenges(user=Depends(get_current_user)):
-    challenges = await db.challenges.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+async def get_challenges(user=Depends(get_current_user), search: str = "", tags: str = ""):
+    # Build query filter
+    query = {}
+    
+    # Search in title and description
+    if search.strip():
+        query["$or"] = [
+            {"title": {"$regex": search.strip(), "$options": "i"}},
+            {"description": {"$regex": search.strip(), "$options": "i"}},
+        ]
+    
+    # Filter by tags (comma-separated)
+    if tags.strip():
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+        if tag_list:
+            query["tags"] = {"$in": tag_list}
+    
+    challenges = await db.challenges.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     for c in challenges:
         author = await db.users.find_one(
             {"user_id": c.get("author_id")},
