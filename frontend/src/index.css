@@ -23,46 +23,8 @@ code {
 
 @layer base {
     :root {
-        /* === CURRENT THEME: Dark Blue-Black === */
-        /* Change data-theme on <html> to switch themes */
+        /* === DEFAULT THEME: Dark Grey (Professional) === */
         
-        /* Dark Theme - Global */
-        --background: 230 20% 4%;          /* #090914 - Very dark blue-black */
-        --foreground: 210 40% 98%;         /* White text */
-        --card: 230 15% 8%;                /* Dark card */
-        --card-foreground: 210 40% 98%;
-        --popover: 230 15% 10%;
-        --popover-foreground: 210 40% 98%;
-        --primary: 217 91% 60%;            /* Blue-500 */
-        --primary-foreground: 0 0% 100%;
-        --secondary: 230 15% 12%;
-        --secondary-foreground: 210 40% 98%;
-        --muted: 230 15% 15%;
-        --muted-foreground: 215 20% 55%;
-        --accent: 230 15% 15%;
-        --accent-foreground: 210 40% 98%;
-        --destructive: 0 84% 60%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 230 15% 15%;
-        --input: 230 15% 15%;
-        --ring: 217 91% 60%;
-        --chart-1: 217 91% 60%;
-        --chart-2: 258 90% 66%;
-        --chart-3: 330 81% 60%;
-        --chart-4: 43 96% 56%;
-        --chart-5: 160 84% 39%;
-        --radius: 0.75rem;
-        
-        /* Glow effects */
-        --glow-primary: 0 0 20px rgba(59, 130, 246, 0.3);
-        --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
-        --glow-violet: 0 0 20px rgba(139, 92, 246, 0.3);
-        --glow-amber: 0 0 20px rgba(245, 158, 11, 0.3);
-        --glow-emerald: 0 0 20px rgba(16, 185, 129, 0.3);
-    }
-    
-    /* === THEME OPTION 1: Dark Grey === */
-    [data-theme="dark-grey"] {
         --background: 0 0% 10%;            /* #1a1a1a - Dark grey */
         --foreground: 0 0% 98%;            /* White text */
         --card: 0 0% 14%;                  /* Slightly lighter grey card */
@@ -82,10 +44,23 @@ code {
         --border: 0 0% 20%;
         --input: 0 0% 20%;
         --ring: 217 91% 60%;
+        --chart-1: 217 91% 60%;
+        --chart-2: 258 90% 66%;
+        --chart-3: 330 81% 60%;
+        --chart-4: 43 96% 56%;
+        --chart-5: 160 84% 39%;
+        --radius: 0.75rem;
+        
+        /* Glow effects */
+        --glow-primary: 0 0 20px rgba(59, 130, 246, 0.3);
+        --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
+        --glow-violet: 0 0 20px rgba(139, 92, 246, 0.3);
+        --glow-amber: 0 0 20px rgba(245, 158, 11, 0.3);
+        --glow-emerald: 0 0 20px rgba(16, 185, 129, 0.3);
     }
     
-    /* === THEME OPTION 2: Light Luminous Blue === */
-    [data-theme="light-blue"] {
+    /* === THEME: Light Luminous Blue === */
+    [data-theme="light"] {
         --background: 210 100% 97%;        /* #e6f4ff - Very light blue */
         --foreground: 220 40% 10%;         /* Dark blue-grey text */
         --card: 210 100% 99%;              /* Almost white card */
@@ -111,18 +86,13 @@ code {
 @layer base {
     * { @apply border-border; }
     
-    /* Default: Dark blue-black theme */
+    /* Default: Dark Grey (Professional) */
     body { 
-        @apply bg-[#090914] text-slate-200; 
-    }
-    
-    /* Dark Grey Theme */
-    [data-theme="dark-grey"] body {
-        @apply bg-[#1a1a1a] text-slate-100;
+        @apply bg-[#1a1a1a] text-slate-100; 
     }
     
     /* Light Blue Theme */
-    [data-theme="light-blue"] body {
+    [data-theme="light"] body {
         @apply bg-[#e6f4ff] text-slate-900;
     }
 }
