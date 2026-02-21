@@ -1,28 +1,32 @@
-/* Bestpl.ai custom styles */
+/* Bestpl.ai — utility classes */
+
+/* Glassmorphic nav */
 .glass-nav {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(231, 229, 228, 0.5);
 }
-
-.hero-gradient {
-    background: linear-gradient(135deg, #FAFAF9 0%, #f0eef8 50%, #FAFAF9 100%);
+@supports not (backdrop-filter: blur(16px)) {
+    .glass-nav { background: rgba(255, 255, 255, 0.95); }
 }
 
+/* Card hover lift + shadow expansion */
 .card-hover {
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .card-hover:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
-.badge-bronze { color: #D97706; background: #FEF3C7; }
-.badge-silver { color: #64748B; background: #F1F5F9; }
-.badge-gold { color: #CA8A04; background: #FEF9C3; }
+/* Badge tier colors */
+.badge-bronze  { color: #D97706; background: #FEF3C7; }
+.badge-silver  { color: #64748B; background: #F1F5F9; }
+.badge-gold    { color: #CA8A04; background: #FEF9C3; }
 .badge-diamond { color: #0891B2; background: #ECFEFF; }
 
+/* Tool card top-line accent on hover */
 .tool-card-gradient {
     position: relative;
     overflow: hidden;
@@ -30,14 +34,23 @@
 .tool-card-gradient::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+    background: hsl(239 84% 67%);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 .tool-card-gradient:hover::before {
     opacity: 1;
+}
+
+/* Initials avatar fallback */
+.avatar-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
 }
