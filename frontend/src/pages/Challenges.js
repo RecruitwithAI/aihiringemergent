@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, ChevronUp, MessageSquare, Clock, Sparkles } from "lucide-react";
+import { Plus, ChevronUp, MessageSquare, Clock, Sparkles, Search, X, Filter } from "lucide-react";
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
