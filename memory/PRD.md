@@ -369,9 +369,27 @@ Full design tokens available in `/app/design_guidelines.json`.
 
 ---
 
+### Phase 8: Backend Refactoring & Multi-File Upload (Dec 2025)
+- [x] **Step 8.1** — Refactored `server.py` into modular routers ✅
+  - `/app/backend/routers/auth.py` — Authentication routes
+  - `/app/backend/routers/challenges.py` — Challenge CRUD + upvoting
+  - `/app/backend/routers/answers.py` — Answer upvoting
+  - `/app/backend/routers/ai_tools.py` — AI generation, file upload, download
+  - `/app/backend/routers/dashboard.py` — Dashboard stats, leaderboard, profile
+  - `/app/backend/utils/` — database.py, helpers.py, auth.py
+  - `/app/backend/models/schemas.py` — Pydantic models
+- [x] **Step 8.2** — Fixed JD Builder to support multi-file upload (up to 5 files) ✅
+  - `uploadedFiles` state now an array of `{name, charCount, extractedText}`
+  - Each file has preview and remove buttons
+  - "Clear all" button to remove all files
+  - All file contexts concatenated for AI generation
+- [x] **Step 8.3** — Testing: 100% pass rate (20/20 backend + 22/22 frontend) ✅
+
+---
+
 ## 8. KEY TECHNICAL DECISIONS
 
-1. **Single server.py** — All backend routes in one file for simplicity (no microservices needed at this scale)
+1. **Modular routers** — Backend split into separate routers for auth, challenges, answers, ai_tools, dashboard (refactored from single server.py)
 2. **Custom user_id (UUID)** — Never expose MongoDB's `_id`; always project `{"_id": 0}`
 3. **Session-based auth** — httpOnly cookie as primary, Bearer token as fallback (for API testing)
 4. **Upvote toggle** — Upvoting again removes the upvote (and reverses points)
