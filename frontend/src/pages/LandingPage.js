@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Zap, Users, Brain, Trophy, ArrowRight, MessageSquare, Sparkles, Target, Award } from "lucide-react";
+import {
+  Zap, Users, Brain, Trophy, ArrowRight, MessageSquare,
+  Sparkles, Target, Award, GraduationCap, TrendingUp, ChevronRight
+} from "lucide-react";
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -43,147 +46,322 @@ export default function LandingPage() {
   };
 
   const features = [
-    { icon: Brain, title: "AI-Powered Tools", desc: "Build JDs, search strategies, candidate dossiers and more with GPT-5.2", anim: "icon-hover-wiggle" },
-    { icon: MessageSquare, title: "Community Challenges", desc: "Pose recruiting challenges, get expert answers, and earn points", anim: "icon-hover-bounce" },
-    { icon: Trophy, title: "Gamified Growth", desc: "Earn XP, unlock badges, and climb the leaderboard", anim: "icon-hover-spin" },
-    { icon: Zap, title: "Hybrid Intelligence", desc: "The perfect blend of AI tools and human judgement", anim: "icon-hover-scale" },
+    {
+      icon: Brain, title: "AI-Powered Tools", iconColor: "text-blue-400", bg: "bg-blue-500/10",
+      desc: "Build JDs, search strategies, candidate dossiers and more — powered by GPT-5.2"
+    },
+    {
+      icon: MessageSquare, title: "Community Challenges", iconColor: "text-cyan-400", bg: "bg-cyan-500/10",
+      desc: "Pose real recruiting challenges, get expert answers, earn XP for every contribution"
+    },
+    {
+      icon: Trophy, title: "Gamified Growth", iconColor: "text-amber-400", bg: "bg-amber-500/10",
+      desc: "Earn XP with every action. Unlock Bronze → Silver → Gold → Diamond badges"
+    },
+    {
+      icon: Zap, title: "Hybrid Intelligence", iconColor: "text-violet-400", bg: "bg-violet-500/10",
+      desc: "The optimal blend of AI precision and human judgement for executive search"
+    },
+  ];
+
+  const previewCards = [
+    { icon: MessageSquare, iconColor: "text-cyan-400", bg: "bg-cyan-500/10", label: "Community Challenge", desc: "How to assess cultural fit in remote leadership hires?", tag: "+5 XP", tagStyle: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" },
+    { icon: Brain, iconColor: "text-blue-400", bg: "bg-blue-500/10", label: "AI JD Builder", desc: "Generate professional job descriptions in seconds", tag: "GPT-5.2", tagStyle: "bg-blue-500/10 text-blue-400 border border-blue-500/20" },
+    { icon: Target, iconColor: "text-amber-400", bg: "bg-amber-500/10", label: "Search Strategy", desc: "Boolean strings, channel mapping, competitor targeting", tag: "AI", tagStyle: "bg-amber-500/10 text-amber-400 border border-amber-500/20" },
+    { icon: Award, iconColor: "text-violet-400", bg: "bg-violet-500/10", label: "Leaderboard", desc: "Top recruiting leaders ranked by community contribution", tag: "Live", tagStyle: "bg-violet-500/10 text-violet-400 border border-violet-500/20" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]" data-testid="landing-page">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 lg:px-12 py-4">
+    <div className="min-h-screen bg-[#090914] relative overflow-hidden" data-testid="landing-page">
+      {/* Ambient glow */}
+      <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-blue-500/[0.05] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/[0.03] rounded-full blur-3xl pointer-events-none" />
+
+      {/* ── NAVBAR ── */}
+      <nav className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5 border-b border-white/[0.05]">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center animate-pulse-glow">
+          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
             <Zap className="w-4 h-4 text-white" strokeWidth={1.5} />
           </div>
-          <span className="text-xl font-semibold font-[Lexend] text-stone-900" data-testid="brand-logo">Bestpl.ai</span>
+          <span className="text-xl font-semibold font-[Lexend] text-white" data-testid="brand-logo">Bestpl.ai</span>
         </div>
-        <Button data-testid="get-started-btn" onClick={() => setShowAuth(true)} className="rounded-full px-6 bg-primary hover:bg-primary/90 text-white btn-shimmer">
-          Get Started <ArrowRight className="w-4 h-4 ml-1" strokeWidth={1.5} />
-        </Button>
+        <button
+          data-testid="get-started-btn"
+          onClick={() => setShowAuth(true)}
+          className="flex items-center gap-2 px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm font-medium hover:bg-blue-500/20 hover:border-blue-500/50 transition-all duration-200"
+        >
+          Get Started <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
+        </button>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-12 pb-20">
+      {/* ── HERO ── */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-20">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+          {/* Left */}
           <div className="animate-float-in">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium mb-6 animate-pulse-glow">
+            <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full px-4 py-1.5 text-sm font-medium mb-7">
               <Sparkles className="w-3.5 h-3.5" strokeWidth={1.5} /> Hybrid Intelligence Platform
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-stone-900 font-[Lexend] leading-tight">
-              The Community for{" "}<br />
-              <span className="gradient-text">Recruiting Leaders</span>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-white font-[Lexend] leading-[1.1]">
+              The Community for{" "}
+              <span className="text-blue-400">Recruiting Leaders</span>
             </h1>
-            <p className="text-base md:text-lg text-stone-600 mt-6 leading-relaxed max-w-lg">
-              AI-powered tools meets collective expertise. Build JDs, research candidates,
+
+            <p className="text-base md:text-lg text-slate-400 mt-6 leading-relaxed max-w-lg">
+              AI-powered tools meet collective expertise. Build JDs, research candidates,
               create dossiers, and learn from the best minds in executive search.
             </p>
-            <div className="flex items-center gap-4 mt-8">
-              <Button data-testid="hero-join-btn" onClick={() => setShowAuth(true)} className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-white text-base btn-shimmer shadow-lg shadow-primary/20">
-                Join the Community
-              </Button>
-              <Button variant="outline" data-testid="hero-learn-btn" onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })} className="rounded-full px-8 h-12 border-stone-300 text-stone-700 hover:bg-stone-100 text-base">
+
+            <div className="flex items-center gap-3 mt-8 flex-wrap">
+              <button
+                data-testid="hero-join-btn"
+                onClick={() => setShowAuth(true)}
+                className="flex items-center gap-2 px-7 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-medium text-base transition-all duration-200 shadow-lg shadow-blue-500/25"
+              >
+                Join the Community <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+              <button
+                data-testid="hero-learn-btn"
+                onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+                className="flex items-center gap-2 px-7 h-12 rounded-full border border-white/[0.12] text-slate-300 hover:bg-white/[0.05] hover:border-white/[0.20] font-medium text-base transition-all duration-200"
+              >
                 Learn More
-              </Button>
+              </button>
             </div>
-            <div className="flex items-center gap-6 mt-10 text-sm text-stone-500">
+
+            <div className="flex items-center gap-6 mt-10 text-sm text-slate-500">
               <span className="flex items-center gap-1.5"><Users className="w-4 h-4" strokeWidth={1.5} /> 500+ Leaders</span>
-              <span className="flex items-center gap-1.5"><Brain className="w-4 h-4" strokeWidth={1.5} /> 5 AI Tools</span>
+              <span className="flex items-center gap-1.5 text-blue-400/60"><Brain className="w-4 h-4" strokeWidth={1.5} /> 5 AI Tools</span>
               <span className="flex items-center gap-1.5"><Trophy className="w-4 h-4" strokeWidth={1.5} /> Earn XP</span>
             </div>
           </div>
 
-          {/* Right panel */}
+          {/* Right: Auth or Preview Cards */}
           {showAuth ? (
-            <div className="bg-white rounded-xl shadow-xl shadow-primary/5 border border-stone-200 p-8 animate-float-in" data-testid="auth-panel">
+            <div
+              className="bg-white/[0.05] border border-white/[0.09] backdrop-blur-md rounded-2xl p-8 animate-float-in shadow-2xl shadow-black/40"
+              data-testid="auth-panel"
+            >
               <Tabs defaultValue="login">
-                <TabsList className="grid grid-cols-2 mb-6 bg-stone-100 rounded-full p-1">
-                  <TabsTrigger value="login" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="login-tab">Sign In</TabsTrigger>
-                  <TabsTrigger value="register" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="register-tab">Sign Up</TabsTrigger>
+                <TabsList className="grid grid-cols-2 mb-6 bg-white/[0.06] rounded-full p-1">
+                  <TabsTrigger
+                    value="login"
+                    className="rounded-full text-slate-400 data-[state=active]:bg-white/[0.12] data-[state=active]:text-white data-[state=active]:shadow-none transition-all duration-200"
+                    data-testid="login-tab"
+                  >
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="register"
+                    className="rounded-full text-slate-400 data-[state=active]:bg-white/[0.12] data-[state=active]:text-white data-[state=active]:shadow-none transition-all duration-200"
+                    data-testid="register-tab"
+                  >
+                    Sign Up
+                  </TabsTrigger>
                 </TabsList>
+
                 <TabsContent value="login">
                   <form onSubmit={handleLogin} className="space-y-4">
-                    <div><Label className="text-stone-700 text-sm font-medium">Email</Label><Input data-testid="login-email" type="email" placeholder="you@company.com" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} className="mt-1.5" required /></div>
-                    <div><Label className="text-stone-700 text-sm font-medium">Password</Label><Input data-testid="login-password" type="password" placeholder="Enter password" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} className="mt-1.5" required /></div>
-                    <Button data-testid="login-submit-btn" type="submit" disabled={loading} className="w-full rounded-full bg-primary hover:bg-primary/90 text-white h-11 btn-shimmer">{loading ? "Signing in..." : "Sign In"}</Button>
+                    <div>
+                      <Label className="text-slate-400 text-sm font-medium">Email</Label>
+                      <Input
+                        data-testid="login-email"
+                        type="email"
+                        placeholder="you@company.com"
+                        value={loginForm.email}
+                        onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                        className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-400 text-sm font-medium">Password</Label>
+                      <Input
+                        data-testid="login-password"
+                        type="password"
+                        placeholder="Enter password"
+                        value={loginForm.password}
+                        onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                        className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    <button
+                      data-testid="login-submit-btn"
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-11 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    >
+                      {loading ? "Signing in..." : "Sign In"}
+                    </button>
                   </form>
-                  <Divider />
-                  <Button data-testid="google-login-btn" variant="outline" onClick={handleGoogleLogin} className="w-full rounded-full h-11 border-stone-300 hover:bg-stone-50 text-stone-700 font-medium">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png" alt="G" className="w-5 h-5 mr-2" /> Continue with Google
-                  </Button>
+                  <DarkDivider />
+                  <button
+                    data-testid="google-login-btn"
+                    onClick={handleGoogleLogin}
+                    className="w-full h-11 rounded-full bg-white/[0.05] border border-white/[0.10] text-slate-300 hover:bg-white/[0.10] font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png" alt="G" className="w-4 h-4" />
+                    Continue with Google
+                  </button>
                 </TabsContent>
+
                 <TabsContent value="register">
                   <form onSubmit={handleRegister} className="space-y-4">
-                    <div><Label className="text-stone-700 text-sm font-medium">Full Name</Label><Input data-testid="register-name" placeholder="Your name" value={registerForm.name} onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })} className="mt-1.5" required /></div>
-                    <div><Label className="text-stone-700 text-sm font-medium">Email</Label><Input data-testid="register-email" type="email" placeholder="you@company.com" value={registerForm.email} onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })} className="mt-1.5" required /></div>
-                    <div><Label className="text-stone-700 text-sm font-medium">Password</Label><Input data-testid="register-password" type="password" placeholder="Min 6 characters" value={registerForm.password} onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })} className="mt-1.5" required /></div>
-                    <Button data-testid="register-submit-btn" type="submit" disabled={loading} className="w-full rounded-full bg-primary hover:bg-primary/90 text-white h-11 btn-shimmer">{loading ? "Creating account..." : "Create Account"}</Button>
+                    <div>
+                      <Label className="text-slate-400 text-sm font-medium">Full Name</Label>
+                      <Input
+                        data-testid="register-name"
+                        placeholder="Your name"
+                        value={registerForm.name}
+                        onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                        className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-400 text-sm font-medium">Email</Label>
+                      <Input
+                        data-testid="register-email"
+                        type="email"
+                        placeholder="you@company.com"
+                        value={registerForm.email}
+                        onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                        className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-400 text-sm font-medium">Password</Label>
+                      <Input
+                        data-testid="register-password"
+                        type="password"
+                        placeholder="Min 6 characters"
+                        value={registerForm.password}
+                        onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                        className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    <button
+                      data-testid="register-submit-btn"
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-11 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    >
+                      {loading ? "Creating account..." : "Create Account"}
+                    </button>
                   </form>
-                  <Divider />
-                  <Button data-testid="google-register-btn" variant="outline" onClick={handleGoogleLogin} className="w-full rounded-full h-11 border-stone-300 hover:bg-stone-50 text-stone-700 font-medium">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png" alt="G" className="w-5 h-5 mr-2" /> Continue with Google
-                  </Button>
+                  <DarkDivider />
+                  <button
+                    data-testid="google-register-btn"
+                    onClick={handleGoogleLogin}
+                    className="w-full h-11 rounded-full bg-white/[0.05] border border-white/[0.10] text-slate-300 hover:bg-white/[0.10] font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png" alt="G" className="w-4 h-4" />
+                    Continue with Google
+                  </button>
                 </TabsContent>
               </Tabs>
             </div>
           ) : (
-            <div className="space-y-4 animate-float-in stagger-2">
-              <FloatingCard icon={Trophy} iconBg="bg-emerald-50 text-emerald-600" label="Community Challenge" desc="How to assess cultural fit in remote leadership hires?" tag="+5 XP" tagColor="bg-primary/10 text-primary xp-tag-pulse" delay="0s" />
-              <FloatingCard icon={Brain} iconBg="bg-violet-50 text-violet-600" label="AI JD Builder" desc="Generate professional job descriptions in seconds" tag="GPT-5.2" tagColor="bg-violet-100 text-violet-700" delay="1s" />
-              <FloatingCard icon={Target} iconBg="bg-amber-50 text-amber-600" label="Search Strategy" desc="Boolean strings, channel mapping, competitor targeting" tag="AI" tagColor="bg-amber-100 text-amber-700" delay="2s" />
-              <FloatingCard icon={Award} iconBg="bg-rose-50 text-rose-600" label="Leaderboard" desc="Top recruiting leaders ranked by contribution" tag="Live" tagColor="bg-rose-100 text-rose-700" delay="0.5s" />
+            <div className="space-y-3 animate-float-in stagger-2">
+              {previewCards.map((card, i) => (
+                <div
+                  key={i}
+                  className="bg-white/[0.04] border border-white/[0.07] rounded-xl p-4 flex items-center gap-4 hover:border-blue-500/20 hover:bg-white/[0.06] transition-all duration-300"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                >
+                  <div className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center flex-shrink-0`}>
+                    <card.icon className={`w-4 h-4 ${card.iconColor}`} strokeWidth={1.5} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-200">{card.label}</p>
+                    <p className="text-xs text-slate-500 truncate">{card.desc}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex-shrink-0 ${card.tagStyle}`}>
+                    {card.tag}
+                  </span>
+                </div>
+              ))}
+              <button
+                onClick={() => setShowAuth(true)}
+                className="w-full mt-1 py-3 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] text-blue-400 text-sm font-medium hover:bg-blue-500/10 hover:border-blue-500/40 transition-all duration-200 flex items-center justify-center gap-2"
+                data-testid="panel-join-btn"
+              >
+                Join Bestpl.ai — It's Free <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </button>
             </div>
           )}
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="max-w-7xl mx-auto px-6 lg:px-12 pb-24">
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-stone-900 font-[Lexend] text-center mb-4">
-          Why <span className="gradient-text">Bestpl.ai</span>?
-        </h2>
-        <p className="text-base text-stone-500 text-center mb-12 max-w-2xl mx-auto">Everything recruiting leaders need to hire smarter, faster, and together.</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ── FEATURES ── */}
+      <section id="features" className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pb-24">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-white font-[Lexend] mb-3">
+            Why <span className="text-blue-400">Bestpl.ai</span>?
+          </h2>
+          <p className="text-slate-500 max-w-xl mx-auto">Everything recruiting leaders need to hire smarter, faster, and together.</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map((f, i) => (
-            <div key={i} className={`${f.anim} bg-white rounded-xl border border-stone-200 shadow-sm p-6 card-glow group animate-float-in stagger-${i + 1}`} data-testid={`feature-card-${i}`}>
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-all duration-300 group-hover:bg-primary/20 group-hover:shadow-lg group-hover:shadow-primary/10">
-                <f.icon className="w-6 h-6 text-primary icon-target" strokeWidth={1.5} />
+            <div
+              key={i}
+              className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-6 group hover:border-blue-500/20 hover:bg-white/[0.06] transition-all duration-300 animate-float-in"
+              style={{ animationDelay: `${i * 0.08}s` }}
+              data-testid={`feature-card-${i}`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center mb-4`}>
+                <f.icon className={`w-5 h-5 ${f.iconColor}`} strokeWidth={1.5} />
               </div>
-              <h3 className="text-lg font-semibold text-stone-900 font-[Lexend] mb-2">{f.title}</h3>
-              <p className="text-sm text-stone-500 leading-relaxed">{f.desc}</p>
+              <h3 className="text-base font-semibold text-white font-[Lexend] mb-2">{f.title}</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
+
+        {/* Bottom CTA strip */}
+        <div className="mt-12 bg-white/[0.03] border border-white/[0.07] rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h3 className="text-xl font-semibold text-white font-[Lexend] mb-1">Ready to level up your hiring?</h3>
+            <p className="text-slate-500 text-sm">Join hundreds of recruiting leaders using Hybrid Intelligence to stay ahead.</p>
+          </div>
+          <button
+            onClick={() => setShowAuth(true)}
+            className="flex items-center gap-2 px-8 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-medium whitespace-nowrap transition-all duration-200 shadow-lg shadow-blue-500/25"
+            data-testid="cta-join-btn"
+          >
+            Get Started Free <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+          </button>
+        </div>
       </section>
 
-      <footer className="border-t border-stone-200 py-8 text-center">
-        <p className="text-sm text-stone-400">Bestpl.ai — The Hybrid Intelligence Community for Recruiting Leaders</p>
+      {/* ── FOOTER ── */}
+      <footer className="relative z-10 border-t border-white/[0.06] py-8 text-center">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="w-5 h-5 rounded bg-blue-500 flex items-center justify-center">
+            <Zap className="w-3 h-3 text-white" strokeWidth={1.5} />
+          </div>
+          <span className="text-slate-500 text-sm font-medium">Bestpl.ai</span>
+        </div>
+        <p className="text-xs text-slate-700">The Hybrid Intelligence Community for Recruiting Leaders</p>
       </footer>
     </div>
   );
 }
 
-function Divider() {
+function DarkDivider() {
   return (
     <div className="relative my-5">
-      <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200" /></div>
-      <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-stone-400">or continue with</span></div>
-    </div>
-  );
-}
-
-function FloatingCard({ icon: Icon, iconBg, label, desc, tag, tagColor, delay }) {
-  return (
-    <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-5 flex items-center gap-4 card-glow animate-float" style={{ animationDelay: delay }}>
-      <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
-        <Icon className="w-5 h-5" strokeWidth={1.5} />
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-white/[0.08]" />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-stone-900">{label}</p>
-        <p className="text-xs text-stone-500 truncate">{desc}</p>
+      <div className="relative flex justify-center text-xs">
+        <span className="bg-transparent px-3 text-slate-600 bg-[#0d0d1e]">or continue with</span>
       </div>
-      <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${tagColor}`}>{tag}</span>
     </div>
   );
 }
