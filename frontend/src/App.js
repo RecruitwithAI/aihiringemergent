@@ -97,13 +97,7 @@ function AuthCallback() {
     })();
   }, [navigate, login]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-      <div className="animate-pulse text-stone-500 font-medium" data-testid="auth-loading">
-        Authenticating...
-      </div>
-    </div>
-  );
+  return <AppLoadingScreen message="Authenticating..." />;
 }
 
 // ==================== PROTECTED ROUTE ====================
@@ -113,11 +107,7 @@ function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-        <div className="animate-pulse text-stone-500 font-medium">Loading...</div>
-      </div>
-    );
+    return <AppLoadingScreen message="Loading..." />;
   }
 
   if (!user) {
@@ -129,6 +119,17 @@ function ProtectedRoute({ children }) {
       <Navbar />
       <main className="pt-16">{children}</main>
     </>
+  );
+}
+
+function AppLoadingScreen({ message }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#090914]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <p className="text-slate-500 text-sm" data-testid="auth-loading">{message}</p>
+      </div>
+    </div>
   );
 }
 
