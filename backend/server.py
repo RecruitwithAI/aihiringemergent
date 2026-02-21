@@ -208,7 +208,7 @@ async def exchange_session(session_id: str, response: Response):
         "created_at": now.isoformat(),
     })
 
-    response.set_cookie(key="session_token", value=session_token, httponly=True, secure=True, samesite="lax", path="/", max_age=7*24*60*60)
+    response.set_cookie(key="session_token", value=session_token, httponly=True, secure=True, samesite="none", path="/", max_age=7*24*60*60)
 
     user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
     if "created_at" in user and isinstance(user["created_at"], datetime):
