@@ -7,6 +7,8 @@
 body {
     margin: 0;
     font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 16px; /* Increased from default 14px for better readability */
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -21,8 +23,11 @@ code {
 
 @layer base {
     :root {
+        /* === CURRENT THEME: Dark Blue-Black === */
+        /* Change data-theme on <html> to switch themes */
+        
         /* Dark Theme - Global */
-        --background: 230 20% 4%;          /* #090914 */
+        --background: 230 20% 4%;          /* #090914 - Very dark blue-black */
         --foreground: 210 40% 98%;         /* White text */
         --card: 230 15% 8%;                /* Dark card */
         --card-foreground: 210 40% 98%;
@@ -55,11 +60,71 @@ code {
         --glow-amber: 0 0 20px rgba(245, 158, 11, 0.3);
         --glow-emerald: 0 0 20px rgba(16, 185, 129, 0.3);
     }
+    
+    /* === THEME OPTION 1: Dark Grey === */
+    [data-theme="dark-grey"] {
+        --background: 0 0% 10%;            /* #1a1a1a - Dark grey */
+        --foreground: 0 0% 98%;            /* White text */
+        --card: 0 0% 14%;                  /* Slightly lighter grey card */
+        --card-foreground: 0 0% 98%;
+        --popover: 0 0% 12%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 217 91% 60%;            /* Blue-500 */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 0 0% 18%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 0 0% 20%;
+        --muted-foreground: 0 0% 60%;
+        --accent: 0 0% 20%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 20%;
+        --input: 0 0% 20%;
+        --ring: 217 91% 60%;
+    }
+    
+    /* === THEME OPTION 2: Light Luminous Blue === */
+    [data-theme="light-blue"] {
+        --background: 210 100% 97%;        /* #e6f4ff - Very light blue */
+        --foreground: 220 40% 10%;         /* Dark blue-grey text */
+        --card: 210 100% 99%;              /* Almost white card */
+        --card-foreground: 220 40% 10%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 220 40% 10%;
+        --primary: 217 91% 50%;            /* Deeper blue for contrast */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 50% 92%;
+        --secondary-foreground: 220 40% 10%;
+        --muted: 210 40% 90%;
+        --muted-foreground: 220 20% 40%;
+        --accent: 210 100% 94%;
+        --accent-foreground: 220 40% 10%;
+        --destructive: 0 84% 50%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 214 32% 85%;
+        --input: 214 32% 88%;
+        --ring: 217 91% 50%;
+    }
 }
 
 @layer base {
     * { @apply border-border; }
-    body { @apply bg-[#090914] text-slate-200; }
+    
+    /* Default: Dark blue-black theme */
+    body { 
+        @apply bg-[#090914] text-slate-200; 
+    }
+    
+    /* Dark Grey Theme */
+    [data-theme="dark-grey"] body {
+        @apply bg-[#1a1a1a] text-slate-100;
+    }
+    
+    /* Light Blue Theme */
+    [data-theme="light-blue"] body {
+        @apply bg-[#e6f4ff] text-slate-900;
+    }
 }
 
 @layer base {
