@@ -151,6 +151,7 @@ Applies to:
   "created_at": "2026-02-15T10:00:00Z"
 }
 ```
+> **Note:** `picture` is stored from Google OAuth. For email/password users without a picture, the frontend renders a fallback **initials avatar** (first letter of name, colored background).
 
 **`user_sessions`**
 ```json
