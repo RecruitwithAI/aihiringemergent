@@ -16,6 +16,8 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 
 ROOT_DIR = Path(__file__).parent
+UPLOAD_DIR = Path("/tmp/bestpl_uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
