@@ -27,7 +27,7 @@ export default function ChallengeDetail() {
     }
   };
 
-  useEffect(() => { fetchChallenge(); }, [id]);
+  useEffect(() => { fetchChallenge(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAnswer = async (e) => {
     e.preventDefault();
