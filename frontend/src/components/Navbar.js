@@ -58,9 +58,9 @@ export default function Navbar() {
                 key={link.to}
                 to={link.to}
                 data-testid={`nav-link-${link.label.toLowerCase().replace(" ", "-")}`}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   isActive
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/10 text-primary shadow-sm shadow-primary/10"
                     : "text-stone-500 hover:text-stone-900 hover:bg-stone-100"
                 }`}
               >
