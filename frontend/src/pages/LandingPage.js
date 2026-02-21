@@ -355,13 +355,10 @@ export default function LandingPage() {
 
 function DarkDivider() {
   return (
-    <div className="relative my-5">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-white/[0.08]" />
-      </div>
-      <div className="relative flex justify-center text-xs">
-        <span className="bg-transparent px-3 text-slate-600 bg-[#0d0d1e]">or continue with</span>
-      </div>
+    <div className="flex items-center gap-3 my-5">
+      <div className="flex-1 border-t border-white/[0.08]" />
+      <span className="text-xs text-slate-600">or continue with</span>
+      <div className="flex-1 border-t border-white/[0.08]" />
     </div>
   );
 }
