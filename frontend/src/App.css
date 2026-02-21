@@ -1,32 +1,73 @@
-/* Bestpl.ai — utility classes */
+/* Bestpl.ai — Gamer-Infused Utility Classes */
 
 /* Glassmorphic nav */
 .glass-nav {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(231, 229, 228, 0.5);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(231, 229, 228, 0.4);
 }
-@supports not (backdrop-filter: blur(16px)) {
+@supports not (backdrop-filter: blur(20px)) {
     .glass-nav { background: rgba(255, 255, 255, 0.95); }
 }
 
-/* Card hover lift + shadow expansion */
+/* Card hover lift + glow border */
 .card-hover {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.12), 0 8px 16px -8px rgba(0, 0, 0, 0.08);
+    border-color: rgba(99, 102, 241, 0.25);
 }
 
-/* Badge tier colors */
+/* Glow card — for featured/important cards */
+.card-glow {
+    transition: all 0.3s ease;
+    position: relative;
+}
+.card-glow::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.08));
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+    filter: blur(8px);
+}
+.card-glow:hover::after {
+    opacity: 1;
+}
+.card-glow:hover {
+    transform: translateY(-4px);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Icon container with hover animation */
+.icon-hover-wiggle:hover .icon-target {
+    animation: icon-wiggle 0.5s ease;
+}
+.icon-hover-bounce:hover .icon-target {
+    animation: icon-bounce 0.4s ease;
+}
+.icon-hover-spin:hover .icon-target {
+    transition: transform 0.4s ease;
+    transform: rotate(180deg);
+}
+.icon-hover-scale:hover .icon-target {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: scale(1.25);
+}
+
+/* Badge tier colors with glow */
 .badge-bronze  { color: #D97706; background: #FEF3C7; }
 .badge-silver  { color: #64748B; background: #F1F5F9; }
-.badge-gold    { color: #CA8A04; background: #FEF9C3; }
-.badge-diamond { color: #0891B2; background: #ECFEFF; }
+.badge-gold    { color: #CA8A04; background: #FEF9C3; box-shadow: 0 0 8px rgba(202, 138, 4, 0.15); }
+.badge-diamond { color: #0891B2; background: #ECFEFF; box-shadow: 0 0 8px rgba(8, 145, 178, 0.15); }
 
-/* Tool card top-line accent on hover */
+/* Tool card accent line */
 .tool-card-gradient {
     position: relative;
     overflow: hidden;
@@ -36,15 +77,16 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: hsl(239 84% 67%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tool-card-gradient:hover::before {
-    opacity: 1;
+    transform: scaleX(1);
 }
 
-/* Initials avatar fallback */
+/* Initials avatar */
 .avatar-initials {
     display: flex;
     align-items: center;
@@ -53,4 +95,50 @@
     font-weight: 600;
     color: white;
     text-transform: uppercase;
+}
+
+/* Upvote button active state */
+.upvote-active {
+    color: #6366f1;
+    animation: pop-in 0.3s ease;
+}
+
+/* Rank trophy glow for top 3 */
+.rank-gold   { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
+.rank-silver { filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.4)); }
+.rank-bronze { filter: drop-shadow(0 0 6px rgba(180, 83, 9, 0.4)); }
+
+/* Shimmer button on hover */
+.btn-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+.btn-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: none;
+}
+.btn-shimmer:hover::after {
+    animation: shimmer 0.8s ease;
+}
+
+/* XP tag pulse */
+.xp-tag-pulse {
+    animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* Progress ring for stats */
+.stat-ring {
+    transition: stroke-dashoffset 0.8s ease;
+}
+
+/* Leaderboard row highlight for self */
+.leaderboard-self {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(139, 92, 246, 0.03));
+    border-color: rgba(99, 102, 241, 0.2);
 }
