@@ -357,7 +357,15 @@ Full design tokens available in `/app/design_guidelines.json`.
   - Bottom CTA strip + clean dark footer
 - [x] **Step 6.2** — Testing: 100% pass rate (20/20 frontend features) ✅
 
-### Results Phase 6: 100% frontend test pass rate
+### Phase 7: JD Builder Enhancements (Feb 2026)
+- [x] **Step 7.1** — Backend: Chunked file upload (`POST /api/ai/upload-chunk`) — 1MB chunks, reassembled into temp storage ✅
+- [x] **Step 7.2** — Backend: File text extraction (`POST /api/ai/extract-file`) — supports .txt, .pdf, .docx, .doc (fallback), audio (Whisper) ✅
+- [x] **Step 7.3** — Backend: Document download (`POST /api/ai/download`) — generates .txt, .docx (python-docx with markdown parsing), .pdf (fpdf2) ✅
+- [x] **Step 7.4** — Frontend: JD Builder file upload zone — drag-and-drop + progress bar + extracted text preview ✅
+- [x] **Step 7.5** — Frontend: Edit mode for all tool outputs — Edit/Save/Cancel toggle ✅
+- [x] **Step 7.6** — Frontend: Download dropdown — Word (.docx) / PDF / Text (.txt) ✅
+- [x] **Step 7.7** — Packages installed: pypdf, python-docx, fpdf2 ✅
+- [x] **Step 7.8** — Testing: 100% pass (11 backend + 18 frontend), PDF crash fixed ✅
 
 ---
 
