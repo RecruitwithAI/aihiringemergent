@@ -182,6 +182,64 @@ export default function Challenges() {
           </Dialog>
         </div>
 
+        {/* Search & Filter Bar */}
+        <div className={`${CARD} p-4 mb-6`} data-testid="search-filter-bar">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" strokeWidth={1.5} />
+              <Input
+                data-testid="search-challenges-input"
+                placeholder="Search challenges..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-cyan-500/50 h-10"
+              />
+            </div>
+            
+            {/* Clear Filters Button */}
+            {(searchQuery || selectedTags.length > 0) && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1.5 px-4 h-10 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] text-sm transition-all"
+                data-testid="clear-filters-btn"
+              >
+                <X className="w-3.5 h-3.5" strokeWidth={1.5} /> Clear
+              </button>
+            )}
+          </div>
+
+          {/* Tag Pills */}
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/[0.06]">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 mr-1">
+                <Filter className="w-3 h-3" strokeWidth={1.5} /> Filter by tag:
+              </div>
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                    selectedTags.includes(tag)
+                      ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/40 font-medium"
+                      : "bg-white/[0.04] text-slate-400 border-white/[0.08] hover:border-white/[0.15] hover:text-slate-300"
+                  }`}
+                  data-testid={`tag-filter-${tag}`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* Active Filter Count */}
+          {selectedTags.length > 0 && (
+            <p className="text-xs text-slate-500 mt-2">
+              {challenges.length} challenge{challenges.length !== 1 ? 's' : ''} found
+            </p>
+          )}
+        </div>
+
         {challenges.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-slate-500">No challenges yet. Be the first to post!</p>
