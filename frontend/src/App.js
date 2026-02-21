@@ -16,7 +16,8 @@ import { Toaster } from "@/components/ui/sonner";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Auth Context
+// ==================== AUTH CONTEXT ====================
+
 const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
@@ -29,7 +30,7 @@ function AuthProvider({ children }) {
   const checkAuth = useCallback(async () => {
     // CRITICAL: If returning from OAuth callback, skip the /me check.
     // AuthCallback will exchange the session_id and establish the session first.
-    if (window.location.hash?.includes('session_id=')) {
+    if (window.location.hash?.includes("session_id=")) {
       setLoading(false);
       return;
     }
@@ -48,10 +49,13 @@ function AuthProvider({ children }) {
   }, [checkAuth]);
 
   const login = (userData) => setUser(userData);
+
   const logout = async () => {
     try {
       await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setUser(null);
   };
 
@@ -61,6 +65,8 @@ function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+
+// ==================== AUTH CALLBACK (Google OAuth return) ====================
 
 function AuthCallback() {
   const hasProcessed = useRef(false);
@@ -80,7 +86,9 @@ function AuthCallback() {
 
     (async () => {
       try {
-        const res = await axios.get(`${API}/auth/session?session_id=${sessionId}`, { withCredentials: true });
+        const res = await axios.get(`${API}/auth/session?session_id=${sessionId}`, {
+          withCredentials: true,
+        });
         login(res.data);
         navigate("/dashboard", { replace: true, state: { user: res.data } });
       } catch {
@@ -91,10 +99,14 @@ function AuthCallback() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-      <div className="animate-pulse text-stone-500 font-medium">Authenticating...</div>
+      <div className="animate-pulse text-stone-500 font-medium" data-testid="auth-loading">
+        Authenticating...
+      </div>
     </div>
   );
 }
+
+// ==================== PROTECTED ROUTE ====================
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -120,11 +132,13 @@ function ProtectedRoute({ children }) {
   );
 }
 
+// ==================== ROUTER ====================
+
 function AppRouter() {
   const location = useLocation();
 
-  // Check URL fragment for session_id synchronously during render
-  if (location.hash?.includes('session_id=')) {
+  // Detect session_id synchronously during render — before ProtectedRoute runs
+  if (location.hash?.includes("session_id=")) {
     return <AuthCallback />;
   }
 
@@ -141,6 +155,8 @@ function AppRouter() {
     </Routes>
   );
 }
+
+// ==================== APP ====================
 
 function App() {
   return (
