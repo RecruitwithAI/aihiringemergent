@@ -56,6 +56,15 @@ class AIToolRequest(BaseModel):
     prompt: str
     context: Optional[str] = ""
 
+class DownloadRequest(BaseModel):
+    content: str
+    format: str  # "txt" | "docx" | "pdf"
+    filename: str = "output"
+
+class ExtractFileRequest(BaseModel):
+    upload_id: str
+    filename: str
+
 # ==================== HELPERS ====================
 
 def get_badge(points):
