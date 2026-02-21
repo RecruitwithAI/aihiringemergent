@@ -276,18 +276,18 @@ export default function AITools() {
             <h1 className="text-2xl sm:text-3xl font-semibold font-[Lexend] text-white">AI Tools</h1>
             <p className="text-slate-400 text-xs sm:text-sm mt-1">Choose a tool to get started</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {TOOLS.map((tool) => (
               <button
                 key={tool.id}
                 onClick={() => selectTool(tool)}
-                className={`${CARD} p-6 text-left hover:border-blue-500/30 hover:bg-white/[0.06] transition-all duration-300 group`}
+                className={`${CARD} p-5 sm:p-6 text-left hover:border-blue-500/30 hover:bg-white/[0.06] transition-all duration-300 group`}
                 data-testid={`tool-card-${tool.id}`}
               >
-                <div className={`w-10 h-10 rounded-xl ${tool.bg} border ${tool.border} flex items-center justify-center mb-4`}>
+                <div className={`w-10 h-10 rounded-xl ${tool.bg} border ${tool.border} flex items-center justify-center mb-3 sm:mb-4`}>
                   <tool.icon className={`w-5 h-5 ${tool.color}`} strokeWidth={1.5} />
                 </div>
-                <p className="text-base font-semibold text-white font-[Lexend]">{tool.label}</p>
+                <p className="text-sm sm:text-base font-semibold text-white font-[Lexend]">{tool.label}</p>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   {tool.id === "jd-builder" ? "Build job descriptions — upload docs for context" :
                    tool.id === "search-strategy" ? "Boolean strings, channel maps, targeting" :
