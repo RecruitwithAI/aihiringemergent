@@ -30,7 +30,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] hover:border-white/[0.15] text-slate-400 hover:text-white"
+      className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] hover:border-white/[0.15] text-slate-400 hover:text-white"
       data-testid="theme-toggle"
       title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
     >
