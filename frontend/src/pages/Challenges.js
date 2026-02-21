@@ -44,7 +44,7 @@ export default function Challenges() {
     }
   };
 
-  useEffect(() => { fetchChallenges(); }, [searchQuery, selectedTags]);
+  useEffect(() => { fetchChallenges(); }, [searchQuery, selectedTags]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async (e) => {
     e.preventDefault();

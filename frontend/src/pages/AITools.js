@@ -68,7 +68,7 @@ export default function AITools() {
     if (selectedTool) {
       fetchHistory();
     }
-  }, [selectedTool]);
+  }, [selectedTool]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchHistory = async () => {
     setLoadingHistory(true);
