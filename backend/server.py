@@ -457,13 +457,40 @@ async def get_profile_stats(user=Depends(get_current_user)):
 
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS: When credentials are used, origin must be explicit (not "*").
+# Reflect the request origin dynamically.
+cors_origins_raw = os.environ.get('CORS_ORIGINS', '*')
+if cors_origins_raw.strip() == '*':
+    # Allow any origin but reflect it back (required for credentials)
+    cors_origins = ["*"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["set-cookie"],
+    )
+    # Patch: Starlette sends "Access-Control-Allow-Origin: *" even with credentials.
+    # We add a middleware that rewrites it to the actual Origin header.
+    from starlette.middleware.base import BaseHTTPMiddleware
+    class FixCORSOriginMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            response = await call_next(request)
+            origin = request.headers.get("origin")
+            if origin and response.headers.get("access-control-allow-origin") == "*":
+                response.headers["access-control-allow-origin"] = origin
+            return response
+    app.add_middleware(FixCORSOriginMiddleware)
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=cors_origins_raw.split(','),
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["set-cookie"],
+    )
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
