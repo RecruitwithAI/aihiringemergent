@@ -318,16 +318,81 @@ export default function AITools() {
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> All Tools
         </button>
 
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className={`w-10 h-10 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}>
-            <selectedTool.icon className={`w-5 h-5 ${selectedTool.color}`} strokeWidth={1.5} />
+        {/* Header with History Button */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}>
+              <selectedTool.icon className={`w-5 h-5 ${selectedTool.color}`} strokeWidth={1.5} />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-white font-[Lexend]">{selectedTool.label}</h1>
+              <p className="text-xs text-slate-500">Powered by GPT-5.2</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-white font-[Lexend]">{selectedTool.label}</h1>
-            <p className="text-xs text-slate-500">Powered by GPT-5.2</p>
-          </div>
+          
+          {/* History Toggle Button */}
+          <button
+            onClick={() => setHistoryOpen(!historyOpen)}
+            className={`flex items-center gap-2 px-4 h-9 rounded-full border text-sm font-medium transition-all ${
+              historyOpen
+                ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                : "bg-white/[0.05] border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15]"
+            }`}
+            data-testid="history-toggle-btn"
+          >
+            <History className="w-4 h-4" strokeWidth={1.5} />
+            History {history.length > 0 && `(${history.length})`}
+          </button>
         </div>
+
+        {/* History Panel */}
+        {historyOpen && (
+          <div className={`${CARD} p-5 mb-5 max-h-[400px] overflow-y-auto`} data-testid="history-panel">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-medium text-white">Recent Generations</p>
+              <button
+                onClick={() => setHistoryOpen(false)}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                <X className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 text-blue-400 animate-spin" strokeWidth={1.5} />
+              </div>
+            ) : history.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-8">No history yet. Generate something to get started!</p>
+            ) : (
+              <div className="space-y-2">
+                {history.map((item, idx) => (
+                  <button
+                    key={item.history_id}
+                    onClick={() => loadFromHistory(item)}
+                    className="w-full text-left p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all group"
+                    data-testid={`history-item-${idx}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white font-medium line-clamp-1 group-hover:text-blue-400 transition-colors">
+                          {item.prompt}
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                          {item.response.slice(0, 100)}...
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
+                        <Clock className="w-3 h-3" strokeWidth={1.5} />
+                        {timeAgo(item.created_at)}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Input Area */}
         <div className={`${CARD} p-6 mb-5`}>
