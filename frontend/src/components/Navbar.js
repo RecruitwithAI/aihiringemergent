@@ -32,34 +32,21 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const isDark = location.pathname === "/dashboard";
 
   const handleLogout = async () => {
     await logout();
     window.location.href = "/";
   };
 
-  const navBase = isDark
-    ? "fixed top-0 left-0 right-0 z-50 h-16 bg-[#090914]/90 backdrop-blur-md border-b border-white/[0.07]"
-    : "fixed top-0 left-0 right-0 z-50 glass-nav h-16";
-
-  const logoText = isDark ? "text-white" : "text-stone-900";
-  const linkActive = isDark ? "bg-blue-500/10 text-blue-400" : "bg-primary/10 text-primary shadow-sm shadow-primary/10";
-  const linkInactive = isDark
-    ? "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-    : "text-stone-500 hover:text-stone-900 hover:bg-stone-100";
-  const userMenuBtn = isDark ? "hover:bg-white/[0.06]" : "hover:bg-stone-100";
-  const userNameColor = isDark ? "text-slate-300" : "text-stone-700";
-
   return (
-    <nav className={navBase} data-testid="navbar">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 glass-nav" data-testid="navbar">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center gap-2 flex-shrink-0" data-testid="nav-logo">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
             <Zap className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
           </div>
-          <span className={`text-lg font-semibold font-[Lexend] ${logoText}`}>Bestpl.ai</span>
+          <span className="text-lg font-semibold font-[Lexend] text-white">Bestpl.ai</span>
         </Link>
 
         {/* Links */}
@@ -72,7 +59,9 @@ export default function Navbar() {
                 to={link.to}
                 data-testid={`nav-link-${link.label.toLowerCase().replace(" ", "-")}`}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  isActive ? linkActive : linkInactive
+                  isActive 
+                    ? "bg-blue-500/10 text-blue-400" 
+                    : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                 }`}
               >
                 <link.icon className="w-4 h-4" strokeWidth={1.5} />
@@ -85,17 +74,28 @@ export default function Navbar() {
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={`flex items-center gap-2 rounded-full p-1 pr-3 transition-colors ${userMenuBtn}`} data-testid="nav-user-menu">
+            <button 
+              className="flex items-center gap-2 rounded-full p-1 pr-3 transition-colors hover:bg-white/[0.06]" 
+              data-testid="nav-user-menu"
+            >
               <UserAvatar user={user} size="sm" />
-              <span className={`text-sm font-medium hidden sm:inline ${userNameColor}`}>{user?.name?.split(" ")[0]}</span>
+              <span className="text-sm font-medium hidden sm:inline text-slate-300">{user?.name?.split(" ")[0]}</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => navigate("/profile")} data-testid="nav-profile-link">
+          <DropdownMenuContent align="end" className="w-48 bg-[#12121a] border-white/[0.08]">
+            <DropdownMenuItem 
+              onClick={() => navigate("/profile")} 
+              data-testid="nav-profile-link"
+              className="text-slate-300 hover:text-white focus:text-white hover:bg-white/[0.06] focus:bg-white/[0.06]"
+            >
               <User className="w-4 h-4 mr-2" strokeWidth={1.5} /> Profile
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} data-testid="nav-logout-btn">
+            <DropdownMenuSeparator className="bg-white/[0.08]" />
+            <DropdownMenuItem 
+              onClick={handleLogout} 
+              data-testid="nav-logout-btn"
+              className="text-slate-300 hover:text-white focus:text-white hover:bg-white/[0.06] focus:bg-white/[0.06]"
+            >
               <LogOut className="w-4 h-4 mr-2" strokeWidth={1.5} /> Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
