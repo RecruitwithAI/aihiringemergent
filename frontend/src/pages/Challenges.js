@@ -242,7 +242,11 @@ export default function Challenges() {
 
         {challenges.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-slate-500">No challenges yet. Be the first to post!</p>
+            <p className="text-slate-500">
+              {searchQuery || selectedTags.length > 0 
+                ? "No challenges match your filters. Try adjusting your search."
+                : "No challenges yet. Be the first to post!"}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
