@@ -174,57 +174,27 @@ export default function AITools() {
     setDownloading(true);
     
     try {
+      const filename = `${selectedTool.label}.${format}`;
+      
       if (format === "txt") {
-        // For text, create blob and use direct download
+        // For text, create blob directly
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        downloadViaForm(blob, `${selectedTool.label}.txt`, "text/plain");
+        saveAs(blob, filename);
       } else {
-        // For PDF/DOCX, fetch from server and trigger download via form
+        // For PDF/DOCX, fetch from server
         const res = await axios.post(`${API}/ai/download`,
           { content, format, filename: selectedTool.label },
           { withCredentials: true, responseType: "blob" }
         );
-        const mimeType = format === "pdf" 
-          ? "application/pdf" 
-          : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        downloadViaForm(res.data, `${selectedTool.label}.${format}`, mimeType);
+        saveAs(res.data, filename);
       }
-      toast.success(`Downloaded ${selectedTool.label}.${format}`);
+      toast.success(`Downloaded ${filename}`);
     } catch (err) {
       console.error("Download error:", err);
       toast.error("Download failed - please try again");
     } finally {
       setDownloading(false);
     }
-  };
-
-  const downloadViaForm = (blob, filename, mimeType) => {
-    // Create a File from the blob with proper name
-    const file = new File([blob], filename, { type: mimeType });
-    const url = URL.createObjectURL(file);
-    
-    // Create an invisible iframe to handle the download
-    // This bypasses iframe restrictions
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
-    
-    // Write download link into iframe and click it
-    const iframeDoc = iframe.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(`
-      <html><body>
-        <a id="dl" href="${url}" download="${filename}">Download</a>
-        <script>document.getElementById('dl').click();</script>
-      </body></html>
-    `);
-    iframeDoc.close();
-    
-    // Cleanup after delay
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-      URL.revokeObjectURL(url);
-    }, 3000);
   };
 
   // ── Markdown Render (basic) ──
