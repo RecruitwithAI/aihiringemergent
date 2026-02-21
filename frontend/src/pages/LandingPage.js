@@ -90,7 +90,7 @@ export default function LandingPage() {
           onClick={() => setShowAuth(true)}
           className="flex items-center gap-2 px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm font-medium hover:bg-blue-500/20 hover:border-blue-500/50 transition-all duration-200"
         >
-          Get Started <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
+          Start Here <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
         </button>
       </nav>
 
@@ -120,7 +120,7 @@ export default function LandingPage() {
                 onClick={() => setShowAuth(true)}
                 className="flex items-center gap-2 px-7 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-medium text-base transition-all duration-200 shadow-lg shadow-blue-500/25"
               >
-                Join the Community <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                Start Here <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
               </button>
               <button
                 data-testid="hero-learn-btn"
@@ -334,7 +334,7 @@ export default function LandingPage() {
             className="flex items-center gap-2 px-8 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-medium whitespace-nowrap transition-all duration-200 shadow-lg shadow-blue-500/25"
             data-testid="cta-join-btn"
           >
-            Get Started Free <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+            Start Here <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
       </section>
