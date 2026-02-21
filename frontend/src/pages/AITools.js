@@ -1,77 +1,218 @@
-import { useState } from "react";
-import { API } from "@/App";
+import { useState, useRef } from "react";
+import { useAuth, API } from "@/App";
 import axios from "axios";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { FileText, Search, UserCheck, FolderOpen, Building2, ArrowLeft, Loader2, Copy, Download, Sparkles } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Brain, FileText, Search, UserSearch, BookUser, Building2,
+  ArrowLeft, Sparkles, Download, Edit3, Check, X, Upload,
+  File as FileIcon, ChevronDown, Loader2, Eye, EyeOff
+} from "lucide-react";
 
 const TOOLS = [
-  { id: "jd-builder", icon: FileText, title: "JD Builder", desc: "Generate professional job descriptions", placeholder: "Describe the role, e.g. 'VP of Engineering for a Series B fintech startup, 200 employees, remote-first...'", color: "bg-violet-50 text-violet-600 border-violet-100", anim: "icon-hover-wiggle" },
-  { id: "search-strategy", icon: Search, title: "Search Strategy", desc: "Create comprehensive candidate search strategies", placeholder: "Who are you looking for? e.g. 'CMO for a D2C healthcare brand expanding to Europe...'", color: "bg-blue-50 text-blue-600 border-blue-100", anim: "icon-hover-bounce" },
-  { id: "candidate-research", icon: UserCheck, title: "Candidate Research", desc: "Deep research on candidate profiles", placeholder: "Describe the candidate or profile, e.g. 'VP of Sales at a SaaS unicorn, 15 years experience...'", color: "bg-emerald-50 text-emerald-600 border-emerald-100", anim: "icon-hover-scale" },
-  { id: "dossier", icon: FolderOpen, title: "Candidate Dossier", desc: "Create presentation-ready candidate dossiers", placeholder: "Provide candidate details, e.g. 'John Smith, CTO at TechCorp, 20 years in enterprise software...'", color: "bg-amber-50 text-amber-600 border-amber-100", anim: "icon-hover-wiggle" },
-  { id: "client-research", icon: Building2, title: "Client Research", desc: "Research potential client companies", placeholder: "Describe the company, e.g. 'Acme Corp, mid-market cybersecurity firm, recently funded Series C...'", color: "bg-rose-50 text-rose-600 border-rose-100", anim: "icon-hover-spin" },
+  { id: "jd-builder",        icon: FileText,   label: "JD Builder",       color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/20",  prompt: "Role title, seniority, key responsibilities..." },
+  { id: "search-strategy",   icon: Search,     label: "Search Strategy",  color: "text-cyan-400",   bg: "bg-cyan-500/10",   border: "border-cyan-500/20",  prompt: "Target role, industry, location, key skills..." },
+  { id: "candidate-research",icon: UserSearch, label: "Candidate Research",color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20",prompt: "Candidate name, LinkedIn URL, or background..." },
+  { id: "dossier",           icon: BookUser,   label: "Candidate Dossier",color: "text-amber-400",  bg: "bg-amber-500/10",  border: "border-amber-500/20", prompt: "Candidate name, role, company, experience notes..." },
+  { id: "client-research",   icon: Building2,  label: "Client Research",  color: "text-emerald-400",bg: "bg-emerald-500/10",border: "border-emerald-500/20",prompt: "Company name, industry, HQ location..." },
 ];
 
+const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
+const CHUNK_SIZE = 1 * 1024 * 1024; // 1 MB
+
+const ACCEPTED = ".txt,.pdf,.doc,.docx,.mp3,.wav,.m4a,.ogg,.aac,.flac";
+const ACCEPTED_LABELS = "PDF, Word (.doc/.docx), TXT, or Audio (MP3/WAV/M4A)";
+
 export default function AITools() {
+  const { user } = useAuth();
   const [selectedTool, setSelectedTool] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [context, setContext] = useState("");
   const [result, setResult] = useState("");
   const [generating, setGenerating] = useState(false);
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) { toast.error("Please provide input"); return; }
-    setGenerating(true); setResult("");
+  // file upload state
+  const [uploadedFile, setUploadedFile] = useState(null);   // { name, charCount }
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [showExtracted, setShowExtracted] = useState(false);
+  const [extractedPreview, setExtractedPreview] = useState("");
+  const [fileContext, setFileContext] = useState("");        // full extracted text
+
+  // edit/download state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editBuffer, setEditBuffer] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  const selectTool = (tool) => {
+    setSelectedTool(tool);
+    setPrompt(""); setContext(""); setResult("");
+    setUploadedFile(null); setFileContext(""); setExtractedPreview("");
+    setIsEditing(false); setEditBuffer(""); setUploadProgress(0);
+  };
+
+  const clearFile = () => {
+    setUploadedFile(null); setFileContext(""); setExtractedPreview(""); setShowExtracted(false);
+  };
+
+  // ── Chunked Upload ──
+  const handleFileDrop = async (file) => {
+    if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    const allowed = ["txt","pdf","doc","docx","mp3","wav","m4a","ogg","aac","flac"];
+    if (!allowed.includes(ext)) {
+      toast.error(`Unsupported type: .${ext}. Allowed: ${allowed.join(", ")}`);
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("File too large. Max 25 MB.");
+      return;
+    }
+
+    setUploading(true); setUploadProgress(0); setUploadedFile(null); setFileContext("");
+
+    const uploadId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
     try {
-      const res = await axios.post(`${API}/ai/generate`, { tool_type: selectedTool.id, prompt, context }, { withCredentials: true });
+      for (let i = 0; i < totalChunks; i++) {
+        const slice = file.slice(i * CHUNK_SIZE, Math.min((i + 1) * CHUNK_SIZE, file.size));
+        const fd = new FormData();
+        fd.append("chunk", slice, file.name);
+        fd.append("upload_id", uploadId);
+        fd.append("chunk_index", String(i));
+        fd.append("total_chunks", String(totalChunks));
+        fd.append("filename", file.name);
+        await axios.post(`${API}/ai/upload-chunk`, fd, { withCredentials: true });
+        setUploadProgress(Math.round(((i + 1) / totalChunks) * 85));
+      }
+
+      setUploadProgress(92);
+      const res = await axios.post(`${API}/ai/extract-file`, { upload_id: uploadId, filename: file.name }, { withCredentials: true });
+      setUploadProgress(100);
+
+      const extracted = res.data.extracted_text;
+      setFileContext(extracted);
+      setExtractedPreview(extracted.slice(0, 500));
+      setUploadedFile({ name: file.name, charCount: res.data.char_count });
+      toast.success(`"${file.name}" processed — ${res.data.char_count.toLocaleString()} chars extracted`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "File processing failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ── Generate ──
+  const handleGenerate = async () => {
+    if (!prompt.trim()) { toast.error("Please enter a prompt first"); return; }
+    setGenerating(true); setResult(""); setIsEditing(false);
+
+    const fullContext = [context, fileContext ? `--- Uploaded File Content ---\n${fileContext}` : ""]
+      .filter(Boolean).join("\n\n");
+
+    try {
+      const res = await axios.post(`${API}/ai/generate`, { tool_type: selectedTool.id, prompt, context: fullContext }, { withCredentials: true });
       setResult(res.data.response);
-      toast.success("Generated successfully! +2 XP earned");
-    } catch (err) { toast.error(err.response?.data?.detail || "Generation failed."); }
-    finally { setGenerating(false); }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
   };
 
-  const copyToClipboard = () => { navigator.clipboard.writeText(result); toast.success("Copied to clipboard"); };
-  const downloadAsText = () => {
-    const blob = new Blob([result], { type: "text/plain" });
+  // ── Edit ──
+  const startEdit = () => { setEditBuffer(result); setIsEditing(true); };
+  const saveEdit  = () => { setResult(editBuffer); setIsEditing(false); };
+  const cancelEdit= () => { setIsEditing(false); };
+
+  // ── Download ──
+  const handleDownload = async (format) => {
+    const content = isEditing ? editBuffer : result;
+    if (!content) return;
+    setDownloading(true);
+    try {
+      if (format === "txt") {
+        const blob = new Blob([content], { type: "text/plain" });
+        triggerDownload(blob, `${selectedTool.label}.txt`);
+      } else {
+        const res = await axios.post(`${API}/ai/download`,
+          { content, format, filename: selectedTool.label },
+          { withCredentials: true, responseType: "blob" }
+        );
+        triggerDownload(new Blob([res.data]), `${selectedTool.label}.${format}`);
+      }
+    } catch {
+      toast.error("Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const triggerDownload = (blob, filename) => {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `${selectedTool?.id}-output.txt`; a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const formatOutput = (text) => {
-    if (!text) return "";
-    return text.replace(/###\s(.+)/g, "<h3>$1</h3>").replace(/##\s(.+)/g, "<h2>$1</h2>").replace(/#\s(.+)/g, "<h1>$1</h1>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n- /g, "\n<li>").replace(/\n\d+\.\s/g, "\n<li>").replace(/\n/g, "<br/>");
+  // ── Markdown Render (basic) ──
+  const renderMarkdown = (text) => {
+    const lines = text.split("\n");
+    return lines.map((line, i) => {
+      if (line.startsWith("### ")) return <h3 key={i} className="text-base font-semibold text-white mt-4 mb-1">{line.slice(4)}</h3>;
+      if (line.startsWith("## "))  return <h2 key={i} className="text-lg font-semibold text-white mt-5 mb-1.5">{line.slice(3)}</h2>;
+      if (line.startsWith("# "))   return <h1 key={i} className="text-xl font-bold text-white mt-6 mb-2">{line.slice(2)}</h1>;
+      if (line.startsWith("- ") || line.startsWith("* ")) {
+        return <li key={i} className="text-slate-300 text-sm ml-4 list-disc">{parseBold(line.slice(2))}</li>;
+      }
+      if (!line.trim()) return <br key={i} />;
+      return <p key={i} className="text-slate-300 text-sm leading-relaxed">{parseBold(line)}</p>;
+    });
   };
 
+  const parseBold = (text) => {
+    const parts = text.split(/\*\*(.*?)\*\*/);
+    return parts.map((p, i) => i % 2 === 1 ? <strong key={i} className="text-white font-semibold">{p}</strong> : p);
+  };
+
+  // ── Tool Grid ──
   if (!selectedTool) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9]" data-testid="ai-tools-page">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8 animate-float-in">
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-stone-900 font-[Lexend]">
-              AI Tools <span className="gradient-text">Hub</span>
-            </h1>
-            <p className="text-base text-stone-500 mt-1 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-primary" strokeWidth={1.5} /> Powered by GPT-5.2 — Your recruiting intelligence arsenal
-            </p>
+      <div className="min-h-screen bg-[#090914]" data-testid="ai-tools-page">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-xs text-blue-400/60 uppercase tracking-widest mb-2">
+              <Brain className="w-3 h-3" strokeWidth={1.5} /> AI Tools
+            </div>
+            <h1 className="text-3xl font-semibold font-[Lexend] text-white">AI Tools</h1>
+            <p className="text-slate-400 text-sm mt-1">Choose a tool to get started</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TOOLS.map((tool, i) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TOOLS.map((tool) => (
               <button
                 key={tool.id}
-                onClick={() => setSelectedTool(tool)}
-                className={`${tool.anim} text-left bg-white rounded-xl border border-stone-200 shadow-sm p-6 card-glow tool-card-gradient group animate-float-in stagger-${i + 1}`}
+                onClick={() => selectTool(tool)}
+                className={`${CARD} p-6 text-left hover:border-blue-500/30 hover:bg-white/[0.06] transition-all duration-300 group`}
                 data-testid={`tool-card-${tool.id}`}
               >
-                <div className={`w-12 h-12 rounded-xl ${tool.color} border flex items-center justify-center mb-4 transition-all duration-300 group-hover:shadow-lg`}>
-                  <tool.icon className="w-6 h-6 icon-target" strokeWidth={1.5} />
+                <div className={`w-10 h-10 rounded-xl ${tool.bg} border ${tool.border} flex items-center justify-center mb-4`}>
+                  <tool.icon className={`w-5 h-5 ${tool.color}`} strokeWidth={1.5} />
                 </div>
-                <h3 className="text-lg font-semibold text-stone-900 font-[Lexend] mb-1">{tool.title}</h3>
-                <p className="text-sm text-stone-500 leading-relaxed">{tool.desc}</p>
-                <p className="mt-4 text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
-                  Use tool <ArrowLeft className="w-3 h-3 rotate-180" strokeWidth={1.5} />
+                <p className="text-base font-semibold text-white font-[Lexend]">{tool.label}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  {tool.id === "jd-builder" ? "Build job descriptions — upload docs for context" :
+                   tool.id === "search-strategy" ? "Boolean strings, channel maps, targeting" :
+                   tool.id === "candidate-research" ? "Research background & fit" :
+                   tool.id === "dossier" ? "Compile structured candidate profile" :
+                   "Research company intel"}
                 </p>
               </button>
             ))}
@@ -81,62 +222,229 @@ export default function AITools() {
     );
   }
 
+  const isJDBuilder = selectedTool.id === "jd-builder";
+
   return (
-    <div className="min-h-screen bg-[#FAFAF9]" data-testid="ai-tool-workspace">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button onClick={() => { setSelectedTool(null); setResult(""); setPrompt(""); setContext(""); }} className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition-colors duration-200 mb-6" data-testid="back-to-tools">
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> Back to AI Tools
+    <div className="min-h-screen bg-[#090914]" data-testid="ai-tool-detail">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Back */}
+        <button
+          onClick={() => setSelectedTool(null)}
+          className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-6 transition-colors"
+          data-testid="back-to-tools"
+        >
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> All Tools
         </button>
-        <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 md:p-8 animate-float-in card-glow">
-          <div className="flex items-center gap-3 mb-6">
-            <div className={`w-10 h-10 rounded-lg ${selectedTool.color} border flex items-center justify-center animate-pulse-glow`}>
-              <selectedTool.icon className="w-5 h-5" strokeWidth={1.5} />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-stone-900 font-[Lexend]">{selectedTool.title}</h2>
-              <p className="text-sm text-stone-500">{selectedTool.desc}</p>
-            </div>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className={`w-10 h-10 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}>
+            <selectedTool.icon className={`w-5 h-5 ${selectedTool.color}`} strokeWidth={1.5} />
           </div>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-stone-700 mb-1.5 block">Main Input</label>
-              <Textarea data-testid="ai-tool-prompt" placeholder={selectedTool.placeholder} value={prompt} onChange={(e) => setPrompt(e.target.value)} className="min-h-[120px] resize-none focus:border-primary/50 focus:ring-primary/20" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-stone-700 mb-1.5 block">Additional Context <span className="text-stone-400">(optional)</span></label>
-              <Input data-testid="ai-tool-context" placeholder="Any extra details, company info, or preferences..." value={context} onChange={(e) => setContext(e.target.value)} className="focus:border-primary/50 focus:ring-primary/20" />
-            </div>
-            <Button data-testid="ai-generate-btn" onClick={handleGenerate} disabled={generating || !prompt.trim()} className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white btn-shimmer shadow-lg shadow-primary/20">
-              {generating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4 mr-2" strokeWidth={1.5} /> Generate</>}
-            </Button>
+          <div>
+            <h1 className="text-xl font-semibold text-white font-[Lexend]">{selectedTool.label}</h1>
+            <p className="text-xs text-slate-500">Powered by GPT-5.2</p>
           </div>
         </div>
 
-        {(result || generating) && (
-          <div className="mt-6 bg-white rounded-xl border border-stone-200 shadow-sm p-6 md:p-8 animate-float-in" data-testid="ai-result-panel">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-stone-900 font-[Lexend] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" strokeWidth={1.5} /> Generated Output
-              </h3>
-              {result && (
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={copyToClipboard} className="rounded-full text-xs" data-testid="copy-result-btn"><Copy className="w-3 h-3 mr-1" strokeWidth={1.5} /> Copy</Button>
-                  <Button variant="outline" size="sm" onClick={downloadAsText} className="rounded-full text-xs" data-testid="download-result-btn"><Download className="w-3 h-3 mr-1" strokeWidth={1.5} /> Download</Button>
-                </div>
-              )}
+        {/* Input Area */}
+        <div className={`${CARD} p-6 mb-5`}>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-slate-400 text-xs uppercase tracking-wider mb-2 block">Prompt</Label>
+              <Textarea
+                data-testid="tool-prompt-input"
+                placeholder={selectedTool.prompt}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={4}
+                className="bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 resize-none"
+              />
             </div>
-            {generating ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center animate-pulse-glow">
-                  <Sparkles className="w-6 h-6 text-primary animate-spin" strokeWidth={1.5} style={{ animationDuration: "3s" }} />
-                </div>
-                <span className="text-stone-400 text-sm">Generating with GPT-5.2...</span>
+
+            <div>
+              <Label className="text-slate-400 text-xs uppercase tracking-wider mb-2 block">Additional Context (optional)</Label>
+              <Input
+                data-testid="tool-context-input"
+                placeholder="Any extra context, constraints, tone preferences..."
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                className="bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50"
+              />
+            </div>
+
+            {/* File Upload — JD Builder only */}
+            {isJDBuilder && (
+              <div>
+                <Label className="text-slate-400 text-xs uppercase tracking-wider mb-2 block">
+                  Upload File for Context
+                </Label>
+
+                {uploadedFile ? (
+                  <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                          <FileIcon className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white truncate max-w-[200px]">{uploadedFile.name}</p>
+                          <p className="text-xs text-slate-500">{uploadedFile.charCount.toLocaleString()} chars extracted</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowExtracted(!showExtracted)}
+                          className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1 transition-colors"
+                          data-testid="toggle-extracted-preview"
+                        >
+                          {showExtracted ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          {showExtracted ? "Hide" : "Preview"}
+                        </button>
+                        <button
+                          onClick={clearFile}
+                          className="text-slate-600 hover:text-red-400 transition-colors"
+                          data-testid="remove-uploaded-file"
+                        >
+                          <X className="w-4 h-4" strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </div>
+                    {showExtracted && (
+                      <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-3 max-h-32 overflow-y-auto">
+                        <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{extractedPreview}{uploadedFile.charCount > 500 ? "..." : ""}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploading ? "border-blue-500/40 bg-blue-500/[0.05]" : "border-white/[0.10] hover:border-blue-500/30 hover:bg-white/[0.04]"}`}
+                    onClick={() => !uploading && fileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); handleFileDrop(e.dataTransfer.files[0]); }}
+                    data-testid="file-upload-zone"
+                  >
+                    {uploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-6 h-6 text-blue-400 animate-spin" strokeWidth={1.5} />
+                        <p className="text-sm text-blue-400 font-medium">Processing file... {uploadProgress}%</p>
+                        <div className="w-full max-w-[200px] bg-white/[0.06] rounded-full h-1.5 overflow-hidden mt-1">
+                          <div className="h-1.5 bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 text-slate-600 mx-auto mb-2" strokeWidth={1.5} />
+                        <p className="text-sm text-slate-400 font-medium">Drag & drop or <span className="text-blue-400">click to upload</span></p>
+                        <p className="text-xs text-slate-600 mt-1">{ACCEPTED_LABELS} · Max 25 MB</p>
+                      </>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={ACCEPTED}
+                      className="hidden"
+                      onChange={(e) => handleFileDrop(e.target.files?.[0] || null)}
+                      data-testid="file-input"
+                    />
+                  </div>
+                )}
               </div>
+            )}
+
+          </div>
+
+          <button
+            onClick={handleGenerate}
+            disabled={generating || !prompt.trim()}
+            className="mt-5 flex items-center gap-2 px-6 h-10 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+            data-testid="generate-btn"
+          >
+            {generating ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
+            {generating ? "Generating..." : "Generate"}
+          </button>
+        </div>
+
+        {/* Result Area */}
+        {result && (
+          <div className={`${CARD} p-6`} data-testid="ai-result">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-slate-500 uppercase tracking-widest">Generated Output</p>
+              <div className="flex items-center gap-2">
+
+                {/* Edit / Save / Cancel */}
+                {!isEditing ? (
+                  <button
+                    onClick={startEdit}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-400 hover:text-white text-xs font-medium transition-all"
+                    data-testid="edit-btn"
+                  >
+                    <Edit3 className="w-3 h-3" strokeWidth={1.5} /> Edit
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={saveEdit}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all"
+                      data-testid="save-edit-btn"
+                    >
+                      <Check className="w-3 h-3" strokeWidth={2} /> Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-500 hover:text-white text-xs transition-all"
+                      data-testid="cancel-edit-btn"
+                    >
+                      <X className="w-3 h-3" strokeWidth={2} /> Cancel
+                    </button>
+                  </>
+                )}
+
+                {/* Download Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      disabled={downloading}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-400 hover:text-white text-xs font-medium transition-all disabled:opacity-50"
+                      data-testid="download-btn"
+                    >
+                      {downloading ? <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} /> : <Download className="w-3 h-3" strokeWidth={1.5} />}
+                      Download <ChevronDown className="w-3 h-3" strokeWidth={2} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem onClick={() => handleDownload("docx")} data-testid="download-docx">
+                      <FileText className="w-4 h-4 mr-2 text-blue-400" strokeWidth={1.5} /> Word (.docx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload("pdf")} data-testid="download-pdf">
+                      <FileIcon className="w-4 h-4 mr-2 text-red-400" strokeWidth={1.5} /> PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload("txt")} data-testid="download-txt">
+                      <FileText className="w-4 h-4 mr-2 text-slate-400" strokeWidth={1.5} /> Text (.txt)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+              </div>
+            </div>
+
+            {isEditing ? (
+              <Textarea
+                data-testid="edit-textarea"
+                value={editBuffer}
+                onChange={(e) => setEditBuffer(e.target.value)}
+                rows={20}
+                className="bg-white/[0.03] border-white/[0.10] text-slate-200 text-sm font-mono resize-y focus-visible:border-blue-500/50"
+              />
             ) : (
-              <div className="ai-output text-sm text-stone-700 leading-relaxed" data-testid="ai-result-content" dangerouslySetInnerHTML={{ __html: formatOutput(result) }} />
+              <div className="prose-sm prose-invert max-w-none space-y-1" data-testid="result-content">
+                {renderMarkdown(result)}
+              </div>
             )}
           </div>
         )}
+
       </div>
     </div>
   );
