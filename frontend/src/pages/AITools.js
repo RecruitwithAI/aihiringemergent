@@ -245,7 +245,7 @@ export default function AITools() {
                   {tool.id === "jd-builder" ? "Build job descriptions — upload docs for context" :
                    tool.id === "search-strategy" ? "Boolean strings, channel maps, targeting" :
                    tool.id === "candidate-research" ? "Research background & fit" :
-                   tool.id === "dossier" ? "Compile structured candidate profile" :
+                   tool.id === "dossier" ? "Compile candidate profile — upload docs for context" :
                    "Research company intel"}
                 </p>
               </button>
@@ -256,7 +256,7 @@ export default function AITools() {
     );
   }
 
-  const isJDBuilder = selectedTool.id === "jd-builder";
+  const supportsFileUpload = selectedTool.id === "jd-builder" || selectedTool.id === "dossier";
 
   return (
     <div className="min-h-screen bg-[#090914]" data-testid="ai-tool-detail">
