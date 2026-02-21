@@ -240,14 +240,29 @@ One platform where recruiting leaders can (a) use AI-powered hiring tools, (b) c
 
 ## 6. DESIGN DIRECTION
 
-**Theme:** "Solar-Punk Professional" — Light, warm, gamified  
+**Theme:** "Solar-Punk Professional" — Light, warm, minimalist  
+**Philosophy:** Clean surfaces, generous whitespace, quiet confidence. Let content breathe. Gamification is present but subtle — numbers and badges, not flashy animations.
+
 **Background:** `#FAFAF9` (warm stone)  
 **Primary Accent:** `#6366F1` (Electric Violet)  
-**Fonts:** `Outfit` (headings) + `Plus Jakarta Sans` (body)  
-**Buttons:** Pill-shaped (rounded-full)  
-**Cards:** White with subtle borders, hover lift + shadow  
-**Gamification:** XP bars (violet→fuchsia gradient), badge pills, rank displays  
-**Nav:** Glassmorphic top bar (blur + semi-transparent)  
+**Fonts (Accessibility-First):**  
+- Headings: `Lexend` — Designed to reduce visual stress and improve reading proficiency  
+- Body: `Atkinson Hyperlegible` — Created by the Braille Institute; distinct letterforms prevent character confusion (I/l/1, O/0, rn/m)  
+- Code: `JetBrains Mono`  
+
+**Buttons:** Pill-shaped (rounded-full), single solid color, no gradients  
+**Cards:** White, 1px stone-200 border, minimal shadow. Hover = slight border color shift, no lift.  
+**Gamification:** Clean XP numbers + badge pills. Progress bar is a simple solid violet bar, no gradient.  
+**Nav:** Clean white top bar with subtle bottom border (no glassmorphism — keep it simple)  
+**Spacing:** Generous. Cards use p-6 to p-8. Sections use py-12 to py-24.  
+
+**Minimalist Rules:**  
+- No gradients on backgrounds or cards  
+- No hover-lift animations on cards (just color shifts)  
+- No decorative noise textures or overlays  
+- Icons are thin (stroke-width 1.5), single color  
+- Max 2 font weights per context (regular + semibold)  
+- Empty states are clean single-line messages, not illustrations  
 
 Full design tokens available in `/app/design_guidelines.json`.
 
