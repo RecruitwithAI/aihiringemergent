@@ -308,8 +308,8 @@ export default function AITools() {
               />
             </div>
 
-            {/* Multi-File Upload — JD Builder only */}
-            {isJDBuilder && (
+            {/* Multi-File Upload — JD Builder and Dossier */}
+            {supportsFileUpload && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <Label className="text-slate-400 text-xs uppercase tracking-wider">
@@ -333,8 +333,8 @@ export default function AITools() {
                       <div key={idx} className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                              <FileIcon className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                            <div className={`w-8 h-8 rounded-lg ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}>
+                              <FileIcon className={`w-4 h-4 ${selectedTool.color}`} strokeWidth={1.5} />
                             </div>
                             <div>
                               <p className="text-sm font-medium text-white truncate max-w-[200px]">{file.name}</p>
@@ -374,7 +374,7 @@ export default function AITools() {
                 {/* Drop zone */}
                 {uploadedFiles.length < 5 && (
                   <div
-                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploading ? "border-blue-500/40 bg-blue-500/[0.05]" : "border-white/[0.10] hover:border-blue-500/30 hover:bg-white/[0.04]"}`}
+                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploading ? `${selectedTool.border} ${selectedTool.bg}` : "border-white/[0.10] hover:border-white/[0.20] hover:bg-white/[0.04]"}`}
                     onClick={() => !uploading && fileInputRef.current?.click()}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => { e.preventDefault(); handleFileDrop(e.dataTransfer.files); }}
@@ -382,17 +382,17 @@ export default function AITools() {
                   >
                     {uploading ? (
                       <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-6 h-6 text-blue-400 animate-spin" strokeWidth={1.5} />
-                        <p className="text-sm text-blue-400 font-medium">Processing files... {uploadProgress}%</p>
+                        <Loader2 className={`w-6 h-6 ${selectedTool.color} animate-spin`} strokeWidth={1.5} />
+                        <p className={`text-sm ${selectedTool.color} font-medium`}>Processing files... {uploadProgress}%</p>
                         <div className="w-full max-w-[200px] bg-white/[0.06] rounded-full h-1.5 overflow-hidden mt-1">
-                          <div className="h-1.5 bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                          <div className={`h-1.5 rounded-full transition-all duration-300 ${selectedTool.id === "dossier" ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${uploadProgress}%` }} />
                         </div>
                       </div>
                     ) : (
                       <>
                         <Upload className="w-6 h-6 text-slate-600 mx-auto mb-2" strokeWidth={1.5} />
                         <p className="text-sm text-slate-400 font-medium">
-                          Drag & drop or <span className="text-blue-400">click to upload</span>
+                          Drag & drop or <span className={selectedTool.color}>click to upload</span>
                         </p>
                         <p className="text-xs text-slate-600 mt-1">{ACCEPTED_LABELS} · Max 25 MB each</p>
                         {uploadedFiles.length > 0 && (
