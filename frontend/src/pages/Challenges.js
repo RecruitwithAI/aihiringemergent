@@ -14,15 +14,29 @@ const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 export default function Challenges() {
   const { user } = useAuth();
   const [challenges, setChallenges] = useState([]);
+  const [allTags, setAllTags] = useState([]); // All unique tags from challenges
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", tags: "" });
   const [submitting, setSubmitting] = useState(false);
+  
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTags, setSelectedTags] = useState([]);
 
   const fetchChallenges = async () => {
     try {
-      const res = await axios.get(`${API}/challenges`, { withCredentials: true });
+      const params = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (selectedTags.length > 0) params.tags = selectedTags.join(",");
+      
+      const res = await axios.get(`${API}/challenges`, { params, withCredentials: true });
       setChallenges(res.data);
+      
+      // Extract all unique tags for filter suggestions
+      const tags = new Set();
+      res.data.forEach(c => c.tags?.forEach(t => tags.add(t)));
+      setAllTags(Array.from(tags).sort());
     } catch (err) {
       console.error(err);
     } finally {
@@ -30,7 +44,7 @@ export default function Challenges() {
     }
   };
 
-  useEffect(() => { fetchChallenges(); }, []);
+  useEffect(() => { fetchChallenges(); }, [searchQuery, selectedTags]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
