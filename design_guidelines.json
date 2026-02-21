@@ -1,0 +1,153 @@
+{
+  "brand_identity": {
+    "name": "Bestpl.ai",
+    "mission": "Hybrid Intelligence for Recruiting Leaders",
+    "persona": "The Solar-Punk Recruiter",
+    "tone": {
+      "primary": "Professional but Engaging",
+      "secondary": "High-Tech Optimism",
+      "tertiary": "Community-Driven"
+    },
+    "aesthetics": "Light Mode Gamer - Clean, Warm, High-Contrast, Reward-Centric"
+  },
+  "typography": {
+    "font_family_heading": "Outfit, sans-serif",
+    "font_family_body": "Plus Jakarta Sans, sans-serif",
+    "font_family_code": "JetBrains Mono, monospace",
+    "scale": {
+      "h1": "text-4xl md:text-6xl font-bold tracking-tight",
+      "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold",
+      "body": "text-base leading-relaxed text-stone-600",
+      "small": "text-sm font-medium text-stone-500 uppercase tracking-wide"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');"
+    ]
+  },
+  "colors": {
+    "base": {
+      "background": "#FAFAF9", 
+      "foreground": "#1C1917",
+      "card": "#FFFFFF",
+      "card_foreground": "#1C1917",
+      "popover": "#FFFFFF",
+      "popover_foreground": "#1C1917",
+      "primary": "#6366F1", 
+      "primary_foreground": "#FFFFFF",
+      "secondary": "#F5F5F4",
+      "secondary_foreground": "#1C1917",
+      "muted": "#F5F5F4",
+      "muted_foreground": "#78716C",
+      "accent": "#F4F4F5",
+      "accent_foreground": "#18181B",
+      "destructive": "#EF4444",
+      "destructive_foreground": "#FAFAFA",
+      "border": "#E7E5E4",
+      "input": "#E7E5E4",
+      "ring": "#6366F1"
+    },
+    "gamification": {
+      "bronze": "#D97706",
+      "silver": "#94A3B8",
+      "gold": "#EAB308",
+      "diamond": "#06B6D4",
+      "xp_bar": "bg-gradient-to-r from-violet-500 to-fuchsia-500"
+    },
+    "charts": {
+      "chart_1": "#6366F1",
+      "chart_2": "#8B5CF6",
+      "chart_3": "#EC4899",
+      "chart_4": "#F59E0B",
+      "chart_5": "#10B981"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+      "hover": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+      "glow": "0 0 15px rgba(99, 102, 241, 0.5)"
+    },
+    "borders": {
+      "default": "1px solid #E7E5E4",
+      "active": "1px solid #6366F1",
+      "glass": "1px solid rgba(255, 255, 255, 0.5)"
+    },
+    "radius": {
+      "default": "0.75rem",
+      "button": "9999px", 
+      "card": "1rem"
+    },
+    "glassmorphism": {
+      "nav": "bg-white/80 backdrop-blur-md border-b border-stone-200/50 supports-[backdrop-filter]:bg-white/60"
+    }
+  },
+  "layout": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "section_spacing": "py-12 md:py-24",
+    "grid_gap": "gap-6 md:gap-8",
+    "bento_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[minmax(180px,auto)]"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 rounded-full shadow-lg hover:shadow-primary/25 transition-all duration-300 font-medium",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-6 py-2 rounded-full border border-stone-200 transition-all duration-300 font-medium",
+      "ghost": "hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-full transition-colors duration-200"
+    },
+    "cards": {
+      "base": "rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-300",
+      "interactive": "rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-primary/20 transition-all duration-300 cursor-pointer group",
+      "glass": "rounded-xl border border-white/20 bg-white/70 backdrop-blur-xl shadow-sm"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
+    }
+  },
+  "gamification_mechanics": {
+    "xp_display": "flex items-center gap-2 text-sm font-bold text-primary",
+    "leaderboard_row": "flex items-center justify-between p-4 bg-white rounded-lg border border-stone-100 hover:border-primary/20 transition-colors",
+    "badge": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+    "upvote_button": "flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-primary transition-colors active:scale-95"
+  },
+  "motion": {
+    "hover": "transition-all duration-300 ease-out",
+    "tap": "active:scale-95",
+    "enter": "animate-in fade-in zoom-in-95 duration-500",
+    "list_stagger": "stagger-100"
+  },
+  "accessibility": {
+    "focus_ring": "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+    "contrast_check": "Ensure text is slate-600 or darker on stone-50 backgrounds",
+    "interactive_targets": "Minimum 44x44px touch targets for mobile"
+  },
+  "image_urls": {
+    "hero_background": "https://images.pexels.com/photos/29717601/pexels-photo-29717601.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "abstract_3d": "https://images.pexels.com/photos/29738253/pexels-photo-29738253.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "community_meeting": "https://images.pexels.com/photos/5439439/pexels-photo-5439439.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "interview_session": "https://images.pexels.com/photos/5439157/pexels-photo-5439157.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "placeholder_avatar": "https://ui.shadcn.com/avatars/01.png",
+    "logos": {
+        "google": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png"
+    }
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "stroke-width: 1.5px; class: text-stone-600 group-hover:text-primary transition-colors"
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Override the CSS variables in /app/frontend/src/index.css with the values from the 'colors.base' section of this JSON.",
+    "Use the 'gamification_mechanics' section to style the Points, Leaderboard, and Challenge components.",
+    "Implement a 'Light Gamer' aesthetic: use white cards with high-quality borders and shadows on a warm stone background (#FAFAF9).",
+    "Use 'Outfit' font for all headings to give a modern tech feel, and 'Plus Jakarta Sans' for body text.",
+    "For the Training Section, display cards with thumbnail images and a progress bar overlay.",
+    "Ensure all buttons have the 'pill' shape (rounded-full) as defined in components.buttons.",
+    "Add 'data-testid' to all interactive elements."
+  ],
+  "universal_guidelines": [
+    "Do not use generic centered layouts. Use Bento grids and asymmetrical layouts where possible.",
+    "Every interaction must have a micro-interaction (hover lift, color shift, shadow expansion).",
+    "Use generous spacing (p-6, p-8) inside cards.",
+    "Never use pure black (#000000). Use Zinc-900 (#18181B) or similar.",
+    "For the AI tools, use a clean, distraction-free interface with a focus on the content generation area."
+  ]
+}
