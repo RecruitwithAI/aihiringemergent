@@ -6,8 +6,20 @@ module.exports = {
     "./public/index.html"
   ],
   theme: {
-  	extend: {
-  		borderRadius: {
+        extend: {
+                fontSize: {
+                        // Increased base sizes for better readability
+                        'xs': ['0.8125rem', { lineHeight: '1.5' }],     // 13px (was 12px)
+                        'sm': ['0.9375rem', { lineHeight: '1.5' }],     // 15px (was 14px)
+                        'base': ['1rem', { lineHeight: '1.6' }],         // 16px
+                        'lg': ['1.125rem', { lineHeight: '1.6' }],       // 18px
+                        'xl': ['1.3125rem', { lineHeight: '1.5' }],      // 21px (was 20px)
+                        '2xl': ['1.5625rem', { lineHeight: '1.4' }],     // 25px (was 24px)
+                        '3xl': ['1.9375rem', { lineHeight: '1.3' }],     // 31px (was 30px)
+                        '4xl': ['2.375rem', { lineHeight: '1.2' }],      // 38px (was 36px)
+                        '5xl': ['3.0625rem', { lineHeight: '1.1' }],     // 49px (was 48px)
+                },
+                borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
