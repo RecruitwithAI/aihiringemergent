@@ -330,6 +330,21 @@ Full design tokens available in `/app/design_guidelines.json`.
 
 ### Results: 93.8% backend / 95.8% frontend test pass rate
 
+### Phase 5: Homepage Redesign (Feb 2026)
+- [x] **Step 5.1** — Enhanced `/api/dashboard/stats` to return `last_ai_tool`, `last_challenge`, `activity_feed` ✅
+- [x] **Step 5.2** — Redesigned `Dashboard.js` → new personalized Homepage with dark navy theme (#090914) ✅
+  - "Welcome back, <username>" heading with time-based greeting
+  - Badge pill (Bronze/Silver/Gold/Diamond) in header
+  - XP stats row with progress bar to next tier
+  - Resume Last Session cards (last AI tool + last challenge)
+  - "Get Started" cards for new users without history
+  - Quick Actions grid (AI Tools, Challenges, Leaderboard, Training)
+  - Community Activity Feed (right sidebar, real-time)
+- [x] **Step 5.3** — Updated `Navbar.js` with dark variant when on `/dashboard` route ✅
+- [x] **Step 5.4** — Testing: 100% pass rate (21 backend + 14 frontend) ✅
+
+### Results Phase 5: 100% backend / 100% frontend test pass rate
+
 ---
 
 ## 8. KEY TECHNICAL DECISIONS
