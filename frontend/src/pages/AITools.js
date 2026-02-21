@@ -199,6 +199,8 @@ export default function AITools() {
     try {
       const res = await axios.post(`${API}/ai/generate`, { tool_type: selectedTool.id, prompt, context: fullContext }, { withCredentials: true });
       setResult(res.data.response);
+      // Refresh history after generating
+      fetchHistory();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Generation failed");
     } finally {
