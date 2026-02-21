@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Preview - Bestpl.ai</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; }
+        .container { display: flex; height: 100vh; }
+        .theme { flex: 1; padding: 40px; overflow-y: auto; }
+        
+        /* Current Dark Blue-Black Theme */
+        .theme-current {
+            background: #090914;
+            color: #cbd5e1;
+        }
+        .theme-current .card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+        .theme-current h1 { color: #ffffff; font-size: 31px; margin-bottom: 8px; }
+        .theme-current h2 { color: #ffffff; font-size: 25px; margin-bottom: 16px; }
+        .theme-current .subtitle { color: #94a3b8; font-size: 15px; }
+        .theme-current .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 24px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .theme-current .tag {
+            background: rgba(255, 255, 255, 0.06);
+            color: #94a3b8;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            display: inline-block;
+            margin: 4px;
+        }
+        
+        /* Option 1: Dark Grey Theme */
+        .theme-dark-grey {
+            background: #1a1a1a;
+            color: #e2e8f0;
+        }
+        .theme-dark-grey .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+        .theme-dark-grey h1 { color: #ffffff; font-size: 31px; margin-bottom: 8px; }
+        .theme-dark-grey h2 { color: #ffffff; font-size: 25px; margin-bottom: 16px; }
+        .theme-dark-grey .subtitle { color: #94a3b8; font-size: 15px; }
+        .theme-dark-grey .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 24px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .theme-dark-grey .tag {
+            background: rgba(255, 255, 255, 0.08);
+            color: #a1a1aa;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            display: inline-block;
+            margin: 4px;
+        }
+        
+        /* Option 2: Light Luminous Blue Theme */
+        .theme-light-blue {
+            background: #e6f4ff;
+            color: #1e293b;
+        }
+        .theme-light-blue .card {
+            background: #ffffff;
+            border: 1px solid #bfdbfe;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .theme-light-blue h1 { color: #0f172a; font-size: 31px; margin-bottom: 8px; }
+        .theme-light-blue h2 { color: #1e293b; font-size: 25px; margin-bottom: 16px; }
+        .theme-light-blue .subtitle { color: #64748b; font-size: 15px; }
+        .theme-light-blue .btn {
+            background: #2563eb;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 24px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .theme-light-blue .tag {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            display: inline-block;
+            margin: 4px;
+        }
+        
+        .label {
+            position: sticky;
+            top: 0;
+            background: inherit;
+            padding: 16px 0;
+            font-weight: bold;
+            font-size: 18px;
+            border-bottom: 2px solid;
+            margin-bottom: 24px;
+            z-index: 10;
+        }
+        .theme-current .label { border-color: #3b82f6; color: #60a5fa; }
+        .theme-dark-grey .label { border-color: #3b82f6; color: #60a5fa; }
+        .theme-light-blue .label { border-color: #2563eb; color: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Option 1: Dark Grey -->
+        <div class="theme theme-dark-grey">
+            <div class="label">🌑 OPTION 1: Dark Grey</div>
+            
+            <div class="card">
+                <h1>Welcome back, Saba</h1>
+                <p class="subtitle">Continue building your recruiting expertise</p>
+                <button class="btn">Get Started</button>
+            </div>
+            
+            <div class="card">
+                <h2>Community Challenges</h2>
+                <p class="subtitle">Ask questions, share knowledge, earn XP</p>
+                <div style="margin-top: 16px;">
+                    <span class="tag">culture-fit</span>
+                    <span class="tag">remote-hiring</span>
+                    <span class="tag">leadership</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Your Progress</h2>
+                <p style="font-size: 38px; font-weight: bold; color: #60a5fa; margin: 16px 0;">48 XP</p>
+                <p class="subtitle">Bronze tier • Keep going to reach Silver (100 XP)</p>
+            </div>
+            
+            <div class="card">
+                <p style="font-size: 15px; line-height: 1.6;">
+                    This theme uses a neutral dark grey background (#1a1a1a) that's easier on the eyes for long reading sessions. 
+                    The contrast is softer than pure black, reducing eye strain while maintaining excellent readability.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Option 2: Light Luminous Blue -->
+        <div class="theme theme-light-blue">
+            <div class="label">☀️ OPTION 2: Light Luminous Blue</div>
+            
+            <div class="card">
+                <h1>Welcome back, Saba</h1>
+                <p class="subtitle">Continue building your recruiting expertise</p>
+                <button class="btn">Get Started</button>
+            </div>
+            
+            <div class="card">
+                <h2>Community Challenges</h2>
+                <p class="subtitle">Ask questions, share knowledge, earn XP</p>
+                <div style="margin-top: 16px;">
+                    <span class="tag">culture-fit</span>
+                    <span class="tag">remote-hiring</span>
+                    <span class="tag">leadership</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Your Progress</h2>
+                <p style="font-size: 38px; font-weight: bold; color: #2563eb; margin: 16px 0;">48 XP</p>
+                <p class="subtitle">Bronze tier • Keep going to reach Silver (100 XP)</p>
+            </div>
+            
+            <div class="card">
+                <p style="font-size: 15px; line-height: 1.6;">
+                    This theme features a bright, energizing light blue background (#e6f4ff) with high contrast dark text. 
+                    Perfect for daytime use and creates a fresh, modern feel. Great for users who prefer light themes.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
