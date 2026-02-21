@@ -36,11 +36,11 @@ export default function AITools() {
   const [result, setResult] = useState("");
   const [generating, setGenerating] = useState(false);
 
-  // file upload state
-  const [uploadedFiles, setUploadedFiles] = useState([]);  // [{ name, charCount, extractedText }]
+  // Multi-file upload state
+  const [uploadedFiles, setUploadedFiles] = useState([]); // [{ name, charCount, extractedText }]
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [expandedFiles, setExpandedFiles] = useState(new Set());
+  const [expandedFileIdx, setExpandedFileIdx] = useState(null);
 
   // edit/download state
   const [isEditing, setIsEditing] = useState(false);
@@ -52,29 +52,34 @@ export default function AITools() {
   const selectTool = (tool) => {
     setSelectedTool(tool);
     setPrompt(""); setContext(""); setResult("");
-    setUploadedFile(null); setFileContext(""); setExtractedPreview("");
+    setUploadedFiles([]);
     setIsEditing(false); setEditBuffer(""); setUploadProgress(0);
+    setExpandedFileIdx(null);
   };
 
-  const clearFile = () => {
-    setUploadedFile(null); setFileContext(""); setExtractedPreview(""); setShowExtracted(false);
+  const removeFile = (index) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    if (expandedFileIdx === index) setExpandedFileIdx(null);
+    else if (expandedFileIdx > index) setExpandedFileIdx(expandedFileIdx - 1);
   };
 
-  // ── Chunked Upload ──
-  const handleFileDrop = async (file) => {
-    if (!file) return;
+  const clearAllFiles = () => {
+    setUploadedFiles([]);
+    setExpandedFileIdx(null);
+  };
+
+  // ── Chunked Upload for single file ──
+  const processFile = async (file) => {
     const ext = file.name.split(".").pop().toLowerCase();
     const allowed = ["txt","pdf","doc","docx","mp3","wav","m4a","ogg","aac","flac"];
     if (!allowed.includes(ext)) {
       toast.error(`Unsupported type: .${ext}. Allowed: ${allowed.join(", ")}`);
-      return;
+      return null;
     }
     if (file.size > 25 * 1024 * 1024) {
-      toast.error("File too large. Max 25 MB.");
-      return;
+      toast.error(`${file.name} is too large. Max 25 MB.`);
+      return null;
     }
-
-    setUploading(true); setUploadProgress(0); setUploadedFile(null); setFileContext("");
 
     const uploadId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
@@ -89,23 +94,50 @@ export default function AITools() {
         fd.append("total_chunks", String(totalChunks));
         fd.append("filename", file.name);
         await axios.post(`${API}/ai/upload-chunk`, fd, { withCredentials: true });
-        setUploadProgress(Math.round(((i + 1) / totalChunks) * 85));
       }
 
-      setUploadProgress(92);
       const res = await axios.post(`${API}/ai/extract-file`, { upload_id: uploadId, filename: file.name }, { withCredentials: true });
-      setUploadProgress(100);
-
-      const extracted = res.data.extracted_text;
-      setFileContext(extracted);
-      setExtractedPreview(extracted.slice(0, 500));
-      setUploadedFile({ name: file.name, charCount: res.data.char_count });
-      toast.success(`"${file.name}" processed — ${res.data.char_count.toLocaleString()} chars extracted`);
+      return {
+        name: file.name,
+        charCount: res.data.char_count,
+        extractedText: res.data.extracted_text,
+      };
     } catch (err) {
-      toast.error(err.response?.data?.detail || "File processing failed");
-    } finally {
-      setUploading(false);
+      toast.error(`Failed to process ${file.name}: ${err.response?.data?.detail || "Unknown error"}`);
+      return null;
     }
+  };
+
+  // ── Handle multiple file drops ──
+  const handleFileDrop = async (files) => {
+    if (!files || files.length === 0) return;
+    
+    const fileArray = Array.from(files);
+    const maxFiles = 5;
+    
+    if (uploadedFiles.length + fileArray.length > maxFiles) {
+      toast.error(`You can upload up to ${maxFiles} files. You have ${uploadedFiles.length} already.`);
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    const results = [];
+    for (let i = 0; i < fileArray.length; i++) {
+      setUploadProgress(Math.round(((i) / fileArray.length) * 80));
+      const processed = await processFile(fileArray[i]);
+      if (processed) results.push(processed);
+      setUploadProgress(Math.round(((i + 1) / fileArray.length) * 100));
+    }
+
+    if (results.length > 0) {
+      setUploadedFiles(prev => [...prev, ...results]);
+      toast.success(`${results.length} file(s) processed successfully`);
+    }
+
+    setUploading(false);
+    setUploadProgress(0);
   };
 
   // ── Generate ──
@@ -113,8 +145,11 @@ export default function AITools() {
     if (!prompt.trim()) { toast.error("Please enter a prompt first"); return; }
     setGenerating(true); setResult(""); setIsEditing(false);
 
-    const fullContext = [context, fileContext ? `--- Uploaded File Content ---\n${fileContext}` : ""]
-      .filter(Boolean).join("\n\n");
+    // Combine all uploaded file contents
+    const fileContextParts = uploadedFiles.map((f, i) => 
+      `--- File ${i + 1}: ${f.name} ---\n${f.extractedText}`
+    );
+    const fullContext = [context, ...fileContextParts].filter(Boolean).join("\n\n");
 
     try {
       const res = await axios.post(`${API}/ai/generate`, { tool_type: selectedTool.id, prompt, context: fullContext }, { withCredentials: true });
@@ -273,61 +308,82 @@ export default function AITools() {
               />
             </div>
 
-            {/* File Upload — JD Builder only */}
+            {/* Multi-File Upload — JD Builder only */}
             {isJDBuilder && (
               <div>
-                <Label className="text-slate-400 text-xs uppercase tracking-wider mb-2 block">
-                  Upload File for Context
-                </Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-slate-400 text-xs uppercase tracking-wider">
+                    Upload Files for Context (max 5)
+                  </Label>
+                  {uploadedFiles.length > 0 && (
+                    <button
+                      onClick={clearAllFiles}
+                      className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+                      data-testid="clear-all-files"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
 
-                {uploadedFile ? (
-                  <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                          <FileIcon className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                {/* Uploaded files list */}
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2 mb-3" data-testid="uploaded-files-list">
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                              <FileIcon className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-white truncate max-w-[200px]">{file.name}</p>
+                              <p className="text-xs text-slate-500">{file.charCount.toLocaleString()} chars</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setExpandedFileIdx(expandedFileIdx === idx ? null : idx)}
+                              className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1 transition-colors"
+                              data-testid={`toggle-preview-${idx}`}
+                            >
+                              {expandedFileIdx === idx ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              {expandedFileIdx === idx ? "Hide" : "Preview"}
+                            </button>
+                            <button
+                              onClick={() => removeFile(idx)}
+                              className="text-slate-600 hover:text-red-400 transition-colors"
+                              data-testid={`remove-file-${idx}`}
+                            >
+                              <X className="w-4 h-4" strokeWidth={1.5} />
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-white truncate max-w-[200px]">{uploadedFile.name}</p>
-                          <p className="text-xs text-slate-500">{uploadedFile.charCount.toLocaleString()} chars extracted</p>
-                        </div>
+                        {expandedFileIdx === idx && (
+                          <div className="mt-3 bg-white/[0.03] border border-white/[0.06] rounded-lg p-3 max-h-32 overflow-y-auto">
+                            <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
+                              {file.extractedText.slice(0, 500)}{file.charCount > 500 ? "..." : ""}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setShowExtracted(!showExtracted)}
-                          className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1 transition-colors"
-                          data-testid="toggle-extracted-preview"
-                        >
-                          {showExtracted ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                          {showExtracted ? "Hide" : "Preview"}
-                        </button>
-                        <button
-                          onClick={clearFile}
-                          className="text-slate-600 hover:text-red-400 transition-colors"
-                          data-testid="remove-uploaded-file"
-                        >
-                          <X className="w-4 h-4" strokeWidth={1.5} />
-                        </button>
-                      </div>
-                    </div>
-                    {showExtracted && (
-                      <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-3 max-h-32 overflow-y-auto">
-                        <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{extractedPreview}{uploadedFile.charCount > 500 ? "..." : ""}</p>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ) : (
+                )}
+
+                {/* Drop zone */}
+                {uploadedFiles.length < 5 && (
                   <div
                     className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploading ? "border-blue-500/40 bg-blue-500/[0.05]" : "border-white/[0.10] hover:border-blue-500/30 hover:bg-white/[0.04]"}`}
                     onClick={() => !uploading && fileInputRef.current?.click()}
                     onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => { e.preventDefault(); handleFileDrop(e.dataTransfer.files[0]); }}
+                    onDrop={(e) => { e.preventDefault(); handleFileDrop(e.dataTransfer.files); }}
                     data-testid="file-upload-zone"
                   >
                     {uploading ? (
                       <div className="flex flex-col items-center gap-2">
                         <Loader2 className="w-6 h-6 text-blue-400 animate-spin" strokeWidth={1.5} />
-                        <p className="text-sm text-blue-400 font-medium">Processing file... {uploadProgress}%</p>
+                        <p className="text-sm text-blue-400 font-medium">Processing files... {uploadProgress}%</p>
                         <div className="w-full max-w-[200px] bg-white/[0.06] rounded-full h-1.5 overflow-hidden mt-1">
                           <div className="h-1.5 bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                         </div>
@@ -335,16 +391,22 @@ export default function AITools() {
                     ) : (
                       <>
                         <Upload className="w-6 h-6 text-slate-600 mx-auto mb-2" strokeWidth={1.5} />
-                        <p className="text-sm text-slate-400 font-medium">Drag & drop or <span className="text-blue-400">click to upload</span></p>
-                        <p className="text-xs text-slate-600 mt-1">{ACCEPTED_LABELS} · Max 25 MB</p>
+                        <p className="text-sm text-slate-400 font-medium">
+                          Drag & drop or <span className="text-blue-400">click to upload</span>
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1">{ACCEPTED_LABELS} · Max 25 MB each</p>
+                        {uploadedFiles.length > 0 && (
+                          <p className="text-xs text-slate-500 mt-2">{uploadedFiles.length}/5 files uploaded</p>
+                        )}
                       </>
                     )}
                     <input
                       ref={fileInputRef}
                       type="file"
                       accept={ACCEPTED}
+                      multiple
                       className="hidden"
-                      onChange={(e) => handleFileDrop(e.target.files?.[0] || null)}
+                      onChange={(e) => handleFileDrop(e.target.files)}
                       data-testid="file-input"
                     />
                   </div>
