@@ -94,6 +94,7 @@ export default function Challenges() {
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle className="font-[Lexend]">Post a Challenge</DialogTitle>
+                <DialogDescription className="text-stone-500">Share a recruiting challenge with the community to get expert answers.</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4 mt-2">
                 <div>
