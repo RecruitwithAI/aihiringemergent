@@ -173,16 +173,23 @@ export default function AITools() {
     setDownloading(true);
     try {
       if (format === "txt") {
-        const blob = new Blob([content], { type: "text/plain" });
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
         triggerDownload(blob, `${selectedTool.label}.txt`);
       } else {
         const res = await axios.post(`${API}/ai/download`,
           { content, format, filename: selectedTool.label },
           { withCredentials: true, responseType: "blob" }
         );
-        triggerDownload(new Blob([res.data]), `${selectedTool.label}.${format}`);
+        // Set proper MIME type based on format
+        const mimeType = format === "pdf" 
+          ? "application/pdf" 
+          : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        const blob = new Blob([res.data], { type: mimeType });
+        triggerDownload(blob, `${selectedTool.label}.${format}`);
       }
-    } catch {
+      toast.success(`Downloaded as ${format.toUpperCase()}`);
+    } catch (err) {
+      console.error("Download error:", err);
       toast.error("Download failed");
     } finally {
       setDownloading(false);
