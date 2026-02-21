@@ -1,14 +1,23 @@
 /* Bestpl.ai — Dark Theme Utility Classes */
 
-/* Glassmorphic nav - dark */
+/* Glassmorphic nav - theme-aware */
 .glass-nav {
-    background: rgba(9, 9, 20, 0.85);
+    background: rgba(26, 26, 26, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 @supports not (backdrop-filter: blur(20px)) {
-    .glass-nav { background: rgba(9, 9, 20, 0.98); }
+    .glass-nav { background: rgba(26, 26, 26, 0.98); }
+}
+
+/* Light theme nav */
+[data-theme="light"] .glass-nav {
+    background: rgba(230, 244, 255, 0.85);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+@supports not (backdrop-filter: blur(20px)) {
+    [data-theme="light"] .glass-nav { background: rgba(230, 244, 255, 0.98); }
 }
 
 /* Card base - dark glassmorphism */
