@@ -37,12 +37,10 @@ export default function AITools() {
   const [generating, setGenerating] = useState(false);
 
   // file upload state
-  const [uploadedFile, setUploadedFile] = useState(null);   // { name, charCount }
+  const [uploadedFiles, setUploadedFiles] = useState([]);  // [{ name, charCount, extractedText }]
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [showExtracted, setShowExtracted] = useState(false);
-  const [extractedPreview, setExtractedPreview] = useState("");
-  const [fileContext, setFileContext] = useState("");        // full extracted text
+  const [expandedFiles, setExpandedFiles] = useState(new Set());
 
   // edit/download state
   const [isEditing, setIsEditing] = useState(false);
