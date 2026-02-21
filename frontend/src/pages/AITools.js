@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import { toast } from "sonner";
@@ -12,7 +12,7 @@ import {
 import {
   Brain, FileText, Search, UserSearch, BookUser, Building2,
   ArrowLeft, Sparkles, Download, Edit3, Check, X, Upload,
-  File as FileIcon, ChevronDown, Loader2, Eye, EyeOff
+  File as FileIcon, ChevronDown, Loader2, Eye, EyeOff, History, Clock
 } from "lucide-react";
 
 const TOOLS = [
