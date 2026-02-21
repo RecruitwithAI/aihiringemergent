@@ -167,6 +167,7 @@ export default function AITools() {
   const renderMarkdown = (text) => {
     const lines = text.split("\n");
     return lines.map((line, i) => {
+      if (line.trim() === "---") return <hr key={i} className="border-white/[0.10] my-3" />;
       if (line.startsWith("### ")) return <h3 key={i} className="text-base font-semibold text-white mt-4 mb-1">{line.slice(4)}</h3>;
       if (line.startsWith("## "))  return <h2 key={i} className="text-lg font-semibold text-white mt-5 mb-1.5">{line.slice(3)}</h2>;
       if (line.startsWith("# "))   return <h1 key={i} className="text-xl font-bold text-white mt-6 mb-2">{line.slice(2)}</h1>;
