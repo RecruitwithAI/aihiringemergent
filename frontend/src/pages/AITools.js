@@ -198,14 +198,28 @@ export default function AITools() {
 
   const triggerDownload = (blob, filename) => {
     const url = URL.createObjectURL(blob);
+    
+    // Try multiple download methods for better iframe compatibility
+    // Method 1: Create link and click (works in most cases)
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    a.target = "_blank"; // Open in new context
+    a.rel = "noopener noreferrer";
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    
+    // Method 2: If in iframe, also try opening in new window as fallback
+    // This ensures the file is accessible even if download attribute is blocked
+    if (window !== window.top) {
+      // We're in an iframe - open in new tab as fallback
+      window.open(url, "_blank");
+    }
+    
+    // Cleanup after a delay
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   // ── Markdown Render (basic) ──
