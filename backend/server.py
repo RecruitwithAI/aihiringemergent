@@ -210,7 +210,7 @@ async def exchange_session(session_id: str, response: Response):
 
     response.set_cookie(key="session_token", value=session_token, httponly=True, secure=True, samesite="none", path="/", max_age=7*24*60*60)
 
-    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
     if "created_at" in user and isinstance(user["created_at"], datetime):
         user["created_at"] = user["created_at"].isoformat()
     user["badge"] = get_badge(user.get("points", 0))
