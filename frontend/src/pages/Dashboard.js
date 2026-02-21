@@ -122,11 +122,11 @@ export default function Dashboard() {
           </div>
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-semibold font-[Lexend] text-white leading-tight" data-testid="welcome-heading">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold font-[Lexend] text-white leading-tight" data-testid="welcome-heading">
                 Welcome back,{" "}
                 <span className="text-blue-400">{firstName}</span>
               </h1>
-              <p className="text-slate-400 mt-2 max-w-xl text-sm md:text-base">{getResumePrompt()}</p>
+              <p className="text-slate-400 mt-2 max-w-xl text-xs sm:text-sm md:text-base">{getResumePrompt()}</p>
             </div>
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${BADGE_STYLES[badge] || BADGE_STYLES.Bronze}`} data-testid="user-badge-pill">
               <Award className="w-3.5 h-3.5" strokeWidth={1.5} /> {badge}
