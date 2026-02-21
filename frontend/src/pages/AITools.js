@@ -171,55 +171,59 @@ export default function AITools() {
     const content = isEditing ? editBuffer : result;
     if (!content) return;
     setDownloading(true);
+    
     try {
       if (format === "txt") {
+        // For text, create blob and use direct download
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        triggerDownload(blob, `${selectedTool.label}.txt`);
+        downloadViaForm(blob, `${selectedTool.label}.txt`, "text/plain");
       } else {
+        // For PDF/DOCX, fetch from server and trigger download via form
         const res = await axios.post(`${API}/ai/download`,
           { content, format, filename: selectedTool.label },
           { withCredentials: true, responseType: "blob" }
         );
-        // Set proper MIME type based on format
         const mimeType = format === "pdf" 
           ? "application/pdf" 
           : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        const blob = new Blob([res.data], { type: mimeType });
-        triggerDownload(blob, `${selectedTool.label}.${format}`);
+        downloadViaForm(res.data, `${selectedTool.label}.${format}`, mimeType);
       }
-      toast.success(`Downloaded as ${format.toUpperCase()}`);
+      toast.success(`Downloaded ${selectedTool.label}.${format}`);
     } catch (err) {
       console.error("Download error:", err);
-      toast.error("Download failed");
+      toast.error("Download failed - please try again");
     } finally {
       setDownloading(false);
     }
   };
 
-  const triggerDownload = (blob, filename) => {
-    const url = URL.createObjectURL(blob);
+  const downloadViaForm = (blob, filename, mimeType) => {
+    // Create a File from the blob with proper name
+    const file = new File([blob], filename, { type: mimeType });
+    const url = URL.createObjectURL(file);
     
-    // Try multiple download methods for better iframe compatibility
-    // Method 1: Create link and click (works in most cases)
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.target = "_blank"; // Open in new context
-    a.rel = "noopener noreferrer";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Create an invisible iframe to handle the download
+    // This bypasses iframe restrictions
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
     
-    // Method 2: If in iframe, also try opening in new window as fallback
-    // This ensures the file is accessible even if download attribute is blocked
-    if (window !== window.top) {
-      // We're in an iframe - open in new tab as fallback
-      window.open(url, "_blank");
-    }
+    // Write download link into iframe and click it
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(`
+      <html><body>
+        <a id="dl" href="${url}" download="${filename}">Download</a>
+        <script>document.getElementById('dl').click();</script>
+      </body></html>
+    `);
+    iframeDoc.close();
     
-    // Cleanup after a delay
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    // Cleanup after delay
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      URL.revokeObjectURL(url);
+    }, 3000);
   };
 
   // ── Markdown Render (basic) ──
