@@ -11,18 +11,18 @@
     "aesthetics": "Light Mode Gamer - Clean, Warm, High-Contrast, Reward-Centric"
   },
   "typography": {
-    "font_family_heading": "Outfit, sans-serif",
-    "font_family_body": "Plus Jakarta Sans, sans-serif",
+    "font_family_heading": "Lexend, sans-serif",
+    "font_family_body": "Atkinson Hyperlegible, sans-serif",
     "font_family_code": "JetBrains Mono, monospace",
     "scale": {
-      "h1": "text-4xl md:text-6xl font-bold tracking-tight",
+      "h1": "text-4xl md:text-6xl font-semibold tracking-tight",
       "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
       "h3": "text-2xl font-semibold",
       "body": "text-base leading-relaxed text-stone-600",
       "small": "text-sm font-medium text-stone-500 uppercase tracking-wide"
     },
     "imports": [
-      "@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');"
+      "@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');"
     ]
   },
   "colors": {
