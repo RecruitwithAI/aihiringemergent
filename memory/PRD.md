@@ -251,15 +251,16 @@ One platform where recruiting leaders can (a) use AI-powered hiring tools, (b) c
 - Code: `JetBrains Mono`  
 
 **Buttons:** Pill-shaped (rounded-full), single solid color, no gradients  
-**Cards:** White, 1px stone-200 border, minimal shadow. Hover = slight border color shift, no lift.  
-**Gamification:** Clean XP numbers + badge pills. Progress bar is a simple solid violet bar, no gradient.  
-**Nav:** Clean white top bar with subtle bottom border (no glassmorphism — keep it simple)  
+**Cards:** White, 1px stone-200 border, shadow. Hover = lift + shadow expansion.  
+**Gamification:** Clean XP numbers + badge pills. Progress bar is a solid violet bar.  
+**Nav:** Glassmorphic (blur + semi-transparent white + subtle bottom border)  
+**Animations:** Scale effects, zoom-in entrances, staggered reveals on lists/grids  
+**Backgrounds:** Flat `#FAFAF9` everywhere — no gradients on page backgrounds  
 **Spacing:** Generous. Cards use p-6 to p-8. Sections use py-12 to py-24.  
 
 **Minimalist Rules:**  
-- No gradients on backgrounds or cards  
-- No hover-lift animations on cards (just color shifts)  
-- No decorative noise textures or overlays  
+- No gradients on page backgrounds (flat #FAFAF9)  
+- Cards DO have shadow + hover lift  
 - Icons are thin (stroke-width 1.5), single color  
 - Max 2 font weights per context (regular + semibold)  
 - Empty states are clean single-line messages, not illustrations  
