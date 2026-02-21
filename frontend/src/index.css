@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,13 +6,13 @@
 
 body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Lexend', sans-serif;
 }
 
 code {
@@ -81,51 +81,44 @@ code {
     }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: #d6d3d1;
-    border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #a8a29e;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 
-/* Animations */
+/* Staggered fade-in + zoom */
 @keyframes float-in {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
-.animate-float-in {
-    animation: float-in 0.5s ease-out forwards;
-}
-
+.animate-float-in { animation: float-in 0.5s ease-out forwards; opacity: 0; }
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }
 .stagger-3 { animation-delay: 0.3s; }
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 
-/* XP Bar */
+/* XP Bar — solid violet */
 .xp-bar {
-    background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    background: hsl(239 84% 67%);
     border-radius: 999px;
     transition: width 0.6s ease;
 }
 
-/* Markdown output styling */
-.ai-output h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; }
-.ai-output h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; margin-top: 1rem; font-family: 'Outfit', sans-serif; }
-.ai-output h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; margin-top: 0.75rem; font-family: 'Outfit', sans-serif; }
-.ai-output p { margin-bottom: 0.5rem; line-height: 1.7; }
+/* AI output prose */
+.ai-output h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; font-family: 'Lexend', sans-serif; }
+.ai-output h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; margin-top: 1rem; font-family: 'Lexend', sans-serif; }
+.ai-output h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; margin-top: 0.75rem; font-family: 'Lexend', sans-serif; }
+.ai-output p  { margin-bottom: 0.5rem; line-height: 1.75; }
 .ai-output ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
 .ai-output ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
 .ai-output li { margin-bottom: 0.25rem; }
-.ai-output strong { font-weight: 600; }
-.ai-output code { font-family: 'JetBrains Mono', monospace; background: #f5f5f4; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875rem; }
+.ai-output strong { font-weight: 700; }
+.ai-output code {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f5f5f4;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
