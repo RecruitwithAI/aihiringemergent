@@ -108,7 +108,7 @@ export default function Challenges() {
   }
 
   return (
-    <div className="min-h-screen bg-[#090914] relative overflow-hidden" data-testid="challenges-page">
+    <div className="min-h-screen bg-[#090914] relative overflow-hidden pt-16" data-testid="challenges-page">
       {/* Ambient glow */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-500/[0.03] rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/[0.03] rounded-full blur-3xl pointer-events-none" />

@@ -112,7 +112,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#090914]" data-testid="dashboard-page">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 pt-24">
 
         {/* ── HEADER ── */}
         <div className="mb-10 animate-float-in">

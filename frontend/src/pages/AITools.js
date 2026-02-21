@@ -268,7 +268,7 @@ export default function AITools() {
   if (!selectedTool) {
     return (
       <div className="min-h-screen bg-[#090914]" data-testid="ai-tools-page">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-24">
           <div className="mb-8">
             <div className="flex items-center gap-2 text-xs text-blue-400/60 uppercase tracking-widest mb-2">
               <Brain className="w-3 h-3" strokeWidth={1.5} /> AI Tools
@@ -307,7 +307,7 @@ export default function AITools() {
 
   return (
     <div className="min-h-screen bg-[#090914]" data-testid="ai-tool-detail">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
 
         {/* Back */}
         <button
