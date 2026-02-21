@@ -369,7 +369,8 @@ Full design tokens available in `/app/design_guidelines.json`.
 4. **Upvote toggle** — Upvoting again removes the upvote (and reverses points)
 5. **AI history stored per-user** — Enables future "my generations" feature
 6. **Points on user document** — `$inc` atomic operation, badge computed on read (not stored)
-7. **No dark mode** — Light theme only per user preference
+7. **No dark mode** — Unified dark theme throughout (landing + homepage) per user preference
+8. **SameSite=none cookie** — Allows session cookies in iframe (Emergent preview) contexts
 
 ---
 
