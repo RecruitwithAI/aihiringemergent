@@ -28,8 +28,8 @@ export default function Training() {
           <div className="flex items-center gap-2 text-xs text-violet-400/60 uppercase tracking-widest mb-2">
             <GraduationCap className="w-3 h-3" strokeWidth={1.5} /> Learning
           </div>
-          <h1 className="text-3xl font-semibold text-white font-[Lexend]">Training</h1>
-          <p className="text-slate-400 text-sm mt-1">Access curated learning modules to sharpen your recruiting skills</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-white font-[Lexend]">Training</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">Access curated learning modules to sharpen your recruiting skills</p>
         </div>
 
         {/* Info banner */}

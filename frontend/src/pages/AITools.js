@@ -273,8 +273,8 @@ export default function AITools() {
             <div className="flex items-center gap-2 text-xs text-blue-400/60 uppercase tracking-widest mb-2">
               <Brain className="w-3 h-3" strokeWidth={1.5} /> AI Tools
             </div>
-            <h1 className="text-3xl font-semibold font-[Lexend] text-white">AI Tools</h1>
-            <p className="text-slate-400 text-sm mt-1">Choose a tool to get started</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold font-[Lexend] text-white">AI Tools</h1>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1">Choose a tool to get started</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {TOOLS.map((tool) => (
