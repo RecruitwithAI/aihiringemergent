@@ -1,7 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
-import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap } from "lucide-react";
+import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap, Menu, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 
 const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -32,6 +33,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -71,6 +73,15 @@ export default function Navbar() {
           })}
         </div>
 
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+          data-testid="mobile-menu-btn"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" strokeWidth={1.5} /> : <Menu className="w-5 h-5" strokeWidth={1.5} />}
+        </button>
+
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -101,6 +112,33 @@ export default function Navbar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-16 left-0 right-0 bg-[#12121a] border-b border-white/[0.08] shadow-2xl z-40" data-testid="mobile-menu">
+          <div className="px-4 py-3 space-y-1">
+            {NAV_LINKS.map((link) => {
+              const isActive = location.pathname === link.to || (link.to !== "/dashboard" && location.pathname.startsWith(link.to));
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid={`mobile-nav-link-${link.label.toLowerCase().replace(" ", "-")}`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive 
+                      ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                      : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <link.icon className="w-5 h-5" strokeWidth={1.5} />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
