@@ -52,8 +52,8 @@ export default function LeaderboardPage() {
           <div className="flex items-center gap-2 text-xs text-amber-400/60 uppercase tracking-widest mb-2">
             <Trophy className="w-3 h-3" strokeWidth={1.5} /> Rankings
           </div>
-          <h1 className="text-3xl font-semibold text-white font-[Lexend]">Leaderboard</h1>
-          <p className="text-slate-400 text-sm mt-1">Top recruiting leaders ranked by community contribution</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-white font-[Lexend]">Leaderboard</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">Top recruiting leaders ranked by community contribution</p>
         </div>
 
         {leaders.length === 0 ? (

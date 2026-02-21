@@ -103,18 +103,18 @@ export default function Profile() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4">
           {statCards.map((s, i) => (
             <div
               key={s.label}
-              className={`${CARD} p-6 text-center hover:border-white/[0.12] transition-all duration-300`}
+              className={`${CARD} p-4 sm:p-6 text-center hover:border-white/[0.12] transition-all duration-300`}
               style={{ animationDelay: `${i * 0.05}s` }}
               data-testid={`profile-stat-${i}`}
             >
-              <div className={`w-10 h-10 rounded-xl ${s.bg} border ${s.border} flex items-center justify-center mx-auto mb-3`}>
+              <div className={`w-10 h-10 rounded-xl ${s.bg} border ${s.border} flex items-center justify-center mx-auto mb-2 sm:mb-3`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} strokeWidth={1.5} />
               </div>
-              <p className="text-2xl font-semibold text-white font-[Lexend]">{s.value}</p>
+              <p className="text-xl sm:text-2xl font-semibold text-white font-[Lexend]">{s.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
             </div>
           ))}
