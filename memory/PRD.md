@@ -322,11 +322,13 @@ Full design tokens available in `/app/design_guidelines.json`.
 - [ ] **Step 3.9** — `pages/LeaderboardPage.js` — Ranked member list with badges
 
 ### Phase 4: Testing & Polish
-- [ ] **Step 4.1** — Backend curl tests for all auth + CRUD endpoints
-- [ ] **Step 4.2** — Frontend screenshot to verify UI loads
-- [ ] **Step 4.3** — End-to-end testing via testing agent (auth flow, challenges, AI tools)
-- [ ] **Step 4.4** — Bug fixes from test results
-- [ ] **Step 4.5** — Final verification
+- [x] **Step 4.1** — Backend curl tests for all auth + CRUD endpoints ✅
+- [x] **Step 4.2** — Frontend screenshot to verify UI loads ✅
+- [x] **Step 4.3** — End-to-end testing via testing agent (2 iterations) ✅
+- [x] **Step 4.4** — Bug fixes: CORS origin reflection, cookie SameSite, dialog accessibility ✅
+- [x] **Step 4.5** — Final verification: all pages, auth flow, navigation ✅
+
+### Results: 93.8% backend / 95.8% frontend test pass rate
 
 ---
 
