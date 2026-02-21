@@ -8,16 +8,16 @@ module.exports = {
   theme: {
         extend: {
                 fontSize: {
-                        // Increased base sizes for better readability
-                        'xs': ['0.8125rem', { lineHeight: '1.5' }],     // 13px (was 12px)
-                        'sm': ['0.9375rem', { lineHeight: '1.5' }],     // 15px (was 14px)
-                        'base': ['1rem', { lineHeight: '1.6' }],         // 16px
-                        'lg': ['1.125rem', { lineHeight: '1.6' }],       // 18px
-                        'xl': ['1.3125rem', { lineHeight: '1.5' }],      // 21px (was 20px)
-                        '2xl': ['1.5625rem', { lineHeight: '1.4' }],     // 25px (was 24px)
-                        '3xl': ['1.9375rem', { lineHeight: '1.3' }],     // 31px (was 30px)
-                        '4xl': ['2.375rem', { lineHeight: '1.2' }],      // 38px (was 36px)
-                        '5xl': ['3.0625rem', { lineHeight: '1.1' }],     // 49px (was 48px)
+                        // Significantly increased sizes for optimal readability
+                        'xs': ['0.875rem', { lineHeight: '1.5' }],      // 14px (was 13px)
+                        'sm': ['1rem', { lineHeight: '1.55' }],         // 16px (was 15px)
+                        'base': ['1.0625rem', { lineHeight: '1.65' }],  // 17px (was 16px)
+                        'lg': ['1.25rem', { lineHeight: '1.6' }],       // 20px (was 18px)
+                        'xl': ['1.5rem', { lineHeight: '1.5' }],        // 24px (was 21px)
+                        '2xl': ['1.75rem', { lineHeight: '1.4' }],      // 28px (was 25px)
+                        '3xl': ['2.25rem', { lineHeight: '1.3' }],      // 36px (was 31px)
+                        '4xl': ['2.75rem', { lineHeight: '1.2' }],      // 44px (was 38px)
+                        '5xl': ['3.5rem', { lineHeight: '1.1' }],       // 56px (was 49px)
                 },
                 borderRadius: {
   			lg: 'var(--radius)',

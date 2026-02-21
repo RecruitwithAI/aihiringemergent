@@ -7,8 +7,8 @@
 body {
     margin: 0;
     font-family: 'Atkinson Hyperlegible', sans-serif;
-    font-size: 16px; /* Increased from default 14px for better readability */
-    line-height: 1.6;
+    font-size: 17px; /* Increased further for better readability */
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
