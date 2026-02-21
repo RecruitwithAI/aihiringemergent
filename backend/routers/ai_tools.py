@@ -192,36 +192,62 @@ def _parse_md_to_pdf(content: str) -> bytes:
     from fpdf import FPDF
 
     def safe(t: str) -> str:
+        # Replace problematic characters and encode safely
+        t = t.replace('\u2022', '-').replace('\u2019', "'").replace('\u2018', "'")
+        t = t.replace('\u201c', '"').replace('\u201d', '"').replace('\u2014', '-')
+        t = t.replace('\u2013', '-').replace('\u00a0', ' ')
         return t.encode("latin-1", errors="replace").decode("latin-1")
 
     pdf = FPDF(orientation="P", unit="mm", format="A4")
     pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=20)
-    pdf.set_margins(20, 20, 20)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(15, 15, 15)
+
+    # Page width minus margins
+    effective_width = 210 - 30  # A4 width (210mm) minus left+right margins (15+15)
 
     for line in content.split("\n"):
         s = line.strip()
         clean = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
+        
+        # Skip empty lines
         if not s:
             pdf.ln(3)
-        elif s.startswith("# ") and not s.startswith("##"):
-            pdf.set_font("Helvetica", "B", 16)
-            pdf.multi_cell(0, 9, safe(clean[2:]))
+            continue
+            
+        # Skip lines that are just special characters
+        if not clean or len(clean.strip()) == 0:
             pdf.ln(2)
+            continue
+
+        if s.startswith("# ") and not s.startswith("##"):
+            pdf.set_font("Helvetica", "B", 16)
+            text = safe(clean[2:]) if len(clean) > 2 else ""
+            if text.strip():
+                pdf.multi_cell(effective_width, 9, text)
+                pdf.ln(2)
         elif s.startswith("## "):
             pdf.set_font("Helvetica", "B", 13)
-            pdf.multi_cell(0, 7, safe(clean[3:]))
-            pdf.ln(1)
+            text = safe(clean[3:]) if len(clean) > 3 else ""
+            if text.strip():
+                pdf.multi_cell(effective_width, 7, text)
+                pdf.ln(1)
         elif s.startswith("### "):
             pdf.set_font("Helvetica", "B", 11)
-            pdf.multi_cell(0, 6, safe(clean[4:]))
-        elif s.startswith(("- ", "* ")):
+            text = safe(clean[4:]) if len(clean) > 4 else ""
+            if text.strip():
+                pdf.multi_cell(effective_width, 6, text)
+        elif s.startswith(("- ", "* ", "\u2022 ")):
             pdf.set_font("Helvetica", "", 10)
-            pdf.set_x(pdf.l_margin + 5)
-            pdf.multi_cell(0, 5.5, safe(f"*  {clean[2:]}"))
+            bullet_text = clean[2:] if len(clean) > 2 else ""
+            text = safe(f"  -  {bullet_text}")
+            if text.strip():
+                pdf.multi_cell(effective_width, 5.5, text)
         else:
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 5.5, safe(clean))
+            text = safe(clean)
+            if text.strip():
+                pdf.multi_cell(effective_width, 5.5, text)
 
     return bytes(pdf.output())
 
