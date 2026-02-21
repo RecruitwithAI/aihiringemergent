@@ -457,40 +457,50 @@ async def get_profile_stats(user=Depends(get_current_user)):
 
 app.include_router(api_router)
 
-# CORS: When credentials are used, origin must be explicit (not "*").
-# Reflect the request origin dynamically.
-cors_origins_raw = os.environ.get('CORS_ORIGINS', '*')
-if cors_origins_raw.strip() == '*':
-    # Allow any origin but reflect it back (required for credentials)
-    cors_origins = ["*"]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["set-cookie"],
-    )
-    # Patch: Starlette sends "Access-Control-Allow-Origin: *" even with credentials.
-    # We add a middleware that rewrites it to the actual Origin header.
-    from starlette.middleware.base import BaseHTTPMiddleware
-    class FixCORSOriginMiddleware(BaseHTTPMiddleware):
-        async def dispatch(self, request, call_next):
-            response = await call_next(request)
-            origin = request.headers.get("origin")
-            if origin and response.headers.get("access-control-allow-origin") == "*":
-                response.headers["access-control-allow-origin"] = origin
-            return response
-    app.add_middleware(FixCORSOriginMiddleware)
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins_raw.split(','),
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["set-cookie"],
-    )
+# CORS: Must reflect actual origin (not "*") when credentials are used.
+from starlette.types import ASGIApp, Receive, Scope, Send
+
+class CORSOriginReflectMiddleware:
+    """Wraps the app and rewrites 'access-control-allow-origin: *' to the actual request origin."""
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Extract Origin header from request
+        request_origin = None
+        for header_name, header_value in scope.get("headers", []):
+            if header_name == b"origin":
+                request_origin = header_value.decode("latin-1")
+                break
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start" and request_origin:
+                headers = list(message.get("headers", []))
+                new_headers = []
+                for name, value in headers:
+                    if name == b"access-control-allow-origin" and value == b"*":
+                        new_headers.append((name, request_origin.encode("latin-1")))
+                    else:
+                        new_headers.append((name, value))
+                message["headers"] = new_headers
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["set-cookie"],
+)
+# This wraps CORSMiddleware — runs AFTER CORS sets headers, rewrites "*" to actual origin
+app.add_middleware(CORSOriginReflectMiddleware)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
