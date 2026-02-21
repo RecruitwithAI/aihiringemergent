@@ -3,10 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
 import axios from "axios";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft, ChevronUp, Clock, MessageSquare } from "lucide-react";
+
+const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
 export default function ChallengeDetail() {
   const { id } = useParams();
@@ -86,46 +87,76 @@ export default function ChallengeDetail() {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
+  const getBadgeStyle = (badge) => {
+    switch (badge) {
+      case "Diamond": return "bg-violet-500/20 text-violet-400 border border-violet-500/30";
+      case "Gold": return "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+      case "Silver": return "bg-slate-400/20 text-slate-300 border border-slate-400/30";
+      default: return "bg-orange-500/20 text-orange-400 border border-orange-500/30";
+    }
+  };
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-stone-400">Loading challenge...</div></div>;
+    return (
+      <div className="min-h-screen bg-[#090914] flex items-center justify-center">
+        <div className="animate-pulse text-slate-500">Loading challenge...</div>
+      </div>
+    );
   }
 
   if (!challenge) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-stone-400">Challenge not found</p></div>;
+    return (
+      <div className="min-h-screen bg-[#090914] flex items-center justify-center">
+        <p className="text-slate-500">Challenge not found</p>
+      </div>
+    );
   }
 
   const isUpvoted = challenge.upvoted_by?.includes(user?.user_id);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]" data-testid="challenge-detail-page">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/challenges" className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition-colors duration-200 mb-6" data-testid="back-to-challenges">
+    <div className="min-h-screen bg-[#090914] relative overflow-hidden" data-testid="challenge-detail-page">
+      {/* Ambient glow */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/[0.03] rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Link
+          to="/challenges"
+          className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors duration-200 mb-6"
+          data-testid="back-to-challenges"
+        >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> Back to Challenges
         </Link>
 
         {/* Challenge */}
-        <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 md:p-8 animate-float-in" data-testid="challenge-content">
+        <div className={`${CARD} p-6 md:p-8`} data-testid="challenge-content">
           <div className="flex gap-4">
             <button
               onClick={handleUpvoteChallenge}
-              className={`flex flex-col items-center gap-1 pt-1 ${isUpvoted ? "text-primary" : "text-stone-400 hover:text-primary"} transition-colors duration-200`}
+              className={`flex flex-col items-center gap-1 pt-1 ${isUpvoted ? "text-cyan-400" : "text-slate-600 hover:text-cyan-400"} transition-colors duration-200`}
               data-testid="upvote-challenge-btn"
             >
               <ChevronUp className="w-6 h-6" strokeWidth={1.5} />
               <span className="text-sm font-semibold">{challenge.upvotes || 0}</span>
             </button>
             <div className="flex-1">
-              <h1 className="text-2xl font-semibold text-stone-900 font-[Lexend]">{challenge.title}</h1>
+              <h1 className="text-2xl font-semibold text-white font-[Lexend]">{challenge.title}</h1>
               <div className="flex items-center gap-3 mt-3">
                 <UserAvatar user={challenge.author} size="sm" />
-                <span className="text-sm text-stone-700 font-medium">{challenge.author?.name}</span>
-                {challenge.author?.badge && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full badge-${challenge.author.badge.toLowerCase()}`}>{challenge.author.badge}</span>}
-                <span className="flex items-center gap-1 text-xs text-stone-400"><Clock className="w-3 h-3" strokeWidth={1.5} /> {timeAgo(challenge.created_at)}</span>
+                <span className="text-sm text-slate-300 font-medium">{challenge.author?.name}</span>
+                {challenge.author?.badge && (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getBadgeStyle(challenge.author.badge)}`}>
+                    {challenge.author.badge}
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-xs text-slate-600"><Clock className="w-3 h-3" strokeWidth={1.5} /> {timeAgo(challenge.created_at)}</span>
               </div>
-              <p className="text-stone-600 mt-4 leading-relaxed whitespace-pre-wrap">{challenge.description}</p>
+              <p className="text-slate-400 mt-4 leading-relaxed whitespace-pre-wrap">{challenge.description}</p>
               {challenge.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-4">
-                  {challenge.tags.map((t) => <span key={t} className="text-xs bg-stone-100 text-stone-500 px-2.5 py-0.5 rounded-full">{t}</span>)}
+                  {challenge.tags.map((t) => (
+                    <span key={t} className="text-xs bg-white/[0.06] text-slate-400 px-2.5 py-0.5 rounded-full border border-white/[0.08]">{t}</span>
+                  ))}
                 </div>
               )}
             </div>
@@ -133,20 +164,32 @@ export default function ChallengeDetail() {
         </div>
 
         {/* Answer form */}
-        <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 mt-4 animate-float-in stagger-1" data-testid="answer-form">
-          <h3 className="font-semibold text-stone-900 font-[Lexend] mb-3">Your Answer</h3>
+        <div className={`${CARD} p-6 mt-4`} data-testid="answer-form">
+          <h3 className="font-semibold text-white font-[Lexend] mb-3">Your Answer</h3>
           <form onSubmit={handleAnswer} className="space-y-3">
-            <Textarea data-testid="answer-input" placeholder="Share your expertise..." value={answerText} onChange={(e) => setAnswerText(e.target.value)} className="min-h-[100px] resize-none" required />
-            <Button data-testid="submit-answer-btn" type="submit" disabled={submitting} className="rounded-full px-6 bg-primary hover:bg-primary/90 text-white">
+            <Textarea
+              data-testid="answer-input"
+              placeholder="Share your expertise..."
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              className="min-h-[100px] resize-none bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-cyan-500/50"
+              required
+            />
+            <button
+              data-testid="submit-answer-btn"
+              type="submit"
+              disabled={submitting}
+              className="px-6 h-10 rounded-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-cyan-500/20"
+            >
               {submitting ? "Posting..." : "Post Answer (+10 XP)"}
-            </Button>
+            </button>
           </form>
         </div>
 
         {/* Answers */}
         <div className="mt-6">
-          <h3 className="font-semibold text-stone-900 font-[Lexend] mb-4 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-stone-400" strokeWidth={1.5} />
+          <h3 className="font-semibold text-white font-[Lexend] mb-4 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
             {challenge.answers?.length || 0} Answers
           </h3>
           {challenge.answers?.length > 0 ? (
@@ -154,11 +197,16 @@ export default function ChallengeDetail() {
               {challenge.answers.map((a, i) => {
                 const ansUpvoted = a.upvoted_by?.includes(user?.user_id);
                 return (
-                  <div key={a.answer_id} className={`bg-white rounded-xl border border-stone-200 shadow-sm p-6 animate-float-in stagger-${Math.min(i + 1, 5)}`} data-testid={`answer-${a.answer_id}`}>
+                  <div
+                    key={a.answer_id}
+                    className={`${CARD} p-6`}
+                    style={{ animationDelay: `${i * 0.05}s` }}
+                    data-testid={`answer-${a.answer_id}`}
+                  >
                     <div className="flex gap-4">
                       <button
                         onClick={() => handleUpvoteAnswer(a.answer_id)}
-                        className={`flex flex-col items-center gap-1 pt-1 ${ansUpvoted ? "text-primary" : "text-stone-400 hover:text-primary"} transition-colors duration-200`}
+                        className={`flex flex-col items-center gap-1 pt-1 ${ansUpvoted ? "text-cyan-400" : "text-slate-600 hover:text-cyan-400"} transition-colors duration-200`}
                         data-testid={`upvote-answer-${a.answer_id}`}
                       >
                         <ChevronUp className="w-5 h-5" strokeWidth={1.5} />
@@ -167,11 +215,15 @@ export default function ChallengeDetail() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <UserAvatar user={a.author} size="sm" />
-                          <span className="text-sm text-stone-700 font-medium">{a.author?.name}</span>
-                          {a.author?.badge && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full badge-${a.author.badge.toLowerCase()}`}>{a.author.badge}</span>}
-                          <span className="text-xs text-stone-400">{timeAgo(a.created_at)}</span>
+                          <span className="text-sm text-slate-300 font-medium">{a.author?.name}</span>
+                          {a.author?.badge && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getBadgeStyle(a.author.badge)}`}>
+                              {a.author.badge}
+                            </span>
+                          )}
+                          <span className="text-xs text-slate-600">{timeAgo(a.created_at)}</span>
                         </div>
-                        <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">{a.content}</p>
+                        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{a.content}</p>
                       </div>
                     </div>
                   </div>
@@ -179,7 +231,7 @@ export default function ChallengeDetail() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-stone-400 text-center py-8">No answers yet. Be the first to help!</p>
+            <p className="text-sm text-slate-600 text-center py-8">No answers yet. Be the first to help!</p>
           )}
         </div>
       </div>
