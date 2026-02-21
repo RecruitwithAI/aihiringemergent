@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
   const rest = leaders.slice(3);
 
   return (
-    <div className="min-h-screen bg-[#090914] relative overflow-hidden pt-16" data-testid="leaderboard-page">
+    <div className="min-h-screen bg-background relative overflow-hidden pt-16" data-testid="leaderboard-page">
       {/* Ambient glow */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/[0.03] rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-violet-500/[0.03] rounded-full blur-3xl pointer-events-none" />
