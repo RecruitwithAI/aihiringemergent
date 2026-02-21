@@ -83,6 +83,20 @@ One platform where recruiting leaders can (a) use AI-powered hiring tools, (b) c
 - XP progress bar showing distance to next badge tier
 - Current badge and rank
 
+### 3.8 User Identity Display (Global Pattern)
+Wherever a user appears in the app, display:
+- **Thumbnail profile pic** (Google avatar or fallback initials avatar)
+- **Name**
+- **Badge pill** (Bronze/Silver/Gold/Diamond)
+
+Applies to:
+- Challenge author on challenge cards and detail page
+- Answer author on each answer
+- Leaderboard rows
+- Dashboard recent activity
+- Navbar (current user avatar + name)
+- Profile page header
+
 ---
 
 ## 4. ARCHITECTURE
