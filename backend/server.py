@@ -412,6 +412,191 @@ async def get_ai_history(user=Depends(get_current_user)):
     history = await db.ai_history.find({"user_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(50)
     return history
 
+
+# ── File Upload & Extraction ──
+
+@api_router.post("/ai/upload-chunk")
+async def upload_chunk(
+    chunk: UploadFile = File(...),
+    upload_id: str = Form(...),
+    chunk_index: str = Form(...),
+    total_chunks: str = Form(...),
+    filename: str = Form(...),
+    user=Depends(get_current_user),
+):
+    chunk_dir = UPLOAD_DIR / f"{user['user_id']}_{upload_id}"
+    chunk_dir.mkdir(parents=True, exist_ok=True)
+    data = await chunk.read()
+    (chunk_dir / f"chunk_{int(chunk_index):05d}").write_bytes(data)
+    return {"chunk": int(chunk_index), "total": int(total_chunks), "ok": True}
+
+
+@api_router.post("/ai/extract-file")
+async def extract_file(req: ExtractFileRequest, user=Depends(get_current_user)):
+    chunk_dir = UPLOAD_DIR / f"{user['user_id']}_{req.upload_id}"
+    if not chunk_dir.exists():
+        raise HTTPException(status_code=404, detail="Upload session not found")
+
+    chunks = sorted(chunk_dir.glob("chunk_*"))
+    if not chunks:
+        raise HTTPException(status_code=400, detail="No chunks received")
+
+    content = b"".join(c.read_bytes() for c in chunks)
+    for c in chunks:
+        c.unlink()
+    chunk_dir.rmdir()
+
+    ext = req.filename.lower().rsplit(".", 1)[-1] if "." in req.filename else ""
+    extracted = ""
+
+    try:
+        if ext == "txt":
+            extracted = content.decode("utf-8", errors="ignore")
+
+        elif ext == "pdf":
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(content))
+            extracted = "\n".join(page.extract_text() or "" for page in reader.pages)
+
+        elif ext == "docx":
+            from docx import Document as DocxDoc
+            doc = DocxDoc(io.BytesIO(content))
+            extracted = "\n".join(p.text for p in doc.paragraphs)
+
+        elif ext == "doc":
+            try:
+                from docx import Document as DocxDoc
+                doc = DocxDoc(io.BytesIO(content))
+                extracted = "\n".join(p.text for p in doc.paragraphs)
+            except Exception:
+                text = content.decode("latin-1", errors="ignore")
+                extracted = " ".join(re.findall(r'[\x20-\x7E\n\r\t]{4,}', text))
+
+        elif ext in ("mp3", "wav", "m4a", "ogg", "aac", "flac", "mp4", "mpeg", "mpga", "webm"):
+            from emergentintegrations.llm.openai import OpenAISpeechToText
+            stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+            with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
+                tmp.write(content)
+                tmp_path = tmp.name
+            try:
+                with open(tmp_path, "rb") as audio_file:
+                    resp = await stt.transcribe(
+                        file=audio_file, model="whisper-1", response_format="json", language="en",
+                        prompt="Recruiting, job descriptions, executive search, candidate profiles.",
+                    )
+                extracted = resp.text
+            finally:
+                os.unlink(tmp_path)
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: .{ext}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File extraction failed: {str(e)}")
+
+    if not extracted.strip():
+        raise HTTPException(status_code=422, detail="Could not extract text from file. Try a different format.")
+
+    return {"extracted_text": extracted.strip(), "filename": req.filename, "char_count": len(extracted)}
+
+
+# ── Document Download Generation ──
+
+def _add_bold_runs(paragraph, text: str):
+    parts = re.split(r"\*\*(.*?)\*\*", text)
+    for i, part in enumerate(parts):
+        paragraph.add_run(part).bold = (i % 2 == 1)
+
+
+def _parse_md_to_docx(content: str) -> bytes:
+    from docx import Document
+    doc = Document()
+    for line in content.split("\n"):
+        s = line.strip()
+        if not s:
+            doc.add_paragraph("")
+        elif s.startswith("### "):
+            doc.add_heading(s[4:], level=3)
+        elif s.startswith("## "):
+            doc.add_heading(s[3:], level=2)
+        elif s.startswith("# "):
+            doc.add_heading(s[2:], level=1)
+        elif s.startswith(("- ", "* ", "\u2022 ")):
+            p = doc.add_paragraph(style="List Bullet")
+            _add_bold_runs(p, s[2:])
+        else:
+            p = doc.add_paragraph()
+            _add_bold_runs(p, s)
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return buf.read()
+
+
+def _parse_md_to_pdf(content: str) -> bytes:
+    from fpdf import FPDF
+
+    def safe(t: str) -> str:
+        return t.encode("latin-1", errors="replace").decode("latin-1")
+
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.set_margins(20, 20, 20)
+
+    for line in content.split("\n"):
+        s = line.strip()
+        clean = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
+        if not s:
+            pdf.ln(3)
+        elif s.startswith("# ") and not s.startswith("##"):
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.multi_cell(0, 9, safe(clean[2:]))
+            pdf.ln(2)
+        elif s.startswith("## "):
+            pdf.set_font("Helvetica", "B", 13)
+            pdf.multi_cell(0, 7, safe(clean[3:]))
+            pdf.ln(1)
+        elif s.startswith("### "):
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.multi_cell(0, 6, safe(clean[4:]))
+        elif s.startswith(("- ", "* ")):
+            pdf.set_font("Helvetica", "", 10)
+            pdf.cell(5)
+            pdf.multi_cell(0, 5.5, safe(f"*  {clean[2:]}"))
+        else:
+            pdf.set_font("Helvetica", "", 10)
+            pdf.multi_cell(0, 5.5, safe(clean))
+
+    return bytes(pdf.output())
+
+
+@api_router.post("/ai/download")
+async def download_document(req: DownloadRequest, user=Depends(get_current_user)):
+    safe_name = re.sub(r"[^\w\- ]", "_", req.filename)[:60]
+    if req.format == "txt":
+        return Response(
+            content=req.content.encode("utf-8"),
+            media_type="text/plain; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.txt"'},
+        )
+    elif req.format == "docx":
+        return Response(
+            content=_parse_md_to_docx(req.content),
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.docx"'},
+        )
+    elif req.format == "pdf":
+        return Response(
+            content=_parse_md_to_pdf(req.content),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
+        )
+    raise HTTPException(status_code=400, detail="Invalid format. Use txt, docx, or pdf.")
+
+
 # ==================== DASHBOARD & LEADERBOARD & PROFILE ====================
 
 @api_router.get("/dashboard/stats")
