@@ -107,6 +107,13 @@ export default function Navbar() {
             >
               <User className="w-4 h-4 mr-2" strokeWidth={1.5} /> Profile
             </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => navigate("/api-settings")} 
+              data-testid="nav-api-settings-link"
+              className="text-slate-300 hover:text-white focus:text-white hover:bg-white/[0.06] focus:bg-white/[0.06]"
+            >
+              <Key className="w-4 h-4 mr-2" strokeWidth={1.5} /> API Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/[0.08]" />
             <DropdownMenuItem 
               onClick={handleLogout} 
