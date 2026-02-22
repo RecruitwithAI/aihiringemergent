@@ -168,10 +168,13 @@ export default function ChallengeDetail() {
         <div className={`${CARD} p-6 mt-4`} data-testid="answer-form">
           <h3 className="font-semibold text-white font-[Lexend] mb-3">Your Answer</h3>
           <form onSubmit={handleAnswer} className="space-y-3">
-            <RichTextEditor 
-              content={answerText}
-              onChange={setAnswerText}
-              placeholder="Share your expertise... Use the toolbar to format your answer"
+            <Textarea
+              data-testid="answer-input"
+              placeholder="Share your expertise..."
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              className="min-h-[100px] resize-none bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-cyan-500/50"
+              required
             />
             <button
               data-testid="submit-answer-btn"
