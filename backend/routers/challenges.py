@@ -49,12 +49,9 @@ async def create_challenge(challenge: ChallengeCreate, user=Depends(get_current_
         "title": challenge.title,
         "description": challenge.description,
         "tags": challenge.tags,
-        "category": challenge.category or "General",  # Default category
         "author_id": user["user_id"],
         "upvotes": 0,
         "upvoted_by": [],
-        "pinned": False,  # New field
-        "pin_order": 0,   # New field
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.challenges.insert_one(doc)
