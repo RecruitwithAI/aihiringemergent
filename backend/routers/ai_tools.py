@@ -590,9 +590,6 @@ def _parse_md_to_pdf(content: str) -> bytes:
                 pdf.set_xy(text_x, y_start)
                 text = safe(bullet_text)
                 
-                # Store current Y before multi_cell
-                y_before_text = pdf.get_y()
-                
                 # Create a temporary position to measure text height
                 # We need to manually handle the multi_cell positioning
                 pdf.multi_cell(text_width, 5, text, align='L', ln=1)
