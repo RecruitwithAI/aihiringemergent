@@ -439,17 +439,31 @@ def _parse_md_to_pdf(content: str) -> bytes:
             pdf.set_font("Helvetica", "", 10)
             bullet_text = clean[2:].strip()
             if bullet_text:
-                # Use proper bullet formatting with indentation
-                x_before = pdf.get_x()
-                y_before = pdf.get_y()
+                # Save current position
+                x_start = pdf.l_margin
+                y_start = pdf.get_y()
                 
-                # Add bullet symbol
-                pdf.cell(5, 5, "-", align='L')
+                # Draw bullet character
+                pdf.set_xy(x_start, y_start)
+                pdf.cell(5, 5, txt=chr(149), ln=0)  # Use bullet character (•)
                 
-                # Add bullet text with proper wrapping
-                pdf.set_x(x_before + 7)
+                # Calculate text area (full width minus bullet indent)
+                text_x = x_start + 7
+                text_width = effective_width - 7
+                
+                # Position for text and use multi_cell for wrapping
+                pdf.set_xy(text_x, y_start)
                 text = safe(bullet_text)
-                pdf.multi_cell(effective_width - 7, 5, text, align='L')
+                
+                # Store current Y before multi_cell
+                y_before_text = pdf.get_y()
+                
+                # Create a temporary position to measure text height
+                # We need to manually handle the multi_cell positioning
+                pdf.multi_cell(text_width, 5, text, align='L', ln=1)
+                
+                # Reset X margin for next line
+                pdf.set_x(x_start)
                 
         else:
             # Regular paragraph text
