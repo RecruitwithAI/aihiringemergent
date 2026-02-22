@@ -340,29 +340,29 @@ IMPORTANT INSTRUCTIONS:
   const supportsFileUpload = selectedTool.id === "jd-builder" || selectedTool.id === "dossier";
 
   return (
-    <div className="min-h-screen bg-[#090914] px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#090914] px-4 sm:px-6 lg:px-8 py-8 ai-tool-workspace">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Back Button */}
         <button
           onClick={() => selectTool(null)}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group back-button"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={1.5} />
           <span className="text-sm font-medium">Back to Tools</span>
         </button>
 
         {/* Tool Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 tool-header">
           <div
-            className={`w-14 h-14 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}
+            className={`w-14 h-14 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center tool-header-icon`}
           >
             <selectedTool.icon className={`w-7 h-7 ${selectedTool.color}`} strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-white font-[Lexend]">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-white font-[Lexend] tool-header-title">
               {selectedTool.label}
             </h1>
-            <p className="text-slate-400 text-sm sm:text-base">
+            <p className="text-slate-400 text-sm sm:text-base tool-header-subtitle">
               {selectedTool.id === "jd-builder" && "Create professional job descriptions"}
               {selectedTool.id === "search-strategy" && "Develop targeted candidate search plans"}
               {selectedTool.id === "candidate-research" && "Analyze candidate backgrounds and fit"}
