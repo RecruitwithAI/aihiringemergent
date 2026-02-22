@@ -349,3 +349,34 @@ async def download_document(req: DownloadRequest, user=Depends(get_current_user)
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
         )
     raise HTTPException(status_code=400, detail="Invalid format. Use txt, docx, or pdf.")
+
+
+
+@router.post("/save-api-key")
+async def save_user_api_key(req: UserAPIKeyUpdate, user=Depends(get_current_user)):
+    """Save user's personal OpenAI API key"""
+    if not req.api_key or len(req.api_key.strip()) < 10:
+        raise HTTPException(status_code=400, detail="Invalid API key")
+    
+    # Update user's API key in database (stored securely)
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "openai_api_key": req.api_key.strip(),
+            "has_own_api_key": True,
+            "api_key_updated_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {"success": True, "message": "API key saved successfully"}
+
+
+@router.delete("/delete-api-key")
+async def delete_user_api_key(user=Depends(get_current_user)):
+    """Remove user's personal OpenAI API key"""
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$unset": {"openai_api_key": ""}, "$set": {"has_own_api_key": False}}
+    )
+    
+    return {"success": True, "message": "API key removed successfully"}
