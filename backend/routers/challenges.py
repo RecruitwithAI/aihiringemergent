@@ -5,7 +5,7 @@ import uuid
 from utils.database import db
 from utils.helpers import get_badge
 from utils.auth import get_current_user, add_points
-from models.schemas import ChallengeCreate, AnswerCreate
+from models.schemas import ChallengeCreate, AnswerCreate, PinChallengeRequest
 
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
