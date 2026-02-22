@@ -200,6 +200,64 @@ code {
 [data-theme="light"]::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
 [data-theme="light"]::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
+/* === LIGHT MODE CARD BORDERS & HOVER EFFECTS === */
+/* Add visible borders to cards in light mode for better definition */
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] [class*="bg-white/[0.04]"],
+[data-theme="light"] [class*="bg-white/[0.06]"] {
+    background-color: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Hover effects for cards in light mode */
+[data-theme="light"] .hover\:bg-white\/\[0\.06\]:hover,
+[data-theme="light"] [class*="hover:bg-white/[0.06]"]:hover,
+[data-theme="light"] [class*="hover:border-blue-500"]:hover {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Specific hover effects for different colored cards/tools */
+[data-theme="light"] [class*="hover:border-cyan-500"]:hover {
+    border-color: rgba(6, 182, 212, 0.5) !important;
+}
+
+[data-theme="light"] [class*="hover:border-violet-500"]:hover {
+    border-color: rgba(139, 92, 246, 0.5) !important;
+}
+
+[data-theme="light"] [class*="hover:border-amber-500"]:hover {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+[data-theme="light"] [class*="hover:border-emerald-500"]:hover {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+}
+
+/* Clickable card cursor */
+[data-theme="light"] [class*="cursor-pointer"] {
+    cursor: pointer;
+}
+
+/* Active/focus state for cards */
+[data-theme="light"] .border-white\/\[0\.07\]:focus-within,
+[data-theme="light"] [class*="border-white/[0.07]"]:focus-within {
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Button borders in light mode */
+[data-theme="light"] button,
+[data-theme="light"] [role="button"] {
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] button:hover,
+[data-theme="light"] [role="button"]:hover {
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
 /* ==================== ANIMATIONS ==================== */
 
 /* Staggered float-in with zoom */
