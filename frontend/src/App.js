@@ -10,6 +10,7 @@ import ChallengeDetail from "@/pages/ChallengeDetail";
 import Training from "@/pages/Training";
 import Profile from "@/pages/Profile";
 import LeaderboardPage from "@/pages/LeaderboardPage";
+import APIKeySettings from "@/pages/APIKeySettings";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
 
