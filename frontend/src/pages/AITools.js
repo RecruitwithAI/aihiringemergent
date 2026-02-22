@@ -292,28 +292,36 @@ IMPORTANT INSTRUCTIONS:
   // ── Download ──
   const handleDownload = async (format) => {
     const content = isEditing ? editBuffer : result;
-    if (!content) return;
+    if (!content) {
+      toast.error("No content to download");
+      return;
+    }
     setDownloading(true);
 
     try {
       const filename = `${selectedTool.label}.${format}`;
+      console.log(`Downloading ${format}: ${filename}, content length: ${content.length}`);
 
       if (format === "txt") {
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
         saveAs(blob, filename);
+        toast.success(`Downloaded as ${format.toUpperCase()}`);
       } else {
         const res = await axios.post(
           `${API}/ai/download`,
           { content, format, filename },
           { responseType: "blob", withCredentials: true }
         );
+        console.log(`Download response received, size: ${res.data.size} bytes`);
         saveAs(res.data, filename);
+        toast.success(`Downloaded as ${format.toUpperCase()}`);
       }
-      toast.success(`Downloaded as ${format.toUpperCase()}`);
     } catch (err) {
-      toast.error("Download failed");
+      console.error("Download error:", err);
+      const errorMsg = err.response?.data ? await err.response.data.text() : err.message;
+      toast.error(`Download failed: ${errorMsg}`);
     } finally {
-      setDownloading(false);
+      setDownloading(true);
     }
   };
 
