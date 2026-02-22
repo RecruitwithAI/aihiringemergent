@@ -577,6 +577,76 @@ export default function AITools() {
               </div>
             )}
 
+            {/* Output Format Upload (Candidate Dossier Only) */}
+            {selectedTool.id === "dossier" && (
+              <div className="mt-5">
+                <Label className="text-sm text-slate-400 mb-2 block">
+                  Output Format (Optional)
+                </Label>
+                <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+                  Upload a sample output format that you would like to use. Alternatively, leave blank to use tool generated format.
+                </p>
+
+                {/* Display uploaded format file */}
+                {outputFormatFile && (
+                  <div className="mb-3">
+                    <div className={`${CARD} p-4 flex items-center justify-between`}>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+                          <FileIcon className="w-4 h-4 text-amber-400" strokeWidth={1.5} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white truncate">{outputFormatFile.name}</p>
+                          <p className="text-xs text-slate-500">{outputFormatFile.charCount.toLocaleString()} characters</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={removeFormatFile}
+                        className="ml-2 p-2 rounded-lg hover:bg-white/[0.06] text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
+                        data-testid="remove-format-file-btn"
+                      >
+                        <X className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Format file drop zone */}
+                {!outputFormatFile && (
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploadingFormat ? "border-amber-500/30 bg-amber-500/10" : "border-white/[0.10] hover:border-amber-500/30 hover:bg-white/[0.04]"}`}
+                    onClick={() => !uploadingFormat && formatFileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); handleFormatFileDrop(e.dataTransfer.files); }}
+                    data-testid="format-file-upload-zone"
+                  >
+                    {uploadingFormat ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-6 h-6 text-amber-400 animate-spin" strokeWidth={1.5} />
+                        <p className="text-sm text-amber-400 font-medium">Processing format file...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 text-slate-600 mx-auto mb-2" strokeWidth={1.5} />
+                        <p className="text-sm text-slate-400 font-medium">
+                          Drag & drop or <span className="text-amber-400">click to upload</span>
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1">PDF, Word, or TXT · Max 10 MB</p>
+                      </>
+                    )}
+                    <input
+                      ref={formatFileInputRef}
+                      type="file"
+                      accept=".txt,.pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => handleFormatFileDrop(e.target.files)}
+                      data-testid="format-file-input"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
 
           <button
