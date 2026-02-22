@@ -365,9 +365,60 @@ def _add_bold_runs(paragraph, text: str):
 
 def _parse_md_to_docx(content: str) -> bytes:
     from docx import Document
+    from docx.shared import Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    
     doc = Document()
-    for line in content.split("\n"):
-        s = line.strip()
+    lines = content.split("\n")
+    i = 0
+    
+    while i < len(lines):
+        s = lines[i].strip()
+        
+        # Check if this is a table (markdown table starts with |)
+        if s.startswith("|") and "|" in s:
+            # Collect all table lines
+            table_lines = []
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                table_lines.append(lines[i].strip())
+                i += 1
+            
+            # Parse table
+            if len(table_lines) >= 2:  # Need at least header and separator
+                # Parse header
+                header = [cell.strip() for cell in table_lines[0].split("|")[1:-1]]
+                
+                # Skip separator line (the one with ---)
+                data_lines = table_lines[2:] if len(table_lines) > 2 else []
+                
+                # Create table
+                num_cols = len(header)
+                num_rows = len(data_lines) + 1  # +1 for header
+                
+                if num_cols > 0 and num_rows > 0:
+                    table = doc.add_table(rows=num_rows, cols=num_cols)
+                    table.style = 'Light Grid Accent 1'
+                    
+                    # Add header
+                    for col_idx, header_text in enumerate(header):
+                        cell = table.rows[0].cells[col_idx]
+                        cell.text = header_text
+                        # Make header bold
+                        for paragraph in cell.paragraphs:
+                            for run in paragraph.runs:
+                                run.bold = True
+                    
+                    # Add data rows
+                    for row_idx, line in enumerate(data_lines, start=1):
+                        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+                        for col_idx, cell_text in enumerate(cells):
+                            if col_idx < num_cols:
+                                table.rows[row_idx].cells[col_idx].text = cell_text
+                    
+                    doc.add_paragraph()  # Add spacing after table
+            continue
+        
+        # Regular line processing
         if not s:
             doc.add_paragraph("")
         elif s.startswith("### "):
@@ -382,6 +433,9 @@ def _parse_md_to_docx(content: str) -> bytes:
         else:
             p = doc.add_paragraph()
             _add_bold_runs(p, s)
+        
+        i += 1
+    
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)
