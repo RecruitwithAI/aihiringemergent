@@ -60,24 +60,24 @@ export default function OutputDisplay({
                     )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 bg-[#12121a] border-white/[0.08] download-dropdown">
+                <DropdownMenuContent align="end" className="w-40 download-dropdown">
                   <DropdownMenuItem
                     onClick={() => onDownload("txt")}
-                    className="text-slate-300 hover:text-white hover:bg-white/[0.06] download-item"
+                    className="cursor-pointer download-item"
                   >
                     <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Text (.txt)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onDownload("docx")}
-                    className="text-slate-300 hover:text-white hover:bg-white/[0.06] download-item"
+                    className="cursor-pointer download-item"
                   >
                     <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Word (.docx)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onDownload("pdf")}
-                    className="text-slate-300 hover:text-white hover:bg-white/[0.06] download-item"
+                    className="cursor-pointer download-item"
                   >
                     <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     PDF (.pdf)
