@@ -27,6 +27,13 @@ class AIToolRequest(BaseModel):
     tool_type: str
     prompt: str
     context: Optional[str] = ""
+    use_own_key: Optional[bool] = False
+    own_api_key: Optional[str] = None
+
+
+class UserAPIKeyUpdate(BaseModel):
+    api_key: str  # User's personal OpenAI API key
+
 
 
 class DownloadRequest(BaseModel):
