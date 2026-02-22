@@ -193,7 +193,25 @@ async def extract_file(req: ExtractFileRequest, user=Depends(get_current_user)):
         elif ext == "pdf":
             import pypdf
             reader = pypdf.PdfReader(io.BytesIO(content))
-            extracted = "\n".join(page.extract_text() or "" for page in reader.pages)
+            
+            # Extract text with better formatting preservation
+            pages_text = []
+            for page_num, page in enumerate(reader.pages, 1):
+                page_text = page.extract_text() or ""
+                if page_text.strip():
+                    # Add page marker for multi-page documents to preserve structure
+                    if len(reader.pages) > 1:
+                        pages_text.append(f"[Page {page_num}]\n{page_text}")
+                    else:
+                        pages_text.append(page_text)
+            
+            extracted = "\n\n".join(pages_text)
+            
+            # Clean up common PDF extraction artifacts while preserving structure
+            # Remove excessive whitespace but keep paragraph breaks
+            extracted = re.sub(r'\n{3,}', '\n\n', extracted)  # Max 2 newlines
+            extracted = re.sub(r'[ \t]+', ' ', extracted)  # Normalize spaces
+            extracted = extracted.strip()
 
         elif ext == "docx":
             from docx import Document as DocxDoc
