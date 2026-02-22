@@ -17,10 +17,11 @@ class ChallengeCreate(BaseModel):
     title: str
     description: str
     tags: List[str] = []
+    category: Optional[str] = None  # NEW: Challenge category
 
 
 class AnswerCreate(BaseModel):
-    content: str
+    content: str  # Now accepts HTML content from rich text editor
 
 
 class AIToolRequest(BaseModel):
