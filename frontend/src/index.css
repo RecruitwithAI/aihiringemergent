@@ -227,9 +227,20 @@ code {
 
 /* Dropdown menus in light mode */
 [data-theme="light"] [role="menu"],
-[data-theme="light"] .download-dropdown {
+[data-theme="light"] .download-dropdown,
+[data-theme="light"] [data-radix-menu-content],
+[data-theme="light"] [data-radix-dropdown-menu-content] {
     background-color: white !important;
     border-color: rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .bg-popover {
+    background-color: white !important;
+}
+
+[data-theme="light"] .text-popover-foreground {
+    color: hsl(220, 40%, 10%) !important;
 }
 
 [data-theme="light"] [role="menuitem"],
@@ -238,7 +249,9 @@ code {
 }
 
 [data-theme="light"] [role="menuitem"]:hover,
-[data-theme="light"] .download-item:hover {
+[data-theme="light"] [role="menuitem"]:focus,
+[data-theme="light"] .download-item:hover,
+[data-theme="light"] .download-item:focus {
     background-color: rgba(0, 0, 0, 0.05) !important;
     color: hsl(220, 40%, 5%) !important;
 }
@@ -246,6 +259,16 @@ code {
 [data-theme="light"] [role="menuitem"] svg,
 [data-theme="light"] .download-item svg {
     color: hsl(220, 30%, 30%) !important;
+}
+
+/* Accent colors for dropdown focus states */
+[data-theme="light"] .focus\:bg-accent:focus,
+[data-theme="light"] [data-radix-collection-item]:focus {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+[data-theme="light"] .focus\:text-accent-foreground:focus {
+    color: hsl(217, 91%, 40%) !important;
 }
 
 /* Dark scrollbar */
