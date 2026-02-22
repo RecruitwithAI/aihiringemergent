@@ -99,26 +99,26 @@ export default function Navbar() {
               <span className="text-sm font-medium hidden sm:inline text-slate-300">{user?.name?.split(" ")[0]}</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-[#12121a] border-white/[0.08]">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem 
               onClick={() => navigate("/profile")} 
               data-testid="nav-profile-link"
-              className="text-slate-300 hover:text-white focus:text-white hover:bg-white/[0.06] focus:bg-white/[0.06]"
+              className="cursor-pointer"
             >
               <User className="w-4 h-4 mr-2" strokeWidth={1.5} /> Profile
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={() => navigate("/settings/api-key")} 
               data-testid="nav-api-settings-link"
-              className="text-slate-300 hover:text-white focus:text-white hover:bg-white/[0.06] focus:bg-white/[0.06]"
+              className="cursor-pointer"
             >
               <Key className="w-4 h-4 mr-2" strokeWidth={1.5} /> API Settings
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/[0.08]" />
+            <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={handleLogout} 
               data-testid="nav-logout-btn"
-              className="text-slate-300 hover:text-white focus:text-white hover:bg-white/[0.06] focus:bg-white/[0.06]"
+              className="cursor-pointer"
             >
               <LogOut className="w-4 h-4 mr-2" strokeWidth={1.5} /> Sign Out
             </DropdownMenuItem>
