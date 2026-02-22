@@ -298,7 +298,9 @@ def _parse_md_to_pdf(content: str) -> bytes:
         t = t.replace('\u2022', '-').replace('\u2019', "'").replace('\u2018', "'")
         t = t.replace('\u201c', '"').replace('\u201d', '"').replace('\u2014', '-')
         t = t.replace('\u2013', '-').replace('\u00a0', ' ')
-        return t.encode("latin-1", errors="replace").decode("latin-1")
+        # Handle other unicode characters more gracefully
+        t = t.encode("latin-1", errors="replace").decode("latin-1")
+        return t
 
     pdf = FPDF(orientation="P", unit="mm", format="A4")
     pdf.add_page()
@@ -310,46 +312,69 @@ def _parse_md_to_pdf(content: str) -> bytes:
 
     for line in content.split("\n"):
         s = line.strip()
-        clean = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
         
-        # Skip empty lines
+        # Skip truly empty lines
         if not s:
             pdf.ln(3)
             continue
-            
+        
+        # Remove markdown bold markers for display
+        clean = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
+        
         # Skip lines that are just special characters
         if not clean or len(clean.strip()) == 0:
             pdf.ln(2)
             continue
 
+        # Process different line types
         if s.startswith("# ") and not s.startswith("##"):
+            # H1 - Main heading
             pdf.set_font("Helvetica", "B", 16)
-            text = safe(clean[2:]) if len(clean) > 2 else ""
-            if text.strip():
-                pdf.multi_cell(effective_width, 9, text)
-                pdf.ln(2)
-        elif s.startswith("## "):
-            pdf.set_font("Helvetica", "B", 13)
-            text = safe(clean[3:]) if len(clean) > 3 else ""
-            if text.strip():
-                pdf.multi_cell(effective_width, 7, text)
-                pdf.ln(1)
+            text = safe(clean[2:].strip())
+            if text:
+                pdf.multi_cell(effective_width, 8, text, align='L')
+                pdf.ln(3)
+                
         elif s.startswith("### "):
+            # H3 - Sub-subheading
             pdf.set_font("Helvetica", "B", 11)
-            text = safe(clean[4:]) if len(clean) > 4 else ""
-            if text.strip():
-                pdf.multi_cell(effective_width, 6, text)
+            text = safe(clean[4:].strip())
+            if text:
+                pdf.multi_cell(effective_width, 6, text, align='L')
+                pdf.ln(1)
+                
+        elif s.startswith("## "):
+            # H2 - Subheading
+            pdf.set_font("Helvetica", "B", 13)
+            text = safe(clean[3:].strip())
+            if text:
+                pdf.multi_cell(effective_width, 7, text, align='L')
+                pdf.ln(2)
+                
         elif s.startswith(("- ", "* ", "\u2022 ")):
+            # Bullet point
             pdf.set_font("Helvetica", "", 10)
-            bullet_text = clean[2:] if len(clean) > 2 else ""
-            text = safe(f"  -  {bullet_text}")
-            if text.strip():
-                pdf.multi_cell(effective_width, 5.5, text)
+            bullet_text = clean[2:].strip()
+            if bullet_text:
+                # Use proper bullet formatting with indentation
+                x_before = pdf.get_x()
+                y_before = pdf.get_y()
+                
+                # Add bullet symbol
+                pdf.cell(5, 5, "-", align='L')
+                
+                # Add bullet text with proper wrapping
+                pdf.set_x(x_before + 7)
+                text = safe(bullet_text)
+                pdf.multi_cell(effective_width - 7, 5, text, align='L')
+                
         else:
+            # Regular paragraph text
             pdf.set_font("Helvetica", "", 10)
             text = safe(clean)
-            if text.strip():
-                pdf.multi_cell(effective_width, 5.5, text)
+            if text:
+                pdf.multi_cell(effective_width, 5, text, align='L')
+                pdf.ln(1)
 
     return bytes(pdf.output())
 
