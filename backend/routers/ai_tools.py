@@ -207,6 +207,9 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
         full_prompt = f"{req.prompt}\n\nAdditional Context: {req.context}"
 
     response = await chat.send_message(UserMessage(text=full_prompt))
+    
+    # Clean up conversational follow-ups from the response
+    cleaned_response = clean_ai_response(response)
 
     # Record usage
     await record_usage(user["user_id"], using_master_key, req.tool_type)
@@ -216,12 +219,12 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
         "user_id": user["user_id"],
         "tool_type": req.tool_type,
         "prompt": req.prompt,
-        "response": response,
+        "response": cleaned_response,
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
 
     await add_points(user["user_id"], 2)
-    return {"response": response, "tool_type": req.tool_type}
+    return {"response": cleaned_response, "tool_type": req.tool_type}
 
 
 @router.get("/history")
