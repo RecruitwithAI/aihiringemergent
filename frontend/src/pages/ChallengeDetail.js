@@ -153,27 +153,6 @@ export default function ChallengeDetail() {
                 <span className="flex items-center gap-1 text-xs text-slate-600"><Clock className="w-3 h-3" strokeWidth={1.5} /> {timeAgo(challenge.created_at)}</span>
               </div>
               <p className="text-slate-400 mt-4 leading-relaxed whitespace-pre-wrap">{challenge.description}</p>
-              
-              {/* Category Badge */}
-              {challenge.category && (() => {
-                const categoryStyle = getCategoryStyle(challenge.category);
-                return (
-                  <div className="mt-3">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${categoryStyle.bg} ${categoryStyle.color} border ${categoryStyle.border}`}>
-                      {challenge.category}
-                    </span>
-                  </div>
-                );
-              })()}
-              
-              {/* Pinned Badge */}
-              {challenge.pinned && (
-                <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
-                  <Pin className="w-3 h-3 text-yellow-400" strokeWidth={2} />
-                  <span className="text-xs text-yellow-400 font-medium">Pinned</span>
-                </div>
-              )}
-              
               {challenge.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-4">
                   {challenge.tags.map((t) => (
@@ -189,10 +168,13 @@ export default function ChallengeDetail() {
         <div className={`${CARD} p-6 mt-4`} data-testid="answer-form">
           <h3 className="font-semibold text-white font-[Lexend] mb-3">Your Answer</h3>
           <form onSubmit={handleAnswer} className="space-y-3">
-            <RichTextEditor 
-              content={answerText}
-              onChange={setAnswerText}
-              placeholder="Share your expertise... Use the toolbar to format your answer"
+            <Textarea
+              data-testid="answer-input"
+              placeholder="Share your expertise..."
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              className="min-h-[100px] resize-none bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-cyan-500/50"
+              required
             />
             <button
               data-testid="submit-answer-btn"
@@ -242,10 +224,7 @@ export default function ChallengeDetail() {
                           )}
                           <span className="text-xs text-slate-600">{timeAgo(a.created_at)}</span>
                         </div>
-                        <div 
-                          className="prose prose-invert max-w-none text-slate-400"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(a.content) }}
-                        />
+                        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{a.content}</p>
                       </div>
                     </div>
                   </div>
