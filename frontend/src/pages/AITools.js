@@ -120,6 +120,42 @@ export default function AITools() {
     setExpandedFileIdx(null);
   };
 
+  // ── Output Format File Upload (for Candidate Dossier) ──
+  const handleFormatFileDrop = async (files) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0]; // Only one format file allowed
+    const ext = file.name.split(".").pop().toLowerCase();
+    const allowed = ["txt","pdf","doc","docx"];
+    
+    if (!allowed.includes(ext)) {
+      toast.error(`Unsupported type: .${ext}. For format, use: PDF, Word, or TXT`);
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(`Format file too large. Max 10 MB.`);
+      return;
+    }
+
+    setUploadingFormat(true);
+    setFormatUploadProgress(0);
+    
+    const processed = await processFile(file);
+    
+    if (processed) {
+      setOutputFormatFile(processed);
+      toast.success("Output format uploaded successfully");
+    }
+    
+    setUploadingFormat(false);
+    setFormatUploadProgress(0);
+  };
+
+  const removeFormatFile = () => {
+    setOutputFormatFile(null);
+  };
+
   // ── Chunked Upload for single file ──
   const processFile = async (file) => {
     const ext = file.name.split(".").pop().toLowerCase();
