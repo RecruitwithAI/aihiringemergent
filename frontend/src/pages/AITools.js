@@ -37,11 +37,16 @@ export default function AITools() {
   const [result, setResult] = useState("");
   const [generating, setGenerating] = useState(false);
 
-  // Multi-file upload state
+  // Multi-file upload state (for context)
   const [uploadedFiles, setUploadedFiles] = useState([]); // [{ name, charCount, extractedText }]
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [expandedFileIdx, setExpandedFileIdx] = useState(null);
+
+  // Output format file upload state (for Candidate Dossier)
+  const [outputFormatFile, setOutputFormatFile] = useState(null); // { name, charCount, extractedText }
+  const [uploadingFormat, setUploadingFormat] = useState(false);
+  const [formatUploadProgress, setFormatUploadProgress] = useState(0);
 
   // edit/download state
   const [isEditing, setIsEditing] = useState(false);
@@ -54,11 +59,13 @@ export default function AITools() {
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   const fileInputRef = useRef(null);
+  const formatFileInputRef = useRef(null);
 
   const selectTool = (tool) => {
     setSelectedTool(tool);
     setPrompt(""); setContext(""); setResult("");
     setUploadedFiles([]);
+    setOutputFormatFile(null);
     setIsEditing(false); setEditBuffer(""); setUploadProgress(0);
     setExpandedFileIdx(null);
   };
