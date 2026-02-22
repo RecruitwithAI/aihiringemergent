@@ -225,6 +225,29 @@ code {
     background-color: rgba(0, 0, 0, 0.10) !important;
 }
 
+/* Dropdown menus in light mode */
+[data-theme="light"] [role="menu"],
+[data-theme="light"] .download-dropdown {
+    background-color: white !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] [role="menuitem"],
+[data-theme="light"] .download-item {
+    color: hsl(220, 40%, 10%) !important;
+}
+
+[data-theme="light"] [role="menuitem"]:hover,
+[data-theme="light"] .download-item:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: hsl(220, 40%, 5%) !important;
+}
+
+[data-theme="light"] [role="menuitem"] svg,
+[data-theme="light"] .download-item svg {
+    color: hsl(220, 30%, 30%) !important;
+}
+
 /* Dark scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
