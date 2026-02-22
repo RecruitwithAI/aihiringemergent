@@ -127,41 +127,5 @@ async def upvote_challenge(challenge_id: str, user=Depends(get_current_user)):
         {"$push": {"upvoted_by": user["user_id"]}, "$inc": {"upvotes": 1}},
     )
     await add_points(challenge["author_id"], 3)
-
-
-
-@router.post("/{challenge_id}/pin")
-async def pin_challenge(challenge_id: str, req: PinChallengeRequest, user=Depends(get_current_user)):
-    """
-    Pin or unpin a challenge (Admin only).
-    Max 5 pinned challenges allowed.
-    """
-    # Check if user is admin
-    if user.get("role") not in ["admin", "superadmin"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    challenge = await db.challenges.find_one({"challenge_id": challenge_id}, {"_id": 0})
-    if not challenge:
-        raise HTTPException(status_code=404, detail="Challenge not found")
-    
-    if req.pinned:
-        # Check current pinned count
-        pinned_count = await db.challenges.count_documents({"pinned": True})
-        if pinned_count >= 5 and not challenge.get("pinned", False):
-            raise HTTPException(status_code=400, detail="Maximum 5 challenges can be pinned at once")
-        
-        # Pin the challenge
-        await db.challenges.update_one(
-            {"challenge_id": challenge_id},
-            {"$set": {"pinned": True, "pin_order": req.pin_order or 0}}
-        )
-        return {"pinned": True, "message": "Challenge pinned successfully"}
-    else:
-        # Unpin the challenge
-        await db.challenges.update_one(
-            {"challenge_id": challenge_id},
-            {"$set": {"pinned": False, "pin_order": 0}}
-        )
-        return {"pinned": False, "message": "Challenge unpinned successfully"}
-
     return {"upvoted": True}
+
