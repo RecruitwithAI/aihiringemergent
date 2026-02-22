@@ -29,6 +29,9 @@ export default function AITools() {
   const [context, setContext] = useState("");
   const [result, setResult] = useState("");
   const [generating, setGenerating] = useState(false);
+  
+  // Search Strategy output type selection
+  const [outputType, setOutputType] = useState("strategy"); // "strategy" or "target-list"
 
   // Multi-file upload state (for context)
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -65,6 +68,7 @@ export default function AITools() {
     setEditBuffer("");
     setUploadProgress(0);
     setExpandedFileIdx(null);
+    setOutputType("strategy"); // Reset output type
   };
 
   // Fetch history when tool is selected
