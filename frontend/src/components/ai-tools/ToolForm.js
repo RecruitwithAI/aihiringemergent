@@ -16,35 +16,35 @@ export default function ToolForm({
   hasHistory,
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 tool-form-container">
       {/* Prompt Input */}
-      <div className={`${CARD} p-6 space-y-4`}>
-        <Label className="text-sm font-medium text-slate-300">
+      <div className={`${CARD} p-6 space-y-4 tool-form-card`}>
+        <Label className="text-sm font-medium text-slate-300 tool-form-label">
           {tool.label} Prompt <span className="text-red-400">*</span>
         </Label>
         <Textarea
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
           placeholder={tool.prompt}
-          className="min-h-[120px] bg-white/[0.02] border-white/[0.08] text-white placeholder:text-slate-500 resize-none focus:border-blue-500/30"
+          className="min-h-[120px] bg-white/[0.02] border-white/[0.08] text-white placeholder:text-slate-500 resize-none focus:border-blue-500/30 tool-form-textarea"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 tool-form-hint">
           Be specific and detailed for best results
         </p>
       </div>
 
       {/* Additional Context (Optional) */}
-      <div className={`${CARD} p-6 space-y-4`}>
-        <Label className="text-sm font-medium text-slate-300">
+      <div className={`${CARD} p-6 space-y-4 tool-form-card`}>
+        <Label className="text-sm font-medium text-slate-300 tool-form-label">
           Additional Context (Optional)
         </Label>
         <Textarea
           value={context}
           onChange={(e) => onContextChange(e.target.value)}
           placeholder="Add any specific requirements, preferences, or additional details here..."
-          className="min-h-[100px] bg-white/[0.02] border-white/[0.08] text-white placeholder:text-slate-500 resize-none focus:border-blue-500/30"
+          className="min-h-[100px] bg-white/[0.02] border-white/[0.08] text-white placeholder:text-slate-500 resize-none focus:border-blue-500/30 tool-form-textarea"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 tool-form-hint">
           Optional: Add extra context, constraints, or formatting preferences
         </p>
       </div>
