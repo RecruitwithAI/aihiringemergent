@@ -321,7 +321,7 @@ IMPORTANT INSTRUCTIONS:
       const errorMsg = err.response?.data ? await err.response.data.text() : err.message;
       toast.error(`Download failed: ${errorMsg}`);
     } finally {
-      setDownloading(true);
+      setDownloading(false);
     }
   };
 
