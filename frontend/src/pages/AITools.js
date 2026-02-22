@@ -303,17 +303,35 @@ IMPORTANT INSTRUCTIONS:
       console.log(`Downloading ${format}: ${filename}, content length: ${content.length}`);
 
       if (format === "txt") {
+        // TXT: Create blob and trigger download directly
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        saveAs(blob, filename);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       } else {
+        // PDF/DOCX: Get from backend
         const res = await axios.post(
           `${API}/ai/download`,
           { content, format, filename },
           { responseType: "blob", withCredentials: true }
         );
         console.log(`Download response received, size: ${res.data.size} bytes`);
-        saveAs(res.data, filename);
+        
+        // Create download link
+        const url = window.URL.createObjectURL(res.data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       }
     } catch (err) {
