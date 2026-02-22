@@ -44,7 +44,7 @@ export default function OutputDisplay({
                 <DropdownMenuTrigger asChild>
                   <button
                     disabled={downloading}
-                    className="flex items-center gap-2 px-4 h-9 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-all"
+                    className="flex items-center gap-2 px-4 h-9 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-all download-button"
                   >
                     {downloading ? (
                       <>
@@ -60,24 +60,24 @@ export default function OutputDisplay({
                     )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 bg-[#12121a] border-white/[0.08]">
+                <DropdownMenuContent align="end" className="w-40 bg-[#12121a] border-white/[0.08] download-dropdown">
                   <DropdownMenuItem
                     onClick={() => onDownload("txt")}
-                    className="text-slate-300 hover:text-white hover:bg-white/[0.06]"
+                    className="text-slate-300 hover:text-white hover:bg-white/[0.06] download-item"
                   >
                     <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Text (.txt)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onDownload("docx")}
-                    className="text-slate-300 hover:text-white hover:bg-white/[0.06]"
+                    className="text-slate-300 hover:text-white hover:bg-white/[0.06] download-item"
                   >
                     <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Word (.docx)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onDownload("pdf")}
-                    className="text-slate-300 hover:text-white hover:bg-white/[0.06]"
+                    className="text-slate-300 hover:text-white hover:bg-white/[0.06] download-item"
                   >
                     <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     PDF (.pdf)
