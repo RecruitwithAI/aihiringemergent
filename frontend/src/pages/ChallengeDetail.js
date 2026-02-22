@@ -221,7 +221,10 @@ export default function ChallengeDetail() {
                           )}
                           <span className="text-xs text-slate-600">{timeAgo(a.created_at)}</span>
                         </div>
-                        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{a.content}</p>
+                        <div 
+                          className="prose prose-invert max-w-none text-slate-400"
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(a.content) }}
+                        />
                       </div>
                     </div>
                   </div>
