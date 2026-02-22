@@ -264,6 +264,111 @@ code {
     color: hsl(160, 75%, 40%) !important;
 }
 
+/* === LIGHT MODE INDIVIDUAL AI TOOL PAGES === */
+[data-theme="light"] .ai-tool-workspace {
+    background: hsl(210, 100%, 97%) !important;
+}
+
+/* Back button */
+[data-theme="light"] .back-button {
+    color: hsl(220, 20%, 45%) !important;
+}
+
+[data-theme="light"] .back-button:hover {
+    color: hsl(220, 40%, 15%) !important;
+}
+
+/* Tool header */
+[data-theme="light"] .tool-header-title {
+    color: hsl(220, 40%, 15%) !important;
+}
+
+[data-theme="light"] .tool-header-subtitle {
+    color: hsl(220, 20%, 45%) !important;
+}
+
+[data-theme="light"] .tool-header-icon {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Tool form cards */
+[data-theme="light"] .tool-form-card {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .tool-form-label {
+    color: hsl(220, 30%, 25%) !important;
+}
+
+[data-theme="light"] .tool-form-textarea {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: hsl(220, 30%, 20%) !important;
+}
+
+[data-theme="light"] .tool-form-textarea::placeholder {
+    color: hsl(220, 15%, 60%) !important;
+}
+
+[data-theme="light"] .tool-form-textarea:focus {
+    border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+[data-theme="light"] .tool-form-hint {
+    color: hsl(220, 15%, 50%) !important;
+}
+
+/* Generate buttons */
+[data-theme="light"] .tool-form-container button {
+    color: white !important; /* Keep button text white for contrast */
+}
+
+/* Output type selector (Search Strategy) */
+[data-theme="light"] .ai-tool-workspace .bg-white\/\[0\.04\] {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .ai-tool-workspace .bg-white\/\[0\.02\] {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .ai-tool-workspace .bg-white\/\[0\.02\]:hover {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* File uploader */
+[data-theme="light"] .ai-tool-workspace .border-white\/\[0\.1\] {
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .ai-tool-workspace .border-white\/\[0\.08\] {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .ai-tool-workspace .border-white\/\[0\.05\] {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Output display */
+[data-theme="light"] .ai-tool-workspace .ai-output {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .ai-tool-workspace .ai-output p,
+[data-theme="light"] .ai-tool-workspace .ai-output div {
+    color: hsl(220, 25%, 30%) !important;
+}
+
+/* History panel (if opened) */
+[data-theme="light"] .ai-tool-workspace [class*="fixed"] [class*="bg-"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
 /* === LIGHT MODE CARD BORDERS & HOVER EFFECTS === */
 /* Add visible borders to cards in light mode for better definition */
 [data-theme="light"] .bg-white\/\[0\.04\],
