@@ -299,43 +299,82 @@ IMPORTANT INSTRUCTIONS:
 
     try {
       const filename = `${selectedTool.label}.${format}`;
-      console.log(`Downloading ${format}: ${filename}, content length: ${content.length}`);
+      console.log(`[DOWNLOAD] Starting download: ${format}, filename: ${filename}, content length: ${content.length}`);
 
       if (format === "txt") {
         // TXT: Create blob and trigger download directly
+        console.log("[DOWNLOAD] Creating TXT blob...");
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        console.log("[DOWNLOAD] Blob created, size:", blob.size);
+        
         const url = window.URL.createObjectURL(blob);
+        console.log("[DOWNLOAD] Object URL created:", url);
+        
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
+        link.style.display = "none";
         document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        console.log("[DOWNLOAD] Link appended to body, triggering click...");
+        
+        // Force click with timeout
+        setTimeout(() => {
+          link.click();
+          console.log("[DOWNLOAD] Click triggered");
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            console.log("[DOWNLOAD] Cleanup complete");
+          }, 100);
+        }, 0);
+        
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       } else {
         // PDF/DOCX: Get from backend
+        console.log("[DOWNLOAD] Requesting from backend...");
         const res = await axios.post(
           `${API}/ai/download`,
           { content, format, filename },
           { responseType: "blob", withCredentials: true }
         );
-        console.log(`Download response received, size: ${res.data.size} bytes`);
+        console.log(`[DOWNLOAD] Response received, size: ${res.data.size} bytes, type: ${res.data.type}`);
+        
+        // Verify we got a blob
+        if (!(res.data instanceof Blob)) {
+          throw new Error("Response is not a Blob");
+        }
         
         // Create download link
         const url = window.URL.createObjectURL(res.data);
+        console.log("[DOWNLOAD] Object URL created:", url);
+        
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
+        link.style.display = "none";
         document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        console.log("[DOWNLOAD] Link appended, triggering click...");
+        
+        // Force click with timeout
+        setTimeout(() => {
+          link.click();
+          console.log("[DOWNLOAD] Click triggered");
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            console.log("[DOWNLOAD] Cleanup complete");
+          }, 100);
+        }, 0);
+        
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       }
     } catch (err) {
-      console.error("Download error:", err);
-      const errorMsg = err.response?.data ? await err.response.data.text() : err.message;
+      console.error("[DOWNLOAD] Error:", err);
+      console.error("[DOWNLOAD] Error stack:", err.stack);
+      let errorMsg = err.message;
+      if (err.response?.data instanceof Blob) {
+        errorMsg = await err.response.data.text();
+      }
       toast.error(`Download failed: ${errorMsg}`);
     } finally {
       setDownloading(false);
