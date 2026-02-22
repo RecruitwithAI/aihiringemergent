@@ -253,11 +253,17 @@ IMPORTANT INSTRUCTIONS:
     }
 
     const fullContext = [context, ...fileContextParts].filter(Boolean).join("\n\n");
+    
+    // Determine the actual tool type to send to backend
+    let toolType = selectedTool.id;
+    if (selectedTool.id === "search-strategy" && outputType === "target-list") {
+      toolType = "search-strategy-targets";
+    }
 
     try {
       const res = await axios.post(
         `${API}/ai/generate`,
-        { tool_type: selectedTool.id, prompt, context: fullContext },
+        { tool_type: toolType, prompt, context: fullContext },
         { withCredentials: true }
       );
       setResult(res.data.response);
