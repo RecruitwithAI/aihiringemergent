@@ -461,13 +461,78 @@ def _parse_md_to_pdf(content: str) -> bytes:
 
     # Page width minus margins
     effective_width = 210 - 30  # A4 width (210mm) minus left+right margins (15+15)
-
-    for line in content.split("\n"):
-        s = line.strip()
+    
+    lines = content.split("\n")
+    i = 0
+    
+    while i < len(lines):
+        s = lines[i].strip()
         
-        # Skip truly empty lines
+        # Check if this is a table (markdown table starts with |)
+        if s.startswith("|") and "|" in s:
+            # Collect all table lines
+            table_lines = []
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                table_lines.append(lines[i].strip())
+                i += 1
+            
+            # Parse table
+            if len(table_lines) >= 2:
+                # Parse header
+                header = [cell.strip() for cell in table_lines[0].split("|")[1:-1]]
+                
+                # Skip separator line (the one with ---)
+                data_lines = table_lines[2:] if len(table_lines) > 2 else []
+                
+                num_cols = len(header)
+                if num_cols > 0:
+                    # Calculate column width
+                    col_width = effective_width / num_cols
+                    
+                    # Add table header
+                    pdf.set_font("Helvetica", "B", 9)
+                    pdf.set_fill_color(200, 200, 200)
+                    
+                    for header_text in header:
+                        pdf.cell(col_width, 7, safe(header_text), border=1, align='L', fill=True)
+                    pdf.ln()
+                    
+                    # Add data rows
+                    pdf.set_font("Helvetica", "", 8)
+                    for line in data_lines:
+                        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+                        
+                        # Calculate max height needed for this row
+                        max_lines = 1
+                        for cell_text in cells[:num_cols]:
+                            # Rough estimate: 35 chars per line for col_width
+                            chars_per_line = int(col_width * 2.5)
+                            lines_needed = max(1, len(cell_text) // chars_per_line + 1)
+                            max_lines = max(max_lines, lines_needed)
+                        
+                        row_height = max(7, max_lines * 4)
+                        
+                        # Store starting Y position
+                        y_start = pdf.get_y()
+                        x_start = pdf.get_x()
+                        
+                        for col_idx, cell_text in enumerate(cells[:num_cols]):
+                            x_pos = x_start + (col_idx * col_width)
+                            pdf.set_xy(x_pos, y_start)
+                            
+                            # Use multi_cell for text wrapping within cell
+                            pdf.multi_cell(col_width, 4, safe(cell_text), border=1, align='L')
+                        
+                        # Move to next row
+                        pdf.set_xy(x_start, y_start + row_height)
+                    
+                    pdf.ln(5)  # Add spacing after table
+            continue
+        
+        # Regular line processing (existing logic)
         if not s:
             pdf.ln(3)
+            i += 1
             continue
         
         # Remove markdown bold markers for display
@@ -476,6 +541,7 @@ def _parse_md_to_pdf(content: str) -> bytes:
         # Skip lines that are just special characters
         if not clean or len(clean.strip()) == 0:
             pdf.ln(2)
+            i += 1
             continue
 
         # Process different line types
@@ -541,6 +607,8 @@ def _parse_md_to_pdf(content: str) -> bytes:
             if text:
                 pdf.multi_cell(effective_width, 5, text, align='L')
                 pdf.ln(1)
+        
+        i += 1
 
     return bytes(pdf.output())
 
