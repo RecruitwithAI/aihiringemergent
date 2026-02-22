@@ -3,17 +3,14 @@ import { useAuth, API } from "@/App";
 import axios from "axios";
 import { toast } from "sonner";
 import { saveAs } from "file-saver";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Brain, FileText, Search, UserSearch, BookUser, Building2,
-  ArrowLeft, Sparkles, Download, Edit3, Check, X, Upload,
-  File as FileIcon, ChevronDown, Loader2, Eye, EyeOff, History, Clock
-} from "lucide-react";
+import { ArrowLeft, FileText, Search, UserSearch, BookUser, Building2 } from "lucide-react";
+
+// Import refactored components
+import ToolSelector from "@/components/ai-tools/ToolSelector";
+import ToolForm from "@/components/ai-tools/ToolForm";
+import FileUploader from "@/components/ai-tools/FileUploader";
+import OutputDisplay from "@/components/ai-tools/OutputDisplay";
+import HistoryPanel from "@/components/ai-tools/HistoryPanel";
 
 const TOOLS = [
   { id: "jd-builder",        icon: FileText,   label: "JD Builder",       color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/20",  prompt: "Role title, seniority, key responsibilities..." },
@@ -23,11 +20,7 @@ const TOOLS = [
   { id: "client-research",   icon: Building2,  label: "Client Research",  color: "text-emerald-400",bg: "bg-emerald-500/10",border: "border-emerald-500/20",prompt: "Company name, industry, HQ location..." },
 ];
 
-const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 const CHUNK_SIZE = 1 * 1024 * 1024; // 1 MB
-
-const ACCEPTED = ".txt,.pdf,.doc,.docx,.mp3,.wav,.m4a,.ogg,.aac,.flac";
-const ACCEPTED_LABELS = "PDF, Word (.doc/.docx), TXT, or Audio (MP3/WAV/M4A)";
 
 export default function AITools() {
   const { user } = useAuth();
@@ -38,13 +31,13 @@ export default function AITools() {
   const [generating, setGenerating] = useState(false);
 
   // Multi-file upload state (for context)
-  const [uploadedFiles, setUploadedFiles] = useState([]); // [{ name, charCount, extractedText }]
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [expandedFileIdx, setExpandedFileIdx] = useState(null);
 
   // Output format file upload state (for Candidate Dossier)
-  const [outputFormatFile, setOutputFormatFile] = useState(null); // { name, charCount, extractedText }
+  const [outputFormatFile, setOutputFormatFile] = useState(null);
   const [uploadingFormat, setUploadingFormat] = useState(false);
   const [formatUploadProgress, setFormatUploadProgress] = useState(0);
 
@@ -63,10 +56,14 @@ export default function AITools() {
 
   const selectTool = (tool) => {
     setSelectedTool(tool);
-    setPrompt(""); setContext(""); setResult("");
+    setPrompt("");
+    setContext("");
+    setResult("");
     setUploadedFiles([]);
     setOutputFormatFile(null);
-    setIsEditing(false); setEditBuffer(""); setUploadProgress(0);
+    setIsEditing(false);
+    setEditBuffer("");
+    setUploadProgress(0);
     setExpandedFileIdx(null);
   };
 
@@ -81,8 +78,7 @@ export default function AITools() {
     setLoadingHistory(true);
     try {
       const res = await axios.get(`${API}/ai/history`, { withCredentials: true });
-      // Filter history for current tool
-      const filtered = res.data.filter(h => h.tool_type === selectedTool.id);
+      const filtered = res.data.filter((h) => h.tool_type === selectedTool.id);
       setHistory(filtered);
     } catch (err) {
       console.error("Failed to load history:", err);
@@ -98,41 +94,102 @@ export default function AITools() {
     toast.success("Loaded from history");
   };
 
-  const timeAgo = (dateStr) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    return `${days}d ago`;
+  // ── File Processing (Chunked Upload) ──
+  const processFile = async (file) => {
+    const uploadId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+    try {
+      // Upload chunks
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        const formData = new FormData();
+        formData.append("chunk", chunk);
+        formData.append("upload_id", uploadId);
+        formData.append("chunk_index", i.toString());
+        formData.append("total_chunks", totalChunks.toString());
+        formData.append("filename", file.name);
+
+        await axios.post(`${API}/ai/upload-chunk`, formData, { withCredentials: true });
+
+        const progress = Math.round(((i + 1) / totalChunks) * 100);
+        setUploadProgress(progress);
+        setFormatUploadProgress(progress);
+      }
+
+      // Extract file
+      const res = await axios.post(
+        `${API}/ai/extract-file`,
+        { upload_id: uploadId, filename: file.name },
+        { withCredentials: true }
+      );
+
+      return {
+        name: file.name,
+        charCount: res.data.char_count,
+        extractedText: res.data.extracted_text,
+      };
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "File processing failed");
+      return null;
+    }
   };
 
-  const removeFile = (index) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-    if (expandedFileIdx === index) setExpandedFileIdx(null);
-    else if (expandedFileIdx > index) setExpandedFileIdx(expandedFileIdx - 1);
-  };
+  // ── Context File Upload ──
+  const handleFilesDrop = async (files) => {
+    if (!files || files.length === 0) return;
 
-  const clearAllFiles = () => {
-    setUploadedFiles([]);
-    setExpandedFileIdx(null);
+    const validFiles = [];
+    for (const file of files) {
+      const ext = file.name.split(".").pop().toLowerCase();
+      const allowed = ["txt", "pdf", "doc", "docx", "mp3", "wav", "m4a", "ogg", "aac", "flac"];
+
+      if (!allowed.includes(ext)) {
+        toast.error(`Unsupported type: .${ext}`);
+        continue;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} is too large. Max 10 MB.`);
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    for (const file of validFiles) {
+      const processed = await processFile(file);
+      if (processed) {
+        setUploadedFiles((prev) => [...prev, processed]);
+      }
+    }
+
+    setUploading(false);
+    setUploadProgress(0);
+    toast.success(`${validFiles.length} file(s) uploaded successfully`);
   };
 
   // ── Output Format File Upload (for Candidate Dossier) ──
   const handleFormatFileDrop = async (files) => {
     if (!files || files.length === 0) return;
-    
+
     const file = files[0]; // Only one format file allowed
     const ext = file.name.split(".").pop().toLowerCase();
-    const allowed = ["txt","pdf","doc","docx"];
-    
+    const allowed = ["txt", "pdf", "doc", "docx"];
+
     if (!allowed.includes(ext)) {
       toast.error(`Unsupported type: .${ext}. For format, use: PDF, Word, or TXT`);
       return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) {
       toast.error(`Format file too large. Max 10 MB.`);
       return;
@@ -140,104 +197,33 @@ export default function AITools() {
 
     setUploadingFormat(true);
     setFormatUploadProgress(0);
-    
+
     const processed = await processFile(file);
-    
+
     if (processed) {
       setOutputFormatFile(processed);
       toast.success("Output format uploaded successfully");
     }
-    
+
     setUploadingFormat(false);
     setFormatUploadProgress(0);
   };
 
-  const removeFormatFile = () => {
-    setOutputFormatFile(null);
-  };
-
-  // ── Chunked Upload for single file ──
-  const processFile = async (file) => {
-    const ext = file.name.split(".").pop().toLowerCase();
-    const allowed = ["txt","pdf","doc","docx","mp3","wav","m4a","ogg","aac","flac"];
-    if (!allowed.includes(ext)) {
-      toast.error(`Unsupported type: .${ext}. Allowed: ${allowed.join(", ")}`);
-      return null;
-    }
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error(`${file.name} is too large. Max 25 MB.`);
-      return null;
-    }
-
-    const uploadId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-
-    try {
-      for (let i = 0; i < totalChunks; i++) {
-        const slice = file.slice(i * CHUNK_SIZE, Math.min((i + 1) * CHUNK_SIZE, file.size));
-        const fd = new FormData();
-        fd.append("chunk", slice, file.name);
-        fd.append("upload_id", uploadId);
-        fd.append("chunk_index", String(i));
-        fd.append("total_chunks", String(totalChunks));
-        fd.append("filename", file.name);
-        await axios.post(`${API}/ai/upload-chunk`, fd, { withCredentials: true });
-      }
-
-      const res = await axios.post(`${API}/ai/extract-file`, { upload_id: uploadId, filename: file.name }, { withCredentials: true });
-      return {
-        name: file.name,
-        charCount: res.data.char_count,
-        extractedText: res.data.extracted_text,
-      };
-    } catch (err) {
-      toast.error(`Failed to process ${file.name}: ${err.response?.data?.detail || "Unknown error"}`);
-      return null;
-    }
-  };
-
-  // ── Handle multiple file drops ──
-  const handleFileDrop = async (files) => {
-    if (!files || files.length === 0) return;
-    
-    const fileArray = Array.from(files);
-    const maxFiles = 5;
-    
-    if (uploadedFiles.length + fileArray.length > maxFiles) {
-      toast.error(`You can upload up to ${maxFiles} files. You have ${uploadedFiles.length} already.`);
-      return;
-    }
-
-    setUploading(true);
-    setUploadProgress(0);
-
-    const results = [];
-    for (let i = 0; i < fileArray.length; i++) {
-      setUploadProgress(Math.round(((i) / fileArray.length) * 80));
-      const processed = await processFile(fileArray[i]);
-      if (processed) results.push(processed);
-      setUploadProgress(Math.round(((i + 1) / fileArray.length) * 100));
-    }
-
-    if (results.length > 0) {
-      setUploadedFiles(prev => [...prev, ...results]);
-      toast.success(`${results.length} file(s) processed successfully`);
-    }
-
-    setUploading(false);
-    setUploadProgress(0);
-  };
-
   // ── Generate ──
   const handleGenerate = async () => {
-    if (!prompt.trim()) { toast.error("Please enter a prompt first"); return; }
-    setGenerating(true); setResult(""); setIsEditing(false);
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt first");
+      return;
+    }
+    setGenerating(true);
+    setResult("");
+    setIsEditing(false);
 
     // Combine all uploaded file contents for context
-    const fileContextParts = uploadedFiles.map((f, i) => 
-      `--- Context File ${i + 1}: ${f.name} ---\n${f.extractedText}`
+    const fileContextParts = uploadedFiles.map(
+      (f, i) => `--- Context File ${i + 1}: ${f.name} ---\n${f.extractedText}`
     );
-    
+
     // Add output format if provided (for Candidate Dossier) - with STRONG emphasis
     if (outputFormatFile && selectedTool.id === "dossier") {
       fileContextParts.unshift(
@@ -261,11 +247,15 @@ IMPORTANT INSTRUCTIONS:
 - Preserve any special structure or flow patterns from the sample`
       );
     }
-    
+
     const fullContext = [context, ...fileContextParts].filter(Boolean).join("\n\n");
 
     try {
-      const res = await axios.post(`${API}/ai/generate`, { tool_type: selectedTool.id, prompt, context: fullContext }, { withCredentials: true });
+      const res = await axios.post(
+        `${API}/ai/generate`,
+        { tool_type: selectedTool.id, prompt, context: fullContext },
+        { withCredentials: true }
+      );
       setResult(res.data.response);
       // Refresh history after generating
       fetchHistory();
@@ -277,485 +267,171 @@ IMPORTANT INSTRUCTIONS:
   };
 
   // ── Edit ──
-  const startEdit = () => { setEditBuffer(result); setIsEditing(true); };
-  const saveEdit  = () => { setResult(editBuffer); setIsEditing(false); };
-  const cancelEdit= () => { setIsEditing(false); };
+  const startEdit = () => {
+    setEditBuffer(result);
+    setIsEditing(true);
+  };
+  const saveEdit = () => {
+    setResult(editBuffer);
+    setIsEditing(false);
+  };
+  const cancelEdit = () => {
+    setIsEditing(false);
+  };
 
   // ── Download ──
   const handleDownload = async (format) => {
     const content = isEditing ? editBuffer : result;
     if (!content) return;
     setDownloading(true);
-    
+
     try {
       const filename = `${selectedTool.label}.${format}`;
-      
+
       if (format === "txt") {
-        // For text, create blob directly
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
         saveAs(blob, filename);
       } else {
-        // For PDF/DOCX, fetch from server
-        const res = await axios.post(`${API}/ai/download`,
-          { content, format, filename: selectedTool.label },
-          { withCredentials: true, responseType: "blob" }
+        const res = await axios.post(
+          `${API}/ai/download`,
+          { content, format, filename },
+          { responseType: "blob", withCredentials: true }
         );
         saveAs(res.data, filename);
       }
-      toast.success(`Downloaded ${filename}`);
+      toast.success(`Downloaded as ${format.toUpperCase()}`);
     } catch (err) {
-      console.error("Download error:", err);
-      toast.error("Download failed - please try again");
+      toast.error("Download failed");
     } finally {
       setDownloading(false);
     }
   };
 
-  // ── Markdown Render (basic) ──
-  const renderMarkdown = (text) => {
-    const lines = text.split("\n");
-    return lines.map((line, i) => {
-      if (line.trim() === "---") return <hr key={i} className="border-white/[0.10] my-3" />;
-      if (line.startsWith("### ")) return <h3 key={i} className="text-base font-semibold text-white mt-4 mb-1">{line.slice(4)}</h3>;
-      if (line.startsWith("## "))  return <h2 key={i} className="text-lg font-semibold text-white mt-5 mb-1.5">{line.slice(3)}</h2>;
-      if (line.startsWith("# "))   return <h1 key={i} className="text-xl font-bold text-white mt-6 mb-2">{line.slice(2)}</h1>;
-      if (line.startsWith("- ") || line.startsWith("* ")) {
-        return <li key={i} className="text-slate-300 text-sm ml-4 list-disc">{parseBold(line.slice(2))}</li>;
-      }
-      if (!line.trim()) return <br key={i} />;
-      return <p key={i} className="text-slate-300 text-sm leading-relaxed">{parseBold(line)}</p>;
-    });
+  const removeFile = (index) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    if (expandedFileIdx === index) setExpandedFileIdx(null);
+    else if (expandedFileIdx > index) setExpandedFileIdx(expandedFileIdx - 1);
   };
 
-  const parseBold = (text) => {
-    const parts = text.split(/\*\*(.*?)\*\*/);
-    return parts.map((p, i) => i % 2 === 1 ? <strong key={i} className="text-white font-semibold">{p}</strong> : p);
+  const clearAllFiles = () => {
+    setUploadedFiles([]);
+    setExpandedFileIdx(null);
   };
 
-  // ── Tool Grid ──
+  const toggleFileExpand = (idx) => {
+    setExpandedFileIdx(expandedFileIdx === idx ? null : idx);
+  };
+
+  // Show tool selector if no tool selected
   if (!selectedTool) {
-    return (
-      <div className="min-h-screen bg-background" data-testid="ai-tools-page">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-24">
-          <div className="mb-8">
-            <div className="flex items-center gap-2 text-xs text-blue-400/60 uppercase tracking-widest mb-2">
-              <Brain className="w-3 h-3" strokeWidth={1.5} /> AI Tools
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold font-[Lexend] text-white">AI Tools</h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1">Choose a tool to get started</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {TOOLS.map((tool) => (
-              <button
-                key={tool.id}
-                onClick={() => selectTool(tool)}
-                className={`${CARD} p-5 sm:p-6 text-left hover:border-blue-500/30 hover:bg-white/[0.06] transition-all duration-300 group`}
-                data-testid={`tool-card-${tool.id}`}
-              >
-                <div className={`w-10 h-10 rounded-xl ${tool.bg} border ${tool.border} flex items-center justify-center mb-3 sm:mb-4`}>
-                  <tool.icon className={`w-5 h-5 ${tool.color}`} strokeWidth={1.5} />
-                </div>
-                <p className="text-sm sm:text-base font-semibold text-white font-[Lexend]">{tool.label}</p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  {tool.id === "jd-builder" ? "Build job descriptions — upload docs for context" :
-                   tool.id === "search-strategy" ? "Boolean strings, channel maps, targeting" :
-                   tool.id === "candidate-research" ? "Research background & fit" :
-                   tool.id === "dossier" ? "Compile candidate profile — upload docs for context" :
-                   "Research company intel"}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ToolSelector tools={TOOLS} onSelectTool={selectTool} />;
   }
 
   const supportsFileUpload = selectedTool.id === "jd-builder" || selectedTool.id === "dossier";
 
   return (
-    <div className="min-h-screen bg-background" data-testid="ai-tool-detail">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-
-        {/* Back */}
+    <div className="min-h-screen bg-[#090914] px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Back Button */}
         <button
-          onClick={() => setSelectedTool(null)}
-          className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-6 transition-colors"
-          data-testid="back-to-tools"
+          onClick={() => selectTool(null)}
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> All Tools
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={1.5} />
+          <span className="text-sm font-medium">Back to Tools</span>
         </button>
 
-        {/* Header with History Button */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}>
-              <selectedTool.icon className={`w-5 h-5 ${selectedTool.color}`} strokeWidth={1.5} />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-white font-[Lexend]">{selectedTool.label}</h1>
-              <p className="text-xs text-slate-500">Powered by GPT-5.2</p>
-            </div>
-          </div>
-          
-          {/* History Toggle Button */}
-          <button
-            onClick={() => setHistoryOpen(!historyOpen)}
-            className={`flex items-center gap-2 px-4 h-9 rounded-full border text-sm font-medium transition-all ${
-              historyOpen
-                ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                : "bg-white/[0.05] border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15]"
-            }`}
-            data-testid="history-toggle-btn"
+        {/* Tool Header */}
+        <div className="flex items-center gap-4">
+          <div
+            className={`w-14 h-14 rounded-xl ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}
           >
-            <History className="w-4 h-4" strokeWidth={1.5} />
-            History {history.length > 0 && `(${history.length})`}
-          </button>
+            <selectedTool.icon className={`w-7 h-7 ${selectedTool.color}`} strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-white font-[Lexend]">
+              {selectedTool.label}
+            </h1>
+            <p className="text-slate-400 text-sm sm:text-base">
+              {selectedTool.id === "jd-builder" && "Create professional job descriptions"}
+              {selectedTool.id === "search-strategy" && "Develop targeted candidate search plans"}
+              {selectedTool.id === "candidate-research" && "Analyze candidate backgrounds and fit"}
+              {selectedTool.id === "dossier" && "Compile candidate profile — upload docs for context"}
+              {selectedTool.id === "client-research" && "Research companies and stakeholders"}
+            </p>
+          </div>
         </div>
+
+        {/* Tool Form */}
+        <ToolForm
+          tool={selectedTool}
+          prompt={prompt}
+          context={context}
+          generating={generating}
+          onPromptChange={setPrompt}
+          onContextChange={setContext}
+          onGenerate={handleGenerate}
+          onShowHistory={() => setHistoryOpen(true)}
+          hasHistory={history.length > 0}
+        />
+
+        {/* File Uploads */}
+        {supportsFileUpload && (
+          <FileUploader
+            files={uploadedFiles}
+            uploading={uploading}
+            uploadProgress={uploadProgress}
+            expandedFileIdx={expandedFileIdx}
+            onFilesDrop={handleFilesDrop}
+            onRemoveFile={removeFile}
+            onClearAll={clearAllFiles}
+            onToggleExpand={toggleFileExpand}
+          />
+        )}
+
+        {/* Output Format File Upload (Candidate Dossier only) */}
+        {selectedTool.id === "dossier" && (
+          <FileUploader
+            files={outputFormatFile ? [outputFormatFile] : []}
+            uploading={uploadingFormat}
+            uploadProgress={formatUploadProgress}
+            expandedFileIdx={null}
+            onFilesDrop={handleFormatFileDrop}
+            onRemoveFile={() => setOutputFormatFile(null)}
+            onClearAll={() => setOutputFormatFile(null)}
+            onToggleExpand={() => {}}
+            acceptedTypes=".txt,.pdf,.doc,.docx"
+            acceptedLabels="PDF, Word (.doc/.docx), or TXT"
+            title="Upload Sample Output Format"
+            subtitle="Provide a sample format for the dossier to follow"
+            multiple={false}
+            maxSizeMB={10}
+          />
+        )}
+
+        {/* Output Display */}
+        <OutputDisplay
+          result={result}
+          isEditing={isEditing}
+          editBuffer={editBuffer}
+          downloading={downloading}
+          toolColor={selectedTool.color}
+          onStartEdit={startEdit}
+          onSaveEdit={saveEdit}
+          onCancelEdit={cancelEdit}
+          onEditBufferChange={setEditBuffer}
+          onDownload={handleDownload}
+        />
 
         {/* History Panel */}
-        {historyOpen && (
-          <div className={`${CARD} p-5 mb-5 max-h-[400px] overflow-y-auto`} data-testid="history-panel">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-medium text-white">Recent Generations</p>
-              <button
-                onClick={() => setHistoryOpen(false)}
-                className="text-slate-500 hover:text-slate-300 transition-colors"
-              >
-                <X className="w-4 h-4" strokeWidth={1.5} />
-              </button>
-            </div>
-            
-            {loadingHistory ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 text-blue-400 animate-spin" strokeWidth={1.5} />
-              </div>
-            ) : history.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-8">No history yet. Generate something to get started!</p>
-            ) : (
-              <div className="space-y-2">
-                {history.map((item, idx) => (
-                  <button
-                    key={item.history_id}
-                    onClick={() => loadFromHistory(item)}
-                    className="w-full text-left p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all group"
-                    data-testid={`history-item-${idx}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white font-medium line-clamp-1 group-hover:text-blue-400 transition-colors">
-                          {item.prompt}
-                        </p>
-                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                          {item.response.slice(0, 100)}...
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
-                        <Clock className="w-3 h-3" strokeWidth={1.5} />
-                        {timeAgo(item.created_at)}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div className={`${CARD} p-6 mb-5`}>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-slate-400 text-xs uppercase tracking-wider mb-2 block">Prompt</Label>
-              <Textarea
-                data-testid="tool-prompt-input"
-                placeholder={selectedTool.prompt}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={4}
-                className="bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 resize-none"
-              />
-            </div>
-
-            <div>
-              <Label className="text-slate-400 text-xs uppercase tracking-wider mb-2 block">Additional Context (optional)</Label>
-              <Input
-                data-testid="tool-context-input"
-                placeholder="Any extra context, constraints, tone preferences..."
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                className="bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50"
-              />
-            </div>
-
-            {/* Multi-File Upload — JD Builder and Dossier */}
-            {supportsFileUpload && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-slate-400 text-xs uppercase tracking-wider">
-                    Upload Files for Context (max 5)
-                  </Label>
-                  {uploadedFiles.length > 0 && (
-                    <button
-                      onClick={clearAllFiles}
-                      className="text-xs text-slate-500 hover:text-red-400 transition-colors"
-                      data-testid="clear-all-files"
-                    >
-                      Clear all
-                    </button>
-                  )}
-                </div>
-
-                {/* Uploaded files list */}
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-2 mb-3" data-testid="uploaded-files-list">
-                    {uploadedFiles.map((file, idx) => (
-                      <div key={idx} className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className={`w-8 h-8 rounded-lg ${selectedTool.bg} border ${selectedTool.border} flex items-center justify-center`}>
-                              <FileIcon className={`w-4 h-4 ${selectedTool.color}`} strokeWidth={1.5} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-white truncate max-w-[200px]">{file.name}</p>
-                              <p className="text-xs text-slate-500">{file.charCount.toLocaleString()} chars</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setExpandedFileIdx(expandedFileIdx === idx ? null : idx)}
-                              className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1 transition-colors"
-                              data-testid={`toggle-preview-${idx}`}
-                            >
-                              {expandedFileIdx === idx ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                              {expandedFileIdx === idx ? "Hide" : "Preview"}
-                            </button>
-                            <button
-                              onClick={() => removeFile(idx)}
-                              className="text-slate-600 hover:text-red-400 transition-colors"
-                              data-testid={`remove-file-${idx}`}
-                            >
-                              <X className="w-4 h-4" strokeWidth={1.5} />
-                            </button>
-                          </div>
-                        </div>
-                        {expandedFileIdx === idx && (
-                          <div className="mt-3 bg-white/[0.03] border border-white/[0.06] rounded-lg p-3 max-h-32 overflow-y-auto">
-                            <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
-                              {file.extractedText.slice(0, 500)}{file.charCount > 500 ? "..." : ""}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Drop zone */}
-                {uploadedFiles.length < 5 && (
-                  <div
-                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploading ? `${selectedTool.border} ${selectedTool.bg}` : "border-white/[0.10] hover:border-white/[0.20] hover:bg-white/[0.04]"}`}
-                    onClick={() => !uploading && fileInputRef.current?.click()}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => { e.preventDefault(); handleFileDrop(e.dataTransfer.files); }}
-                    data-testid="file-upload-zone"
-                  >
-                    {uploading ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 className={`w-6 h-6 ${selectedTool.color} animate-spin`} strokeWidth={1.5} />
-                        <p className={`text-sm ${selectedTool.color} font-medium`}>Processing files... {uploadProgress}%</p>
-                        <div className="w-full max-w-[200px] bg-white/[0.06] rounded-full h-1.5 overflow-hidden mt-1">
-                          <div className={`h-1.5 rounded-full transition-all duration-300 ${selectedTool.id === "dossier" ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${uploadProgress}%` }} />
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload className="w-6 h-6 text-slate-600 mx-auto mb-2" strokeWidth={1.5} />
-                        <p className="text-sm text-slate-400 font-medium">
-                          Drag & drop or <span className={selectedTool.color}>click to upload</span>
-                        </p>
-                        <p className="text-xs text-slate-600 mt-1">{ACCEPTED_LABELS} · Max 25 MB each</p>
-                        {uploadedFiles.length > 0 && (
-                          <p className="text-xs text-slate-500 mt-2">{uploadedFiles.length}/5 files uploaded</p>
-                        )}
-                      </>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept={ACCEPTED}
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleFileDrop(e.target.files)}
-                      data-testid="file-input"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Output Format Upload (Candidate Dossier Only) */}
-            {selectedTool.id === "dossier" && (
-              <div className="mt-5">
-                <Label className="text-sm text-slate-400 mb-2 block">
-                  Output Format (Optional)
-                </Label>
-                <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-                  Upload a sample output format that you would like to use. Alternatively, leave blank to use tool generated format.
-                </p>
-
-                {/* Display uploaded format file */}
-                {outputFormatFile && (
-                  <div className="mb-3">
-                    <div className={`${CARD} p-4 flex items-center justify-between`}>
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-                          <FileIcon className="w-4 h-4 text-amber-400" strokeWidth={1.5} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{outputFormatFile.name}</p>
-                          <p className="text-xs text-slate-500">{outputFormatFile.charCount.toLocaleString()} characters</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={removeFormatFile}
-                        className="ml-2 p-2 rounded-lg hover:bg-white/[0.06] text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
-                        data-testid="remove-format-file-btn"
-                      >
-                        <X className="w-4 h-4" strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Format file drop zone */}
-                {!outputFormatFile && (
-                  <div
-                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 cursor-pointer ${uploadingFormat ? "border-amber-500/30 bg-amber-500/10" : "border-white/[0.10] hover:border-amber-500/30 hover:bg-white/[0.04]"}`}
-                    onClick={() => !uploadingFormat && formatFileInputRef.current?.click()}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => { e.preventDefault(); handleFormatFileDrop(e.dataTransfer.files); }}
-                    data-testid="format-file-upload-zone"
-                  >
-                    {uploadingFormat ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-6 h-6 text-amber-400 animate-spin" strokeWidth={1.5} />
-                        <p className="text-sm text-amber-400 font-medium">Processing format file...</p>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload className="w-6 h-6 text-slate-600 mx-auto mb-2" strokeWidth={1.5} />
-                        <p className="text-sm text-slate-400 font-medium">
-                          Drag & drop or <span className="text-amber-400">click to upload</span>
-                        </p>
-                        <p className="text-xs text-slate-600 mt-1">PDF, Word, or TXT · Max 10 MB</p>
-                      </>
-                    )}
-                    <input
-                      ref={formatFileInputRef}
-                      type="file"
-                      accept=".txt,.pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={(e) => handleFormatFileDrop(e.target.files)}
-                      data-testid="format-file-input"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-
-          <button
-            onClick={handleGenerate}
-            disabled={generating || !prompt.trim()}
-            className="mt-5 flex items-center gap-2 px-6 h-10 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
-            data-testid="generate-btn"
-          >
-            {generating ? <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
-            {generating ? "Generating..." : "Generate"}
-          </button>
-        </div>
-
-        {/* Result Area */}
-        {result && (
-          <div className={`${CARD} p-6`} data-testid="ai-result">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-slate-500 uppercase tracking-widest">Generated Output</p>
-              <div className="flex items-center gap-2">
-
-                {/* Edit / Save / Cancel */}
-                {!isEditing ? (
-                  <button
-                    onClick={startEdit}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-400 hover:text-white text-xs font-medium transition-all"
-                    data-testid="edit-btn"
-                  >
-                    <Edit3 className="w-3 h-3" strokeWidth={1.5} /> Edit
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={saveEdit}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all"
-                      data-testid="save-edit-btn"
-                    >
-                      <Check className="w-3 h-3" strokeWidth={2} /> Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-500 hover:text-white text-xs transition-all"
-                      data-testid="cancel-edit-btn"
-                    >
-                      <X className="w-3 h-3" strokeWidth={2} /> Cancel
-                    </button>
-                  </>
-                )}
-
-                {/* Download Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      disabled={downloading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-400 hover:text-white text-xs font-medium transition-all disabled:opacity-50"
-                      data-testid="download-btn"
-                    >
-                      {downloading ? <Loader2 className="w-3 h-3 animate-spin" strokeWidth={1.5} /> : <Download className="w-3 h-3" strokeWidth={1.5} />}
-                      Download <ChevronDown className="w-3 h-3" strokeWidth={2} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
-                    <DropdownMenuItem onClick={() => handleDownload("docx")} data-testid="download-docx">
-                      <FileText className="w-4 h-4 mr-2 text-blue-400" strokeWidth={1.5} /> Word (.docx)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload("pdf")} data-testid="download-pdf">
-                      <FileIcon className="w-4 h-4 mr-2 text-red-400" strokeWidth={1.5} /> PDF
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload("txt")} data-testid="download-txt">
-                      <FileText className="w-4 h-4 mr-2 text-slate-400" strokeWidth={1.5} /> Text (.txt)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-              </div>
-            </div>
-
-            {isEditing ? (
-              <Textarea
-                data-testid="edit-textarea"
-                value={editBuffer}
-                onChange={(e) => setEditBuffer(e.target.value)}
-                rows={20}
-                className="bg-white/[0.03] border-white/[0.10] text-slate-200 text-sm font-mono resize-y focus-visible:border-blue-500/50"
-              />
-            ) : (
-              <div className="prose-sm prose-invert max-w-none space-y-1" data-testid="result-content">
-                {renderMarkdown(result)}
-              </div>
-            )}
-          </div>
-        )}
-
+        <HistoryPanel
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          history={history}
+          loading={loadingHistory}
+          onLoadItem={loadFromHistory}
+          toolLabel={selectedTool.label}
+        />
       </div>
     </div>
   );
