@@ -271,6 +271,27 @@ code {
     color: hsl(217, 91%, 40%) !important;
 }
 
+/* Ensure all Radix UI dropdown components work in light mode */
+[data-theme="light"] [data-radix-popper-content-wrapper] {
+    z-index: 9999;
+}
+
+[data-theme="light"] .radix-dropdown-menu-content,
+[data-theme="light"] [data-radix-dropdown-menu-content] > div {
+    background-color: white !important;
+}
+
+/* Fix any remaining shadcn/ui dropdown items */
+[data-theme="light"] [cmdk-item],
+[data-theme="light"] .cmdk-item {
+    color: hsl(220, 40%, 10%) !important;
+}
+
+[data-theme="light"] [cmdk-item]:hover,
+[data-theme="light"] .cmdk-item:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
 /* Dark scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
