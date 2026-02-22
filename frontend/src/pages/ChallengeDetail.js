@@ -153,6 +153,27 @@ export default function ChallengeDetail() {
                 <span className="flex items-center gap-1 text-xs text-slate-600"><Clock className="w-3 h-3" strokeWidth={1.5} /> {timeAgo(challenge.created_at)}</span>
               </div>
               <p className="text-slate-400 mt-4 leading-relaxed whitespace-pre-wrap">{challenge.description}</p>
+              
+              {/* Category Badge */}
+              {challenge.category && (() => {
+                const categoryStyle = getCategoryStyle(challenge.category);
+                return (
+                  <div className="mt-3">
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${categoryStyle.bg} ${categoryStyle.color} border ${categoryStyle.border}`}>
+                      {challenge.category}
+                    </span>
+                  </div>
+                );
+              })()}
+              
+              {/* Pinned Badge */}
+              {challenge.pinned && (
+                <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+                  <Pin className="w-3 h-3 text-yellow-400" strokeWidth={2} />
+                  <span className="text-xs text-yellow-400 font-medium">Pinned</span>
+                </div>
+              )}
+              
               {challenge.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-4">
                   {challenge.tags.map((t) => (
