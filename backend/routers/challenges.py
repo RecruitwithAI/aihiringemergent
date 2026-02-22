@@ -5,14 +5,14 @@ import uuid
 from utils.database import db
 from utils.helpers import get_badge
 from utils.auth import get_current_user, add_points
-from models.schemas import ChallengeCreate, AnswerCreate, PinChallengeRequest
+from models.schemas import ChallengeCreate, AnswerCreate
 
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
 
 @router.get("")
-async def get_challenges(user=Depends(get_current_user), search: str = "", tags: str = "", category: str = ""):
+async def get_challenges(user=Depends(get_current_user), search: str = "", tags: str = ""):
     # Build query filter
     query = {}
     
@@ -29,22 +29,7 @@ async def get_challenges(user=Depends(get_current_user), search: str = "", tags:
         if tag_list:
             query["tags"] = {"$in": tag_list}
     
-    # Filter by category
-    if category.strip():
-        query["category"] = category.strip()
-    
-    # Fetch challenges and sort: pinned first (by pin_order), then by date
-    challenges = await db.challenges.find(query, {"_id": 0}).to_list(100)
-    
-    # Sort: pinned challenges first (by pin_order), then by created_at
-    challenges.sort(
-        key=lambda c: (
-            not c.get("pinned", False),  # False (not pinned) comes after True (pinned)
-            -c.get("pin_order", 0) if c.get("pinned", False) else 0,  # Higher pin_order first
-            -int(datetime.fromisoformat(c["created_at"]).timestamp())  # Newer first
-        )
-    )
-    
+    challenges = await db.challenges.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     for c in challenges:
         author = await db.users.find_one(
             {"user_id": c.get("author_id")},
