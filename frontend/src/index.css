@@ -161,6 +161,23 @@ code {
     color: hsl(25, 85%, 45%) !important;
 }
 
+/* Card backgrounds in light mode */
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] .bg-white\/\[0\.06\] {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="light"] .bg-\[#090914\],
+[data-theme="light"] .bg-\[#12121a\] {
+    background-color: hsl(210, 100%, 98%) !important;
+}
+
+/* Borders in light mode */
+[data-theme="light"] .border-white\/\[0\.07\],
+[data-theme="light"] .border-white\/\[0\.08\] {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
 /* Gradient text in light mode */
 [data-theme="light"] .gradient-text {
     background: linear-gradient(135deg, #2563eb, #0891b2, #7c3aed);
@@ -188,6 +205,24 @@ code {
 [data-theme="light"] .ai-output code {
     background: rgba(0, 0, 0, 0.06);
     color: hsl(220, 30%, 25%);
+}
+
+/* Avatar backgrounds in light mode */
+[data-theme="light"] .avatar-initials {
+    color: white !important;
+}
+
+/* Hover states in light mode */
+[data-theme="light"] .hover\:text-white:hover {
+    color: hsl(220, 40%, 10%) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/\[0\.06\]:hover {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/\[0\.10\]:hover {
+    background-color: rgba(0, 0, 0, 0.10) !important;
 }
 
 /* Dark scrollbar */
