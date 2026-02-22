@@ -101,11 +101,104 @@ code {
     [data-debug-wrapper="true"] { display: contents !important; }
 }
 
+/* === LIGHT MODE TEXT COLOR OVERRIDES === */
+/* Override hardcoded text colors for light theme */
+[data-theme="light"] .text-white,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] h6 {
+    color: hsl(220, 40%, 10%) !important; /* Dark blue-grey for headings and white text */
+}
+
+[data-theme="light"] .text-slate-100,
+[data-theme="light"] .text-slate-200,
+[data-theme="light"] .text-slate-300 {
+    color: hsl(220, 30%, 20%) !important; /* Darker grey for light text */
+}
+
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-slate-500 {
+    color: hsl(220, 20%, 40%) !important; /* Medium grey for muted text */
+}
+
+[data-theme="light"] .text-slate-600 {
+    color: hsl(220, 15%, 30%) !important;
+}
+
+/* Keep link colors visible */
+[data-theme="light"] .text-blue-400 {
+    color: hsl(217, 80%, 40%) !important; /* Darker blue for better contrast */
+}
+
+[data-theme="light"] .text-cyan-400 {
+    color: hsl(190, 80%, 35%) !important;
+}
+
+[data-theme="light"] .text-violet-400,
+[data-theme="light"] .text-purple-400 {
+    color: hsl(258, 70%, 45%) !important;
+}
+
+[data-theme="light"] .text-amber-400,
+[data-theme="light"] .text-yellow-400 {
+    color: hsl(43, 85%, 40%) !important;
+}
+
+[data-theme="light"] .text-emerald-400,
+[data-theme="light"] .text-green-400 {
+    color: hsl(160, 75%, 35%) !important;
+}
+
+[data-theme="light"] .text-red-400,
+[data-theme="light"] .text-rose-400 {
+    color: hsl(0, 75%, 45%) !important;
+}
+
+[data-theme="light"] .text-orange-400 {
+    color: hsl(25, 85%, 45%) !important;
+}
+
+/* Gradient text in light mode */
+[data-theme="light"] .gradient-text {
+    background: linear-gradient(135deg, #2563eb, #0891b2, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* AI output prose in light mode */
+[data-theme="light"] .ai-output h1,
+[data-theme="light"] .ai-output h2,
+[data-theme="light"] .ai-output h3 {
+    color: hsl(220, 40%, 10%) !important;
+}
+
+[data-theme="light"] .ai-output p,
+[data-theme="light"] .ai-output li {
+    color: hsl(220, 20%, 35%) !important;
+}
+
+[data-theme="light"] .ai-output strong {
+    color: hsl(220, 40%, 15%) !important;
+}
+
+[data-theme="light"] .ai-output code {
+    background: rgba(0, 0, 0, 0.06);
+    color: hsl(220, 30%, 25%);
+}
+
 /* Dark scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Light scrollbar for light theme */
+[data-theme="light"]::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+[data-theme="light"]::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
 /* ==================== ANIMATIONS ==================== */
 
