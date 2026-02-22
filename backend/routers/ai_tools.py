@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 import os
 import io
@@ -10,15 +10,18 @@ from pathlib import Path
 from utils.database import db
 from utils.helpers import get_badge
 from utils.auth import get_current_user, add_points
-from models.schemas import AIToolRequest, DownloadRequest, ExtractFileRequest
+from models.schemas import AIToolRequest, DownloadRequest, ExtractFileRequest, UserAPIKeyUpdate
 
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
+MASTER_OPENAI_KEY = os.environ.get("MASTER_OPENAI_KEY")
 UPLOAD_DIR = Path("/tmp/bestpl_uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 CHUNK_SIZE = 1 * 1024 * 1024  # 1 MB
+
+DAILY_FREE_LIMIT = 3  # Free API key uses per user per day
 
 TOOL_PROMPTS = {
     "jd-builder": "You are an expert recruiter. Generate a professional, detailed Job Description based on the user's input. Include: Role Title, Company Overview (if provided), Role Summary, Key Responsibilities, Required Qualifications, Preferred Qualifications, Compensation Range guidance, and Why Join section. Format it cleanly with headers.",
@@ -29,14 +32,83 @@ TOOL_PROMPTS = {
 }
 
 
+async def check_daily_usage(user_id: str) -> dict:
+    """Check if user has remaining free API uses today"""
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    usage_count = await db.api_usage.count_documents({
+        "user_id": user_id,
+        "used_master_key": True,
+        "timestamp": {"$gte": today_start}
+    })
+    
+    remaining = max(0, DAILY_FREE_LIMIT - usage_count)
+    return {
+        "used": usage_count,
+        "remaining": remaining,
+        "limit": DAILY_FREE_LIMIT,
+        "can_use": remaining > 0
+    }
+
+
+async def record_usage(user_id: str, used_master_key: bool, tool_type: str):
+    """Record API usage"""
+    await db.api_usage.insert_one({
+        "user_id": user_id,
+        "used_master_key": used_master_key,
+        "tool_type": tool_type,
+        "timestamp": datetime.now(timezone.utc)
+    })
+
+
+@router.get("/usage")
+async def get_usage_stats(user=Depends(get_current_user)):
+    """Get user's API usage statistics"""
+    usage = await check_daily_usage(user["user_id"])
+    
+    # Get user's stored API key status
+    user_data = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "has_own_api_key": 1})
+    has_own_key = user_data.get("has_own_api_key", False) if user_data else False
+    
+    return {
+        "daily_usage": usage,
+        "has_own_api_key": has_own_key
+    }
+
+
 @router.post("/generate")
 async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
     from emergentintegrations.llm.chat import LlmChat, UserMessage
 
+    # Determine which API key to use
+    api_key_to_use = None
+    using_master_key = False
+    
+    if req.use_own_key and req.own_api_key:
+        # User provided their own API key for this request
+        api_key_to_use = req.own_api_key
+        using_master_key = False
+    else:
+        # Check if user has a saved API key
+        user_data = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "openai_api_key": 1})
+        if user_data and user_data.get("openai_api_key"):
+            api_key_to_use = user_data["openai_api_key"]
+            using_master_key = False
+        else:
+            # Use master key - check daily limit
+            usage = await check_daily_usage(user["user_id"])
+            if not usage["can_use"]:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Daily free API limit reached ({DAILY_FREE_LIMIT} uses per day). Please add your own OpenAI API key to continue."
+                )
+            api_key_to_use = MASTER_OPENAI_KEY
+            using_master_key = True
+
     system_prompt = TOOL_PROMPTS.get(req.tool_type, "You are a helpful recruiting AI assistant.")
 
     chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
+        api_key=api_key_to_use,
         session_id=f"ai_{user['user_id']}_{uuid.uuid4().hex[:8]}",
         system_message=system_prompt,
     ).with_model("openai", "gpt-5.2")
@@ -46,6 +118,9 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
         full_prompt = f"{req.prompt}\n\nAdditional Context: {req.context}"
 
     response = await chat.send_message(UserMessage(text=full_prompt))
+
+    # Record usage
+    await record_usage(user["user_id"], using_master_key, req.tool_type)
 
     await db.ai_history.insert_one({
         "history_id": f"hist_{uuid.uuid4().hex[:12]}",
