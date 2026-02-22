@@ -233,10 +233,18 @@ export default function AITools() {
     if (!prompt.trim()) { toast.error("Please enter a prompt first"); return; }
     setGenerating(true); setResult(""); setIsEditing(false);
 
-    // Combine all uploaded file contents
+    // Combine all uploaded file contents for context
     const fileContextParts = uploadedFiles.map((f, i) => 
-      `--- File ${i + 1}: ${f.name} ---\n${f.extractedText}`
+      `--- Context File ${i + 1}: ${f.name} ---\n${f.extractedText}`
     );
+    
+    // Add output format if provided (for Candidate Dossier)
+    if (outputFormatFile && selectedTool.id === "dossier") {
+      fileContextParts.push(
+        `--- DESIRED OUTPUT FORMAT ---\nUse the following format structure for the output:\n${outputFormatFile.extractedText}`
+      );
+    }
+    
     const fullContext = [context, ...fileContextParts].filter(Boolean).join("\n\n");
 
     try {
