@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
+import RichTextEditor from "@/components/RichTextEditor";
 import axios from "axios";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, Clock, MessageSquare } from "lucide-react";
+import { ArrowLeft, ChevronUp, Clock, MessageSquare, Pin } from "lucide-react";
+import DOMPurify from 'dompurify';
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
