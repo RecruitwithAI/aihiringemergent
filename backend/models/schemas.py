@@ -17,16 +17,10 @@ class ChallengeCreate(BaseModel):
     title: str
     description: str
     tags: List[str] = []
-    category: Optional[str] = None  # NEW: Challenge category
 
 
 class AnswerCreate(BaseModel):
-    content: str  # Now accepts HTML content from rich text editor
-
-
-class PinChallengeRequest(BaseModel):
-    pinned: bool
-    pin_order: Optional[int] = 0
+    content: str
 
 
 class AIToolRequest(BaseModel):
