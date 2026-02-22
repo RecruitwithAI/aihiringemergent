@@ -153,7 +153,7 @@ function AppRouter() {
       <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeDetail /></ProtectedRoute>} />
       <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-      <Route path="/api-settings" element={<ProtectedRoute><APIKeySettings /></ProtectedRoute>} />
+      <Route path="/settings/api-key" element={<ProtectedRoute><APIKeySettings /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
     </Routes>
   );
