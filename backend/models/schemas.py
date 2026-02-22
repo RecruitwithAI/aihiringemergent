@@ -24,6 +24,11 @@ class AnswerCreate(BaseModel):
     content: str  # Now accepts HTML content from rich text editor
 
 
+class PinChallengeRequest(BaseModel):
+    pinned: bool
+    pin_order: Optional[int] = 0
+
+
 class AIToolRequest(BaseModel):
     tool_type: str
     prompt: str
