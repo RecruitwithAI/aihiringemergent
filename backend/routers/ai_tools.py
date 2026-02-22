@@ -25,7 +25,22 @@ DAILY_FREE_LIMIT = 3  # Free API key uses per user per day
 
 TOOL_PROMPTS = {
     "jd-builder": "You are an expert recruiter. Generate a professional, detailed Job Description based on the user's input. Include: Role Title, Company Overview (if provided), Role Summary, Key Responsibilities, Required Qualifications, Preferred Qualifications, Compensation Range guidance, and Why Join section. Format it cleanly with headers. IMPORTANT: Provide ONLY the job description content. Do NOT include any conversational follow-ups, questions, or offers for additional help at the end.",
-    "search-strategy": "You are a senior executive search strategist. Create a comprehensive Search Strategy for finding the ideal candidate. Include: Target Profile, Industry Mapping, Geographic Scope, Channel Strategy (LinkedIn, networks, databases), Boolean Search Strings, Competitor Companies to Target, Timeline, and KPIs for the search. IMPORTANT: Provide ONLY the search strategy content. Do NOT include any conversational follow-ups or questions at the end.",
+    "search-strategy": "You are a senior executive search strategist. Create a CONCISE and ACTIONABLE Search Strategy. Include ONLY: 1) Target Profile (2-3 sentences), 2) Key Industries & Companies (bullet list), 3) Geographic Scope, 4) Primary Search Channels (LinkedIn, networks, databases - be specific), 5) Boolean Search Strings (2-3 examples), 6) Timeline (simple milestones). Keep it tight and practical. IMPORTANT: Provide ONLY the strategy content. Do NOT include any conversational follow-ups.",
+    "search-strategy-targets": """You are a senior executive search strategist creating a TARGET COMPANY LIST. Generate a comprehensive table of target organizations for recruitment.
+
+OUTPUT FORMAT: Create a markdown table with these columns:
+| Company Name | Location | Website | Organization Overview | Why Target | Key Roles | Headcount |
+
+INSTRUCTIONS:
+- List 15-20 relevant target companies based on the user's search criteria
+- Location: City, State/Country format
+- Website: Full URL (https://...)
+- Organization Overview: 1-2 sentence description of what they do
+- Why Target: Why they're a good source for candidates (1 sentence)
+- Key Roles: Types of roles to target (e.g., "Engineering Managers, Senior Developers")
+- Headcount: Approximate company size or department size
+
+Make the table well-formatted, data-rich, and actionable. Focus on companies that match the search profile. IMPORTANT: Provide ONLY the table. Do NOT include conversational text before or after.""",
     "candidate-research": "You are a talent intelligence analyst. Research and provide detailed insights about the candidate or candidate profile described. Include: Background Analysis, Career Trajectory, Key Achievements, Leadership Style indicators, Cultural Fit Assessment, Potential Red Flags, and Interview Focus Areas. IMPORTANT: Provide ONLY the research content. Do NOT include any conversational follow-ups or questions at the end.",
     "dossier": """You are a senior executive recruiter preparing a candidate presentation for a client. 
 
