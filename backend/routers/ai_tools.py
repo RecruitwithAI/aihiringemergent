@@ -24,9 +24,9 @@ CHUNK_SIZE = 1 * 1024 * 1024  # 1 MB
 DAILY_FREE_LIMIT = 3  # Free API key uses per user per day
 
 TOOL_PROMPTS = {
-    "jd-builder": "You are an expert recruiter. Generate a professional, detailed Job Description based on the user's input. Include: Role Title, Company Overview (if provided), Role Summary, Key Responsibilities, Required Qualifications, Preferred Qualifications, Compensation Range guidance, and Why Join section. Format it cleanly with headers.",
-    "search-strategy": "You are a senior executive search strategist. Create a comprehensive Search Strategy for finding the ideal candidate. Include: Target Profile, Industry Mapping, Geographic Scope, Channel Strategy (LinkedIn, networks, databases), Boolean Search Strings, Competitor Companies to Target, Timeline, and KPIs for the search.",
-    "candidate-research": "You are a talent intelligence analyst. Research and provide detailed insights about the candidate or candidate profile described. Include: Background Analysis, Career Trajectory, Key Achievements, Leadership Style indicators, Cultural Fit Assessment, Potential Red Flags, and Interview Focus Areas.",
+    "jd-builder": "You are an expert recruiter. Generate a professional, detailed Job Description based on the user's input. Include: Role Title, Company Overview (if provided), Role Summary, Key Responsibilities, Required Qualifications, Preferred Qualifications, Compensation Range guidance, and Why Join section. Format it cleanly with headers. IMPORTANT: Provide ONLY the job description content. Do NOT include any conversational follow-ups, questions, or offers for additional help at the end.",
+    "search-strategy": "You are a senior executive search strategist. Create a comprehensive Search Strategy for finding the ideal candidate. Include: Target Profile, Industry Mapping, Geographic Scope, Channel Strategy (LinkedIn, networks, databases), Boolean Search Strings, Competitor Companies to Target, Timeline, and KPIs for the search. IMPORTANT: Provide ONLY the search strategy content. Do NOT include any conversational follow-ups or questions at the end.",
+    "candidate-research": "You are a talent intelligence analyst. Research and provide detailed insights about the candidate or candidate profile described. Include: Background Analysis, Career Trajectory, Key Achievements, Leadership Style indicators, Cultural Fit Assessment, Potential Red Flags, and Interview Focus Areas. IMPORTANT: Provide ONLY the research content. Do NOT include any conversational follow-ups or questions at the end.",
     "dossier": """You are a senior executive recruiter preparing a candidate presentation for a client. 
 
 CRITICAL INSTRUCTIONS:
@@ -36,9 +36,89 @@ CRITICAL INSTRUCTIONS:
 4. If specific sections appear in the sample (e.g., "Executive Summary", "Professional Background", "Key Strengths"), use those EXACT section names and ordering.
 5. Match the format's use of bullet points, paragraphs, metrics presentation, and any special formatting cues.
 
-If NO sample format is provided, create a professional Candidate Dossier with: Executive Summary, Career Overview, Key Accomplishments with metrics, Leadership Competencies, Education & Certifications, Compensation Expectations, Availability, and Recommendation Summary.""",
-    "client-research": "You are a business development researcher for an executive search firm. Research the potential client company described. Include: Company Overview, Leadership Team, Recent News & Developments, Growth Trajectory, Culture & Values, Likely Hiring Needs, Key Decision Makers, and Approach Strategy.",
+If NO sample format is provided, create a professional Candidate Dossier with: Executive Summary, Career Overview, Key Accomplishments with metrics, Leadership Competencies, Education & Certifications, Compensation Expectations, Availability, and Recommendation Summary.
+
+IMPORTANT: Provide ONLY the dossier content. Do NOT include any conversational follow-ups, questions, or offers for additional help at the end.""",
+    "client-research": "You are a business development researcher for an executive search firm. Research the potential client company described. Include: Company Overview, Leadership Team, Recent News & Developments, Growth Trajectory, Culture & Values, Likely Hiring Needs, Key Decision Makers, and Approach Strategy. IMPORTANT: Provide ONLY the research content. Do NOT include any conversational follow-ups or questions at the end.",
 }
+
+
+def clean_ai_response(response: str) -> str:
+    """
+    Remove conversational follow-ups and questions from AI responses.
+    Strips out common patterns like 'If you want...', 'Let me know...', etc.
+    """
+    # Split by lines
+    lines = response.split('\n')
+    cleaned_lines = []
+    found_separator = False
+    
+    # Common patterns that indicate conversational follow-ups
+    followup_patterns = [
+        "if you want",
+        "if you'd like",
+        "would you like",
+        "let me know",
+        "feel free to",
+        "i can help",
+        "i can tailor",
+        "i can create",
+        "i can provide",
+        "i can also",
+        "shall i",
+        "should i",
+        "do you want",
+        "would you prefer",
+        "happy to help",
+        "happy to assist",
+        "need any changes",
+        "need anything else",
+        "anything else",
+        "any questions",
+    ]
+    
+    for line in lines:
+        stripped = line.strip()
+        lower_line = stripped.lower()
+        
+        # Check if this line starts a conversational section
+        # Often preceded by "---" or empty lines
+        if stripped == "---" or stripped == "***":
+            # Check if the next content looks conversational
+            found_separator = True
+            continue
+        
+        # If we found a separator, check if subsequent non-empty lines are conversational
+        if found_separator and stripped:
+            is_conversational = any(pattern in lower_line for pattern in followup_patterns)
+            if is_conversational:
+                # Skip this and remaining lines (likely all conversational)
+                break
+            else:
+                # False alarm, include the separator and continue
+                if cleaned_lines and cleaned_lines[-1].strip() != "":
+                    cleaned_lines.append("")  # Add spacing
+                found_separator = False
+        
+        # Check if line itself starts with a conversational pattern
+        is_conversational_start = any(
+            lower_line.startswith(pattern) for pattern in followup_patterns
+        )
+        
+        if is_conversational_start:
+            # This line and everything after is likely conversational - stop here
+            break
+        
+        cleaned_lines.append(line)
+    
+    # Join and clean up excessive blank lines at the end
+    result = '\n'.join(cleaned_lines).rstrip('\n')
+    
+    # Remove trailing "---" if present
+    while result.endswith('\n---') or result.endswith('\n***'):
+        result = result.rsplit('\n', 1)[0].rstrip()
+    
+    return result
 
 
 async def check_daily_usage(user_id: str) -> dict:
