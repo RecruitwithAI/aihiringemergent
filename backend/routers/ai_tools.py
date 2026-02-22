@@ -486,42 +486,90 @@ def _parse_md_to_pdf(content: str) -> bytes:
                 
                 num_cols = len(header)
                 if num_cols > 0:
-                    # Calculate column width
+                    # Calculate column width - make slightly smaller for better fit
                     col_width = effective_width / num_cols
+                    cell_height = 6
                     
                     # Add table header
-                    pdf.set_font("Helvetica", "B", 9)
+                    pdf.set_font("Helvetica", "B", 8)
                     pdf.set_fill_color(200, 200, 200)
                     
-                    for header_text in header:
-                        pdf.cell(col_width, 7, safe(header_text), border=1, align='L', fill=True)
-                    pdf.ln()
+                    x_start = pdf.get_x()
+                    y_start = pdf.get_y()
+                    
+                    for col_idx, header_text in enumerate(header):
+                        pdf.set_xy(x_start + (col_idx * col_width), y_start)
+                        # Truncate long headers
+                        max_chars = int(col_width * 2.2)
+                        text = safe(header_text)[:max_chars]
+                        pdf.cell(col_width, cell_height, text, border=1, align='L', fill=True)
+                    
+                    pdf.set_xy(x_start, y_start + cell_height)
                     
                     # Add data rows
-                    pdf.set_font("Helvetica", "", 8)
+                    pdf.set_font("Helvetica", "", 7)
                     for line in data_lines:
                         cells = [cell.strip() for cell in line.split("|")[1:-1]]
                         
-                        # Calculate max height needed for this row
-                        max_lines = 1
+                        # Calculate row height based on content
+                        row_height = cell_height
                         for cell_text in cells[:num_cols]:
-                            # Rough estimate: 35 chars per line for col_width
-                            chars_per_line = int(col_width * 2.5)
-                            lines_needed = max(1, len(cell_text) // chars_per_line + 1)
-                            max_lines = max(max_lines, lines_needed)
+                            # Estimate lines needed
+                            max_chars_per_line = int(col_width * 2.5)
+                            if len(cell_text) > max_chars_per_line:
+                                lines_needed = (len(cell_text) // max_chars_per_line) + 1
+                                estimated_height = lines_needed * 4
+                                row_height = max(row_height, estimated_height)
                         
-                        row_height = max(7, max_lines * 4)
-                        
-                        # Store starting Y position
                         y_start = pdf.get_y()
-                        x_start = pdf.get_x()
                         
+                        # Draw all cells in the row
                         for col_idx, cell_text in enumerate(cells[:num_cols]):
+                            if col_idx >= num_cols:
+                                break
+                                
                             x_pos = x_start + (col_idx * col_width)
-                            pdf.set_xy(x_pos, y_start)
                             
-                            # Use multi_cell for text wrapping within cell
-                            pdf.multi_cell(col_width, 4, safe(cell_text), border=1, align='L')
+                            # Draw cell border
+                            pdf.rect(x_pos, y_start, col_width, row_height)
+                            
+                            # Add text with padding
+                            pdf.set_xy(x_pos + 1, y_start + 1)
+                            
+                            # Calculate available width for text (with padding)
+                            text_width = col_width - 2
+                            
+                            # Truncate or wrap text
+                            text = safe(cell_text)
+                            max_chars = int(text_width * 2.5)
+                            
+                            if len(text) > max_chars:
+                                # Multi-line text - split into lines
+                                words = text.split()
+                                lines_list = []
+                                current_line = ""
+                                
+                                for word in words:
+                                    test_line = current_line + " " + word if current_line else word
+                                    if len(test_line) <= max_chars:
+                                        current_line = test_line
+                                    else:
+                                        if current_line:
+                                            lines_list.append(current_line)
+                                        current_line = word
+                                
+                                if current_line:
+                                    lines_list.append(current_line)
+                                
+                                # Draw each line
+                                line_y = y_start + 1
+                                for text_line in lines_list[:int(row_height/4)]:  # Limit lines to fit
+                                    pdf.set_xy(x_pos + 1, line_y)
+                                    pdf.cell(text_width, 4, text_line[:max_chars], border=0, align='L')
+                                    line_y += 4
+                            else:
+                                # Single line
+                                pdf.cell(text_width, 4, text, border=0, align='L')
                         
                         # Move to next row
                         pdf.set_xy(x_start, y_start + row_height)
