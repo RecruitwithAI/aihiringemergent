@@ -310,23 +310,31 @@ IMPORTANT INSTRUCTIONS:
         const url = window.URL.createObjectURL(blob);
         console.log("[DOWNLOAD] Object URL created:", url);
         
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        console.log("[DOWNLOAD] Link appended to body, triggering click...");
-        
-        // Force click with timeout
-        setTimeout(() => {
+        // Try multiple download methods
+        try {
+          // Method 1: Standard anchor download
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          
+          // Append to body and click
+          document.body.appendChild(link);
           link.click();
-          console.log("[DOWNLOAD] Click triggered");
+          console.log("[DOWNLOAD] Method 1 (anchor) triggered");
+          
+          // Cleanup
           setTimeout(() => {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-            console.log("[DOWNLOAD] Cleanup complete");
           }, 100);
-        }, 0);
+        } catch (e) {
+          console.error("[DOWNLOAD] Method 1 failed:", e);
+          // Method 2: Try window.open as fallback
+          window.open(url, "_blank");
+          console.log("[DOWNLOAD] Method 2 (window.open) triggered");
+        }
         
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       } else {
@@ -344,27 +352,34 @@ IMPORTANT INSTRUCTIONS:
           throw new Error("Response is not a Blob");
         }
         
-        // Create download link
         const url = window.URL.createObjectURL(res.data);
         console.log("[DOWNLOAD] Object URL created:", url);
         
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        console.log("[DOWNLOAD] Link appended, triggering click...");
-        
-        // Force click with timeout
-        setTimeout(() => {
+        // Try multiple download methods
+        try {
+          // Method 1: Standard anchor download
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          
+          // Append to body and click
+          document.body.appendChild(link);
           link.click();
-          console.log("[DOWNLOAD] Click triggered");
+          console.log("[DOWNLOAD] Method 1 (anchor) triggered");
+          
+          // Cleanup
           setTimeout(() => {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-            console.log("[DOWNLOAD] Cleanup complete");
           }, 100);
-        }, 0);
+        } catch (e) {
+          console.error("[DOWNLOAD] Method 1 failed:", e);
+          // Method 2: Try window.open as fallback
+          window.open(url, "_blank");
+          console.log("[DOWNLOAD] Method 2 (window.open) triggered");
+        }
         
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       }
