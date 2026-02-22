@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 class APIKeyManagementTester:
-    def __init__(self, base_url="https://api-key-mgmt-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://search-strategy.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.session = requests.Session()

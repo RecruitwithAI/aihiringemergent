@@ -6,7 +6,7 @@ import sys
 
 def test_complete_api_key_flow():
     """Test the complete API key flow including using personal keys"""
-    base_url = "https://api-key-mgmt-1.preview.emergentagent.com"
+    base_url = "https://search-strategy.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🔧 Testing Complete API Key Flow")
