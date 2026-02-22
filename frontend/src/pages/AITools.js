@@ -238,10 +238,27 @@ export default function AITools() {
       `--- Context File ${i + 1}: ${f.name} ---\n${f.extractedText}`
     );
     
-    // Add output format if provided (for Candidate Dossier)
+    // Add output format if provided (for Candidate Dossier) - with STRONG emphasis
     if (outputFormatFile && selectedTool.id === "dossier") {
-      fileContextParts.push(
-        `--- DESIRED OUTPUT FORMAT ---\nUse the following format structure for the output:\n${outputFormatFile.extractedText}`
+      fileContextParts.unshift(
+        `========================================
+📋 DESIRED OUTPUT FORMAT (CRITICAL - MUST FOLLOW EXACTLY)
+========================================
+
+YOU MUST REPLICATE THIS EXACT FORMAT, STRUCTURE, STYLE, AND SECTION ORDERING:
+
+${outputFormatFile.extractedText}
+
+========================================
+END OF FORMAT SAMPLE
+========================================
+
+IMPORTANT INSTRUCTIONS:
+- Use the EXACT same section headings as shown above
+- Follow the SAME ordering of sections
+- Match the writing style, tone, and level of detail
+- Use the same formatting approach (bullets, paragraphs, metrics presentation)
+- Preserve any special structure or flow patterns from the sample`
       );
     }
     
