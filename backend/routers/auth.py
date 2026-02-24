@@ -29,7 +29,25 @@ async def register(user: UserCreate, response: Response):
         "password_hash": hashed,
         "picture": None,
         "points": 0,
+        
+        # New profile fields
+        "linkedin_url": user.linkedin_url,
+        "title": user.title,
+        "company": user.company,
+        "phone_number": user.phone_number,
+        "city": user.city,
+        "country": user.country,
+        "about_me": user.about_me,
+        "help_topics": user.help_topics or [],
+        
+        # Role and status (with defaults)
+        "role": "user",  # Default role for new users
+        "status": "active",  # Default status
+        
+        # Timestamps
         "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        "last_login_at": now.isoformat(),
     })
 
     session_token = make_session_token()
