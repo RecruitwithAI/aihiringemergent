@@ -128,10 +128,20 @@ async def exchange_session(session_id: str, response: Response):
     picture = data.get("picture", "")
 
     existing = await db.users.find_one({"email": email}, {"_id": 0})
+    now = datetime.now(timezone.utc)
+    
     if existing:
         user_id = existing["user_id"]
-        await db.users.update_one({"user_id": user_id}, {"$set": {"name": name, "picture": picture}})
+        await db.users.update_one(
+            {"user_id": user_id}, 
+            {"$set": {
+                "name": name, 
+                "picture": picture,
+                "last_login_at": now.isoformat()
+            }}
+        )
     else:
+        # New Google OAuth user - create with default values
         user_id = make_user_id()
         await db.users.insert_one({
             "user_id": user_id,
@@ -139,7 +149,25 @@ async def exchange_session(session_id: str, response: Response):
             "email": email,
             "picture": picture,
             "points": 0,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            
+            # New profile fields (empty for Google OAuth users until they fill them)
+            "linkedin_url": None,
+            "title": None,
+            "company": None,
+            "phone_number": None,
+            "city": None,
+            "country": None,
+            "about_me": None,
+            "help_topics": [],
+            
+            # Role and status
+            "role": "user",
+            "status": "active",
+            
+            # Timestamps
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+            "last_login_at": now.isoformat(),
         })
 
     now = datetime.now(timezone.utc)
