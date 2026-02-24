@@ -108,12 +108,32 @@ export default function Navbar() {
               <User className="w-4 h-4 mr-2" strokeWidth={1.5} /> Profile
             </DropdownMenuItem>
             <DropdownMenuItem 
+              onClick={() => navigate("/settings/profile")} 
+              data-testid="nav-profile-settings-link"
+              className="cursor-pointer"
+            >
+              <Settings className="w-4 h-4 mr-2" strokeWidth={1.5} /> Profile Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem 
               onClick={() => navigate("/settings/api-key")} 
               data-testid="nav-api-settings-link"
               className="cursor-pointer"
             >
               <Key className="w-4 h-4 mr-2" strokeWidth={1.5} /> API Settings
             </DropdownMenuItem>
+            {/* Admin Panel Link - Only for admins/superadmins */}
+            {(user?.role === "admin" || user?.role === "superadmin") && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => navigate("/admin")} 
+                  data-testid="nav-admin-link"
+                  className="cursor-pointer text-purple-400 focus:text-purple-300"
+                >
+                  <Shield className="w-4 h-4 mr-2" strokeWidth={1.5} /> Admin Panel
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={handleLogout} 
