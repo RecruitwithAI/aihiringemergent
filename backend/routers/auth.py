@@ -73,6 +73,13 @@ async def login(user: UserLogin, response: Response):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     now = datetime.now(timezone.utc)
+    
+    # Update last_login_at
+    await db.users.update_one(
+        {"user_id": existing["user_id"]},
+        {"$set": {"last_login_at": now.isoformat()}}
+    )
+    
     session_token = make_session_token()
     await db.user_sessions.insert_one({
         "user_id": existing["user_id"],
@@ -89,6 +96,18 @@ async def login(user: UserLogin, response: Response):
         "points": existing.get("points", 0),
         "badge": get_badge(existing.get("points", 0)),
         "picture": existing.get("picture"),
+        "role": existing.get("role", "user"),
+        "status": existing.get("status", "active"),
+        
+        # Profile fields
+        "linkedin_url": existing.get("linkedin_url"),
+        "title": existing.get("title"),
+        "company": existing.get("company"),
+        "phone_number": existing.get("phone_number"),
+        "city": existing.get("city"),
+        "country": existing.get("country"),
+        "about_me": existing.get("about_me"),
+        "help_topics": existing.get("help_topics", []),
     }
 
 
