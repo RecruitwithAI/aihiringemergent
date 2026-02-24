@@ -16,7 +16,7 @@ export default function LandingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "" });
+  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "", linkedin_url: "" });
   const [loading, setLoading] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
 
@@ -229,6 +229,18 @@ export default function LandingPage() {
                         placeholder="you@company.com"
                         value={registerForm.email}
                         onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                        className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-400 text-sm font-medium">LinkedIn Profile URL *</Label>
+                      <Input
+                        data-testid="register-linkedin"
+                        type="url"
+                        placeholder="https://linkedin.com/in/yourname"
+                        value={registerForm.linkedin_url}
+                        onChange={(e) => setRegisterForm({ ...registerForm, linkedin_url: e.target.value })}
                         className="mt-1.5 bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-blue-500/50 focus-visible:ring-blue-500/20"
                         required
                       />
