@@ -13,7 +13,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import routers
-from routers import auth, challenges, answers, ai_tools, dashboard
+from routers import auth, challenges, answers, ai_tools, dashboard, users
 from utils.database import client
 
 app = FastAPI()
@@ -28,6 +28,7 @@ api_router.include_router(challenges.router)
 api_router.include_router(answers.router)
 api_router.include_router(ai_tools.router)
 api_router.include_router(dashboard.router)
+api_router.include_router(users.router)
 
 # Wire up the main API router
 app.include_router(api_router)
