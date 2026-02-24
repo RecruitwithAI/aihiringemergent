@@ -9,7 +9,7 @@ import requests
 import os
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-strategy.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ai-tools-hub-69.preview.emergentagent.com').rstrip('/')
 API = f"{BASE_URL}/api"
 
 TEST_USER_EMAIL = "testdash@bestpl.ai"

@@ -71,7 +71,7 @@
 
 ## Manual Test Steps
 
-1. **Login** to https://search-strategy.preview.emergentagent.com
+1. **Login** to https://ai-tools-hub-69.preview.emergentagent.com
 2. **Navigate** to AI Tools
 3. **Select** "Search Strategy" tool
 4. **Generate** content with any prompt (wait for output)
