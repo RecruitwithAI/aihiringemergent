@@ -22,7 +22,7 @@ class UserCreate(BaseModel):
     def validate_linkedin_url(cls, v):
         if not v:
             raise ValueError('LinkedIn URL is required')
-        if not ('linkedin.com' in v.lower()):
+        if 'linkedin.com' not in v.lower():
             raise ValueError('Must be a valid LinkedIn URL')
         return v
     
@@ -66,7 +66,7 @@ class UserProfileUpdate(BaseModel):
     
     @validator('linkedin_url')
     def validate_linkedin_url(cls, v):
-        if v and not ('linkedin.com' in v.lower()):
+        if v and 'linkedin.com' not in v.lower():
             raise ValueError('Must be a valid LinkedIn URL')
         return v
     
