@@ -125,6 +125,33 @@ function ProtectedRoute({ children }) {
   );
 }
 
+// ==================== ADMIN PROTECTED ROUTE ====================
+
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <AppLoadingScreen message="Loading..." />;
+  }
+
+  if (!user) {
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  // Check if user is admin or superadmin
+  if (user.role !== "admin" && user.role !== "superadmin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <>
+      <Navbar />
+      <main className="pt-16">{children}</main>
+    </>
+  );
+}
+
 function AppLoadingScreen({ message }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#090914]">
