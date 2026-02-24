@@ -71,6 +71,7 @@ export default function AdminPanel() {
       return;
     }
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, roleFilter, statusFilter]);
 
   const fetchUsers = async () => {
