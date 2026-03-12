@@ -1,0 +1,160 @@
+{
+  "design_system": {
+    "brand_name": "Bestpl.ai",
+    "theme_strategy": "light_preferred_with_dark_toggle",
+    "emotional_tone": "Professional, Data-Driven, Efficient, Trusted",
+    "archetype": "Swiss & High-Contrast (Archetype 4) with a 'Deep Royal Blue' Twist",
+    "typography": {
+      "primary_font": "Inter",
+      "heading_font": "Outfit",
+      "mono_font": "JetBrains Mono",
+      "instructions": "Install '@fontsource/inter', '@fontsource/outfit', and '@fontsource/jetbrains-mono'. Configure 'Outfit' for headings (h1-h3) to give a modern tech feel, and 'Inter' for body/data to ensure maximum legibility in dense grids. Use 'JetBrains Mono' for any code snippets or technical data (e.g., API keys, JSON views)."
+    },
+    "colors": {
+      "light": {
+        "background": "#F8FAFC",
+        "foreground": "#0F172A",
+        "card": "#FFFFFF",
+        "card_foreground": "#0F172A",
+        "popover": "#FFFFFF",
+        "popover_foreground": "#0F172A",
+        "primary": "#0F172A",
+        "primary_foreground": "#F8FAFC",
+        "secondary": "#F1F5F9",
+        "secondary_foreground": "#0F172A",
+        "muted": "#F1F5F9",
+        "muted_foreground": "#64748B",
+        "accent": "#EEF2FF",
+        "accent_foreground": "#4338CA",
+        "destructive": "#EF4444",
+        "destructive_foreground": "#F8FAFC",
+        "border": "#E2E8F0",
+        "input": "#E2E8F0",
+        "ring": "#0F172A"
+      },
+      "dark": {
+        "background": "#020617",
+        "foreground": "#F8FAFC",
+        "card": "#0F172A",
+        "card_foreground": "#F8FAFC",
+        "popover": "#0F172A",
+        "popover_foreground": "#F8FAFC",
+        "primary": "#F8FAFC",
+        "primary_foreground": "#0F172A",
+        "secondary": "#1E293B",
+        "secondary_foreground": "#F8FAFC",
+        "muted": "#1E293B",
+        "muted_foreground": "#94A3B8",
+        "accent": "#1E1B4B",
+        "accent_foreground": "#818CF8",
+        "destructive": "#7F1D1D",
+        "destructive_foreground": "#F8FAFC",
+        "border": "#1E293B",
+        "input": "#1E293B",
+        "ring": "#94A3B8"
+      },
+      "chart_colors": {
+        "chart_1": "#2563EB",
+        "chart_2": "#10B981",
+        "chart_3": "#F59E0B",
+        "chart_4": "#8B5CF6",
+        "chart_5": "#EC4899"
+      }
+    },
+    "visual_enhancers": {
+      "radius": "0.5rem",
+      "shadows": {
+        "soft": "0 2px 10px rgba(0,0,0,0.03)",
+        "medium": "0 4px 20px rgba(0,0,0,0.06)",
+        "hard": "4px 4px 0px rgba(15, 23, 42, 1)"
+      },
+      "gradients": {
+        "subtle_fade": "linear-gradient(to bottom, transparent, rgba(255,255,255,0.8))",
+        "ai_glow": "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)"
+      }
+    }
+  },
+  "layout_strategy": {
+    "dashboard_grid": "Bento Grid (Mode B - High Density)",
+    "container_padding": "p-6 md:p-8 lg:p-10",
+    "spacing_scale": "Relaxed (use gap-6 or gap-8 for layout sections, gap-2 for dense data)",
+    "sidebar": {
+      "width": "w-64",
+      "style": "Fixed, dark background in dark mode, light background with border-r in light mode.",
+      "behavior": "Collapsible on mobile"
+    },
+    "card_style": "Flat, 1px border (border-slate-200), no shadow by default, shadow-md on hover. White background."
+  },
+  "component_guidelines": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium px-4 py-2 shadow-sm transition-all",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md font-medium px-4 py-2",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md font-medium px-4 py-2",
+      "ghost": "hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2",
+      "danger": "bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md px-4 py-2"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      "search": "pl-10 (with search icon)"
+    },
+    "cards": {
+      "default": "rounded-lg border bg-card text-card-foreground shadow-sm",
+      "interactive": "rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+    },
+    "badges": {
+      "success": "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
+      "warning": "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200",
+      "neutral": "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200",
+      "ai_score": "bg-indigo-50 text-indigo-700 border-indigo-200 font-mono font-bold"
+    }
+  },
+  "specific_components": {
+    "mandate_form": {
+      "layout": "Wizard-style or single long-form with sticky navigation sidebar.",
+      "interaction": "Use 'Sonner' toasts for save confirmations. Use 'Shadcn Select' for dropdowns."
+    },
+    "candidate_card": {
+      "structure": "Grid layout. Left: Avatar + Name + Current Role. Right: Fit Score + Match Reasons.",
+      "visuals": "Use a radial progress bar for 'Fit Score'. Use 'CheckCircle' icons for match reasons."
+    },
+    "evidence_viewer": {
+      "style": "Drawer or Modal (Sheet component).",
+      "content": "Monospace font for raw data extracts. Highlight keywords in yellow-100."
+    }
+  },
+  "image_assets": {
+    "avatars": [
+      "https://images.unsplash.com/photo-1655249481446-25d575f1c054?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzczMzEzNjkyfDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1689600944138-da3b150d9cb8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzczMzEzNjkyfDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1655249493799-9cee4fe983bb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzczMzEzNjkyfDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzczMzEzNjkyfDA&ixlib=rb-4.1.0&q=85"
+    ],
+    "logos": [
+      "https://images.pexels.com/photos/30608593/pexels-photo-30608593.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "https://images.pexels.com/photos/15863044/pexels-photo-15863044.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    ],
+    "backgrounds": [
+      "https://images.unsplash.com/photo-1737505598998-693328b57ae3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdlb21ldHJpYyUyMHRlY2hub2xvZ3klMjBiYWNrZ3JvdW5kJTIwbWluaW1hbHxlbnwwfHx8fDE3NzMzMTM2OTN8MA&ixlib=rb-4.1.0&q=85"
+    ]
+  },
+  "universal_guidelines": {
+    "general": "Do not converge toward generic AI outputs. Create depth through layered design elements (z-index hierarchy).",
+    "motion": "Every interaction needs micro-animations. Use specific properties for transitions (NOT transition: all).",
+    "spacing": "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "testing": "All interactive elements MUST include a 'data-testid' attribute (kebab-case).",
+    "dark_colors": "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "centering": "You MUST NOT center align the app container. No '.App { text-align: center; }'.",
+    "toasts": "Use 'sonner' for toasts.",
+    "icons": "Use 'lucide-react' for UI icons (user, settings, search, etc.) and 'phosphor-icons' if you need more specific business icons.",
+    "charts": "Use 'recharts' with the custom chart colors defined above."
+  },
+  "implementation_steps": [
+    "Install required fonts (@fontsource/inter, @fontsource/outfit, @fontsource/jetbrains-mono).",
+    "Update tailwind.config.js with the new font families and color palette.",
+    "Create a 'Layout' component that includes the Sidebar and Main Content Area.",
+    "Build the 'MandateForm' using React Hook Form and Shadcn components.",
+    "Develop the 'CandidateGrid' using a high-density grid layout.",
+    "Implement the 'CandidateProfile' view with the 3-column layout.",
+    "Ensure all interactive elements have data-testid attributes."
+  ]
+}
