@@ -101,7 +101,7 @@ class Settings(BaseModel):
     id: str = "default"
     ai_model: str = "gpt-5.2"
 
-@api_router.post("/mandates", response_model=Mandate)
+@api_router.post("/mandates", response_model=Mandate, status_code=201)
 async def create_mandate(input: MandateCreate):
     mandate_dict = input.model_dump()
     mandate = Mandate(**mandate_dict)
