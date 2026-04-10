@@ -39,6 +39,17 @@ export default function AITools() {
       iconColor: "text-amber-500"
     },
     {
+      id: "candidate-research",
+      title: "Candidate Research",
+      description: "Deep-dive candidate profiles, dossiers, and competitive intelligence",
+      icon: FileText,
+      badge: "AI",
+      badgeVariant: "secondary",
+      link: "/candidate-research",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-500"
+    },
+    {
       id: "talent-scout",
       title: "Talent Scout",
       description: "AI-powered candidate sourcing and research from target companies",

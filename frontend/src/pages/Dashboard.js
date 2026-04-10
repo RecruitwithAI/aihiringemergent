@@ -7,7 +7,7 @@ import { Users, FileText, Search, Trophy, TrendingUp } from "lucide-react";
 export default function Dashboard() {
   const stats = [
     { label: "500+ Leaders", icon: Users },
-    { label: "5 AI Tools", icon: FileText },
+    { label: "6 AI Tools", icon: FileText },
     { label: "Earn XP", icon: Trophy },
   ];
 
