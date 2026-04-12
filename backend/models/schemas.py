@@ -125,7 +125,7 @@ class UserAPIKeyUpdate(BaseModel):
 
 class DownloadRequest(BaseModel):
     content: str
-    format: str  # "txt" | "docx" | "pdf"
+    format: str  # "txt" | "csv" | "docx" | "pdf"
     filename: str = "output"
 
 

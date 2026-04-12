@@ -55,6 +55,45 @@ If NO sample format is provided, create a professional Candidate Dossier with: E
 
 IMPORTANT: Provide ONLY the dossier content. Do NOT include any conversational follow-ups, questions, or offers for additional help at the end.""",
     "client-research": "You are a business development researcher for an executive search firm. Research the potential client company described. Include: Company Overview, Leadership Team, Recent News & Developments, Growth Trajectory, Culture & Values, Likely Hiring Needs, Key Decision Makers, and Approach Strategy. IMPORTANT: Provide ONLY the research content. Do NOT include any conversational follow-ups or questions at the end.",
+    "talent-scout": """You are a senior executive search researcher conducting candidate identification for a critical role.
+
+ROLE: Identify high-potential candidates who match the specified requirements.
+
+PROCESS:
+1. First, build a comprehensive role context based on the user's input (Target Role, Company, Geography, Compensation, Required Qualifications, Success Factors, Ideal Background, Exclusions)
+2. Then identify realistic candidate profiles that match this context
+
+OUTPUT FORMAT: Return ONLY a valid JSON array with exactly 5 candidate objects. Each candidate must follow this structure:
+
+[
+  {
+    "name": "Full Name (realistic, diverse names)",
+    "current_title": "Exact current job title",
+    "current_employer": "Current company name",
+    "location": "City, State/Country",
+    "scope": "Detailed description of current responsibilities including team size, budget, key technologies/domains, reporting structure, and strategic impact",
+    "achievements": "Specific, measurable achievements with concrete outcomes and business impact (use numbers, percentages, dollar amounts)",
+    "previous_employers": ["Company1", "Company2", "Company3"],
+    "education": "Degrees and institutions (e.g., MBA - Harvard Business School, BS Computer Science - Stanford)",
+    "years_in_role": "X years (approximate tenure in current position)",
+    "total_experience": "Y years (total relevant professional experience)",
+    "data_confidence": "high|medium|low (based on how commonly available this type of profile information would be)",
+    "verification_notes": "Any caveats, assumptions, or uncertainties about the data (e.g., 'Title inferred from company size', 'Scope estimated based on industry standards')"
+  }
+]
+
+CRITICAL INSTRUCTIONS:
+- Generate realistic, diverse, high-quality candidate profiles
+- Make achievements specific and measurable (avoid generic statements)
+- Scope should be detailed (100-150 words) covering team size, budget, technologies, impact
+- Previous employers should show logical career progression
+- Data confidence should reflect reality (not all information is equally available)
+- Verification notes should be honest about assumptions
+- Names should be diverse (gender, ethnicity)
+- Return ONLY the JSON array, no additional text before or after
+- Ensure the JSON is valid and properly formatted
+
+If this is a REFINEMENT request (user provided feedback), adjust your search criteria based on their feedback while maintaining the JSON format.""",
 }
 
 
@@ -661,25 +700,71 @@ def _parse_md_to_pdf(content: str) -> bytes:
 @router.post("/download")
 async def download_document(req: DownloadRequest, user=Depends(get_current_user)):
     safe_name = re.sub(r"[^\w\- ]", "_", req.filename)[:60]
+    
     if req.format == "txt":
         return Response(
             content=req.content.encode("utf-8"),
             media_type="text/plain; charset=utf-8",
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.txt"'},
         )
+    
+    elif req.format == "csv":
+        # CSV export for talent-scout (expects JSON array of candidates)
+        import csv
+        import json
+        
+        try:
+            candidates = json.loads(req.content)
+            if not isinstance(candidates, list):
+                raise ValueError("Content must be a JSON array")
+            
+            # Create CSV in memory
+            output = io.StringIO()
+            if candidates:
+                writer = csv.DictWriter(output, fieldnames=candidates[0].keys())
+                writer.writeheader()
+                
+                for candidate in candidates:
+                    # Flatten arrays/lists for CSV
+                    row = {}
+                    for key, value in candidate.items():
+                        if isinstance(value, list):
+                            row[key] = ", ".join(str(v) for v in value)
+                        else:
+                            row[key] = value
+                    writer.writerow(row)
+            
+            csv_content = output.getvalue()
+            output.close()
+            
+            return Response(
+                content=csv_content.encode("utf-8"),
+                media_type="text/csv; charset=utf-8",
+                headers={"Content-Disposition": f'attachment; filename="{safe_name}.csv"'},
+            )
+        except (json.JSONDecodeError, ValueError):
+            # Fallback: treat as plain text CSV
+            return Response(
+                content=req.content.encode("utf-8"),
+                media_type="text/csv; charset=utf-8",
+                headers={"Content-Disposition": f'attachment; filename="{safe_name}.csv"'},
+            )
+    
     elif req.format == "docx":
         return Response(
             content=_parse_md_to_docx(req.content),
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.docx"'},
         )
+    
     elif req.format == "pdf":
         return Response(
             content=_parse_md_to_pdf(req.content),
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
         )
-    raise HTTPException(status_code=400, detail="Invalid format. Use txt, docx, or pdf.")
+    
+    raise HTTPException(status_code=400, detail="Invalid format. Use txt, csv, docx, or pdf.")
 
 
 

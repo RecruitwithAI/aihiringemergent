@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, Search, UserSearch, BookUser, Building2 } from "lucide-react";
+import { ArrowLeft, FileText, Search, UserSearch, BookUser, Building2, Users } from "lucide-react";
 
 // Import refactored components
 import ToolSelector from "@/components/ai-tools/ToolSelector";
@@ -10,10 +10,12 @@ import ToolForm from "@/components/ai-tools/ToolForm";
 import FileUploader from "@/components/ai-tools/FileUploader";
 import OutputDisplay from "@/components/ai-tools/OutputDisplay";
 import HistoryPanel from "@/components/ai-tools/HistoryPanel";
+import TalentScoutTool from "@/components/ai_tools/TalentScoutTool";
 
 const TOOLS = [
   { id: "jd-builder",        icon: FileText,   label: "JD Builder",       color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/20",  prompt: "Role title, seniority, key responsibilities..." },
   { id: "search-strategy",   icon: Search,     label: "Search Strategy",  color: "text-cyan-400",   bg: "bg-cyan-500/10",   border: "border-cyan-500/20",  prompt: "Target role, industry, location, key skills..." },
+  { id: "talent-scout",      icon: Users,      label: "Talent Scout",     color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", prompt: "Identify high-potential candidates for a role..." },
   { id: "candidate-research",icon: UserSearch, label: "Candidate Research",color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20",prompt: "Candidate name, LinkedIn URL, or background..." },
   { id: "dossier",           icon: BookUser,   label: "Candidate Dossier",color: "text-amber-400",  bg: "bg-amber-500/10",  border: "border-amber-500/20", prompt: "Candidate name, role, company, experience notes..." },
   { id: "client-research",   icon: Building2,  label: "Client Research",  color: "text-emerald-400",bg: "bg-emerald-500/10",border: "border-emerald-500/20",prompt: "Company name, industry, HQ location..." },
@@ -486,66 +488,76 @@ IMPORTANT INSTRUCTIONS:
           </div>
         )}
 
-        {/* Tool Form */}
-        <ToolForm
-          tool={selectedTool}
-          prompt={prompt}
-          context={context}
-          generating={generating}
-          onPromptChange={setPrompt}
-          onContextChange={setContext}
-          onGenerate={handleGenerate}
-          onShowHistory={() => setHistoryOpen(true)}
-          hasHistory={history.length > 0}
-        />
-
-        {/* File Uploads */}
-        {supportsFileUpload && (
-          <FileUploader
-            files={uploadedFiles}
-            uploading={uploading}
-            uploadProgress={uploadProgress}
-            expandedFileIdx={expandedFileIdx}
-            onFilesDrop={handleFilesDrop}
-            onRemoveFile={removeFile}
-            onClearAll={clearAllFiles}
-            onToggleExpand={toggleFileExpand}
+        {/* Talent Scout Tool (Special UI) */}
+        {selectedTool.id === "talent-scout" ? (
+          <TalentScoutTool
+            onGenerate={handleGenerate}
+            loading={generating}
           />
-        )}
+        ) : (
+          <>
+            {/* Tool Form */}
+            <ToolForm
+              tool={selectedTool}
+              prompt={prompt}
+              context={context}
+              generating={generating}
+              onPromptChange={setPrompt}
+              onContextChange={setContext}
+              onGenerate={handleGenerate}
+              onShowHistory={() => setHistoryOpen(true)}
+              hasHistory={history.length > 0}
+            />
 
-        {/* Output Format File Upload (Candidate Dossier only) */}
-        {selectedTool.id === "dossier" && (
-          <FileUploader
-            files={outputFormatFile ? [outputFormatFile] : []}
-            uploading={uploadingFormat}
-            uploadProgress={formatUploadProgress}
-            expandedFileIdx={null}
-            onFilesDrop={handleFormatFileDrop}
-            onRemoveFile={() => setOutputFormatFile(null)}
-            onClearAll={() => setOutputFormatFile(null)}
-            onToggleExpand={() => {}}
-            acceptedTypes=".txt,.pdf,.doc,.docx"
-            acceptedLabels="PDF, Word (.doc/.docx), or TXT"
-            title="Upload Sample Output Format"
-            subtitle="Provide a sample format for the dossier to follow"
-            multiple={false}
-            maxSizeMB={10}
-          />
-        )}
+            {/* File Uploads */}
+            {supportsFileUpload && (
+              <FileUploader
+                files={uploadedFiles}
+                uploading={uploading}
+                uploadProgress={uploadProgress}
+                expandedFileIdx={expandedFileIdx}
+                onFilesDrop={handleFilesDrop}
+                onRemoveFile={removeFile}
+                onClearAll={clearAllFiles}
+                onToggleExpand={toggleFileExpand}
+              />
+            )}
 
-        {/* Output Display */}
-        <OutputDisplay
-          result={result}
-          isEditing={isEditing}
-          editBuffer={editBuffer}
-          downloading={downloading}
-          toolColor={selectedTool.color}
-          onStartEdit={startEdit}
-          onSaveEdit={saveEdit}
-          onCancelEdit={cancelEdit}
-          onEditBufferChange={setEditBuffer}
-          onDownload={handleDownload}
-        />
+            {/* Output Format File Upload (Candidate Dossier only) */}
+            {selectedTool.id === "dossier" && (
+              <FileUploader
+                files={outputFormatFile ? [outputFormatFile] : []}
+                uploading={uploadingFormat}
+                uploadProgress={formatUploadProgress}
+                expandedFileIdx={null}
+                onFilesDrop={handleFormatFileDrop}
+                onRemoveFile={() => setOutputFormatFile(null)}
+                onClearAll={() => setOutputFormatFile(null)}
+                onToggleExpand={() => {}}
+                acceptedTypes=".txt,.pdf,.doc,.docx"
+                acceptedLabels="PDF, Word (.doc/.docx), or TXT"
+                title="Upload Sample Output Format"
+                subtitle="Provide a sample format for the dossier to follow"
+                multiple={false}
+                maxSizeMB={10}
+              />
+            )}
+
+            {/* Output Display */}
+            <OutputDisplay
+              result={result}
+              isEditing={isEditing}
+              editBuffer={editBuffer}
+              downloading={downloading}
+              toolColor={selectedTool.color}
+              onStartEdit={startEdit}
+              onSaveEdit={saveEdit}
+              onCancelEdit={cancelEdit}
+              onEditBufferChange={setEditBuffer}
+              onDownload={handleDownload}
+            />
+          </>
+        )}
 
         {/* History Panel */}
         <HistoryPanel
