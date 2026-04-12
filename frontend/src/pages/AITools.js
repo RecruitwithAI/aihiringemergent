@@ -215,8 +215,12 @@ export default function AITools() {
   };
 
   // ── Generate ──
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
+  const handleGenerate = async (overridePrompt = null, overrideContext = null) => {
+    // Use override values if provided, otherwise use state
+    const actualPrompt = overridePrompt !== null ? overridePrompt : prompt;
+    const actualContext = overrideContext !== null ? overrideContext : context;
+    
+    if (!actualPrompt.trim()) {
       toast.error("Please enter a prompt first");
       return;
     }
@@ -253,7 +257,7 @@ IMPORTANT INSTRUCTIONS:
       );
     }
 
-    const fullContext = [context, ...fileContextParts].filter(Boolean).join("\n\n");
+    const fullContext = [actualContext, ...fileContextParts].filter(Boolean).join("\n\n");
     
     // Determine the actual tool type to send to backend
     let toolType = selectedTool.id;
@@ -264,14 +268,18 @@ IMPORTANT INSTRUCTIONS:
     try {
       const res = await axios.post(
         `${API}/ai/generate`,
-        { tool_type: toolType, prompt, context: fullContext },
+        { tool_type: toolType, prompt: actualPrompt, context: fullContext },
         { withCredentials: true }
       );
       setResult(res.data.response);
       // Refresh history after generating
       fetchHistory();
+      
+      // Return the result for components that need it (like TalentScout)
+      return res.data;
     } catch (err) {
       toast.error(err.response?.data?.detail || "Generation failed");
+      return null;
     } finally {
       setGenerating(false);
     }

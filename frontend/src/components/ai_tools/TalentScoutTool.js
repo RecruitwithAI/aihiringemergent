@@ -65,11 +65,11 @@ Please adjust the candidate search based on this feedback while maintaining the 
   const handleInitialSearch = async () => {
     const prompt = buildPrompt(false);
     
-    // Update parent's prompt state
+    // Update parent's prompt state for display
     onPromptChange(prompt);
     
-    // Call parent's generate function (it will use the prompt from state)
-    const result = await onGenerate();
+    // Call parent's generate function with the prompt directly (bypasses state timing issue)
+    const result = await onGenerate(prompt, "");
     
     if (result && result.response) {
       try {
@@ -91,11 +91,11 @@ Please adjust the candidate search based on this feedback while maintaining the 
     // Continue with same search path - add 5 more candidates
     const prompt = buildPrompt(false) + `\n\nGenerate 5 MORE candidates following the same successful pattern as before.`;
     
-    // Update parent's prompt state
+    // Update parent's prompt state for display
     onPromptChange(prompt);
     
-    // Call parent's generate function
-    const result = await onGenerate();
+    // Call parent's generate function with the prompt directly
+    const result = await onGenerate(prompt, "");
     
     if (result && result.response) {
       try {
@@ -116,11 +116,11 @@ Please adjust the candidate search based on this feedback while maintaining the 
 
     const prompt = buildPrompt(true);
     
-    // Update parent's prompt state
+    // Update parent's prompt state for display
     onPromptChange(prompt);
     
-    // Call parent's generate function
-    const result = await onGenerate();
+    // Call parent's generate function with the prompt directly
+    const result = await onGenerate(prompt, "");
     
     if (result && result.response) {
       try {
