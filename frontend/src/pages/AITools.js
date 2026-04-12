@@ -492,6 +492,7 @@ IMPORTANT INSTRUCTIONS:
         {selectedTool.id === "talent-scout" ? (
           <TalentScoutTool
             onGenerate={handleGenerate}
+            onPromptChange={setPrompt}
             loading={generating}
           />
         ) : (

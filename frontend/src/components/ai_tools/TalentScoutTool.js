@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, UserSearch, ThumbsUp, ThumbsDown, Download, Plus, AlertCircle } from "lucide-react";
 
-export default function TalentScoutTool({ onGenerate, loading }) {
+export default function TalentScoutTool({ onGenerate, loading, onPromptChange }) {
   const [step, setStep] = useState("input"); // "input" | "initial_results" | "feedback" | "final_results"
   const [formData, setFormData] = useState({
     targetRole: "",
@@ -29,7 +29,6 @@ export default function TalentScoutTool({ onGenerate, loading }) {
   });
   const [candidates, setCandidates] = useState([]);
   const [feedbackText, setFeedbackText] = useState("");
-  const [generationPrompt, setGenerationPrompt] = useState("");
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,9 +64,12 @@ Please adjust the candidate search based on this feedback while maintaining the 
 
   const handleInitialSearch = async () => {
     const prompt = buildPrompt(false);
-    setGenerationPrompt(prompt);
     
-    const result = await onGenerate("talent-scout", prompt, "");
+    // Update parent's prompt state
+    onPromptChange(prompt);
+    
+    // Call parent's generate function (it will use the prompt from state)
+    const result = await onGenerate();
     
     if (result && result.response) {
       try {
@@ -88,9 +90,12 @@ Please adjust the candidate search based on this feedback while maintaining the 
   const handleFeedbackYes = async () => {
     // Continue with same search path - add 5 more candidates
     const prompt = buildPrompt(false) + `\n\nGenerate 5 MORE candidates following the same successful pattern as before.`;
-    setGenerationPrompt(prompt);
     
-    const result = await onGenerate("talent-scout", prompt, "");
+    // Update parent's prompt state
+    onPromptChange(prompt);
+    
+    // Call parent's generate function
+    const result = await onGenerate();
     
     if (result && result.response) {
       try {
@@ -110,9 +115,12 @@ Please adjust the candidate search based on this feedback while maintaining the 
     }
 
     const prompt = buildPrompt(true);
-    setGenerationPrompt(prompt);
     
-    const result = await onGenerate("talent-scout", prompt, "");
+    // Update parent's prompt state
+    onPromptChange(prompt);
+    
+    // Call parent's generate function
+    const result = await onGenerate();
     
     if (result && result.response) {
       try {
