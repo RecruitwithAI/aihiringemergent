@@ -13,6 +13,7 @@ import LeaderboardPage from "@/pages/LeaderboardPage";
 import APIKeySettings from "@/pages/APIKeySettings";
 import ProfileSettings from "@/pages/ProfileSettings";
 import AdminPanel from "@/pages/AdminPanel";
+import ArchitectureDocs from "@/pages/ArchitectureDocs";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -152,6 +153,33 @@ function AdminRoute({ children }) {
   );
 }
 
+// ==================== SUPERADMIN PROTECTED ROUTE ====================
+
+function SuperAdminRoute({ children }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <AppLoadingScreen message="Loading..." />;
+  }
+
+  if (!user) {
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  // Check if user is superadmin
+  if (user.role !== "superadmin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <>
+      <Navbar />
+      <main className="pt-16">{children}</main>
+    </>
+  );
+}
+
 function AppLoadingScreen({ message }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#090914]">
@@ -186,6 +214,7 @@ function AppRouter() {
       <Route path="/settings/profile" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+      <Route path="/admin/architecture" element={<SuperAdminRoute><ArchitectureDocs /></SuperAdminRoute>} />
     </Routes>
   );
 }

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
-import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap, Menu, X, Key, Settings, Shield } from "lucide-react";
+import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap, Menu, X, Key, Settings, Shield, FileCode } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
@@ -132,6 +132,16 @@ export default function Navbar() {
                 >
                   <Shield className="w-4 h-4 mr-2" strokeWidth={1.5} /> Admin Panel
                 </DropdownMenuItem>
+                {/* Architecture Docs - SuperAdmin only */}
+                {user?.role === "superadmin" && (
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/admin/architecture")} 
+                    data-testid="nav-architecture-link"
+                    className="cursor-pointer text-amber-400 focus:text-amber-300"
+                  >
+                    <FileCode className="w-4 h-4 mr-2" strokeWidth={1.5} /> System Architecture
+                  </DropdownMenuItem>
+                )}
               </>
             )}
             <DropdownMenuSeparator />
