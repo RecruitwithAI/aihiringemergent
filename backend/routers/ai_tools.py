@@ -259,15 +259,24 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
             api_key_to_use = user_data["openai_api_key"]
             using_master_key = False
         else:
-            # Use Emergent LLM key - check daily limit
+            # Use SuperAdmin's API key for free usages - check daily limit
             usage = await check_daily_usage(user["user_id"])
             if not usage["can_use"]:
                 raise HTTPException(
                     status_code=429,
                     detail=f"Daily free API limit reached ({DAILY_FREE_LIMIT} uses per day). Please add your own OpenAI API key to continue."
                 )
-            api_key_to_use = EMERGENT_LLM_KEY
-            using_master_key = True
+            
+            # Get SuperAdmin's API key
+            superadmin = await db.users.find_one({"role": "superadmin"}, {"_id": 0, "openai_api_key": 1})
+            if superadmin and superadmin.get("openai_api_key"):
+                api_key_to_use = superadmin["openai_api_key"]
+                using_master_key = True
+            else:
+                raise HTTPException(
+                    status_code=503,
+                    detail="System API key not configured. Please contact administrator or add your own OpenAI API key."
+                )
 
     system_prompt = TOOL_PROMPTS.get(req.tool_type, "You are a helpful recruiting AI assistant.")
 
