@@ -37,7 +37,7 @@ INSTRUCTIONS:
 - Website: Full URL (https://...)
 - Organization Overview: 1-2 sentence description of what they do
 - Why Target: Why they're a good source for candidates (1 sentence)
-- Key Roles: Types of roles to target (e.g., "Engineering Managers, Senior Developers")
+- Key Roles: Types of roles to target (e.g., \"Engineering Managers, Senior Developers\")
 - Headcount: Approximate company size or department size
 
 Make the table well-formatted, data-rich, and actionable. Focus on companies that match the search profile. IMPORTANT: Provide ONLY the table. Do NOT include conversational text before or after.""",
@@ -45,10 +45,10 @@ Make the table well-formatted, data-rich, and actionable. Focus on companies tha
     "dossier": """You are a senior executive recruiter preparing a candidate presentation for a client. 
 
 CRITICAL INSTRUCTIONS:
-1. If the user provides a "DESIRED OUTPUT FORMAT" or "Sample Output Format", you MUST follow that exact structure, style, section ordering, and formatting.
+1. If the user provides a \"DESIRED OUTPUT FORMAT\" or \"Sample Output Format\", you MUST follow that exact structure, style, section ordering, and formatting.
 2. Match the tone, writing style, level of detail, and section headings from the provided format sample.
 3. Preserve the same flow and organization as shown in the sample format.
-4. If specific sections appear in the sample (e.g., "Executive Summary", "Professional Background", "Key Strengths"), use those EXACT section names and ordering.
+4. If specific sections appear in the sample (e.g., \"Executive Summary\", \"Professional Background\", \"Key Strengths\"), use those EXACT section names and ordering.
 5. Match the format's use of bullet points, paragraphs, metrics presentation, and any special formatting cues.
 
 If NO sample format is provided, create a professional Candidate Dossier with: Executive Summary, Career Overview, Key Accomplishments with metrics, Leadership Competencies, Education & Certifications, Compensation Expectations, Availability, and Recommendation Summary.
@@ -65,7 +65,7 @@ YOUR EXPERTISE INCLUDES:
 
 PROFESSIONAL GUIDELINES:
 - Only provide information that can be verified from public sources (LinkedIn, company websites, press releases, industry publications)
-- Clearly indicate when information is inferred vs. confirmed (use the "verification_notes" field)
+- Clearly indicate when information is inferred vs. confirmed (use the \"verification_notes\" field)
 - Respect candidate privacy and professional boundaries
 - Focus on professional achievements and qualifications, not personal information
 
@@ -157,7 +157,7 @@ def clean_ai_response(response: str) -> str:
         lower_line = stripped.lower()
         
         # Check if this line starts a conversational section
-        # Often preceded by "---" or empty lines
+        # Often preceded by \"---\" or empty lines
         if stripped == "---" or stripped == "***":
             # Check if the next content looks conversational
             found_separator = True
@@ -189,7 +189,7 @@ def clean_ai_response(response: str) -> str:
     # Join and clean up excessive blank lines at the end
     result = '\n'.join(cleaned_lines).rstrip('\n')
     
-    # Remove trailing "---" if present
+    # Remove trailing \"---\" if present
     while result.endswith('\n---') or result.endswith('\n***'):
         result = result.rsplit('\n', 1)[0].rstrip()
     
@@ -275,7 +275,7 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
         api_key=api_key_to_use,
         session_id=f"ai_{user['user_id']}_{uuid.uuid4().hex[:8]}",
         system_message=system_prompt,
-    ).with_model("openai", "gpt-5.2")
+    ).with_model("openai", "gpt-4o")
 
     full_prompt = req.prompt
     if req.context:
@@ -324,7 +324,6 @@ async def upload_chunk(
     data = await chunk.read()
     (chunk_dir / f"chunk_{int(chunk_index):05d}").write_bytes(data)
     return {"chunk": int(chunk_index), "total": int(total_chunks), "ok": True}
-
 
 @router.post("/extract-file")
 async def extract_file(req: ExtractFileRequest, user=Depends(get_current_user)):
