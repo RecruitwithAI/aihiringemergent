@@ -104,7 +104,8 @@ class BestplAPITester:
             {
                 "name": f"Test User {timestamp}",
                 "email": test_email,
-                "password": test_password
+                "password": test_password,
+                "linkedin_url": "https://linkedin.com/in/testuser"
             }
         )
         
@@ -123,8 +124,8 @@ class BestplAPITester:
             "auth/login", 
             200,
             {
-                "email": "testphase4@bestpl.ai",
-                "password": "TestPass123"
+                "email": "saba@bestpl.ai",
+                "password": "Bestpl2026!"
             }
         )
         
