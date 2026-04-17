@@ -217,10 +217,11 @@ export default function AITools() {
   // ── Generate ──
   const handleGenerate = async (overridePrompt = null, overrideContext = null) => {
     // Use override values if provided, otherwise use state
-    const actualPrompt = overridePrompt !== null ? overridePrompt : prompt;
-    const actualContext = overrideContext !== null ? overrideContext : context;
+    // Ensure we dont use the event object if called directly from onClick
+    const actualPrompt = (typeof overridePrompt === "string") ? overridePrompt : prompt;
+    const actualContext = (typeof overrideContext === "string") ? overrideContext : context;
     
-    if (!actualPrompt.trim()) {
+    if (!actualPrompt || !actualPrompt.trim()) {
       toast.error("Please enter a prompt first");
       return;
     }
