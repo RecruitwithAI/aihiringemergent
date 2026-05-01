@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
-import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap, Menu, X, Key, Settings, Shield, FileCode } from "lucide-react";
+import { LayoutDashboard, Brain, MessageSquare, GraduationCap, Trophy, User, LogOut, Zap, Menu, X, Key, Settings, Shield, FileCode, ScrollText } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
@@ -140,6 +140,15 @@ export default function Navbar() {
                     className="cursor-pointer text-amber-400 focus:text-amber-300"
                   >
                     <FileCode className="w-4 h-4 mr-2" strokeWidth={1.5} /> System Architecture
+                  </DropdownMenuItem>
+                )}
+                {user?.role === "superadmin" && (
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/admin/prompts")} 
+                    data-testid="nav-prompts-link"
+                    className="cursor-pointer text-amber-400 focus:text-amber-300"
+                  >
+                    <ScrollText className="w-4 h-4 mr-2" strokeWidth={1.5} /> System Prompts
                   </DropdownMenuItem>
                 )}
               </>

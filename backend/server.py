@@ -13,7 +13,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import routers
-from routers import auth, challenges, answers, ai_tools, dashboard, users
+from routers import auth, challenges, answers, ai_tools, dashboard, users, prompts
 from utils.database import client
 
 app = FastAPI()
@@ -29,6 +29,7 @@ api_router.include_router(answers.router)
 api_router.include_router(ai_tools.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(users.router)
+api_router.include_router(prompts.router)
 
 # Wire up the main API router
 app.include_router(api_router)
@@ -76,6 +77,12 @@ app.add_middleware(
 )
 # This wraps CORSMiddleware — runs AFTER CORS sets headers, rewrites "*" to actual origin
 app.add_middleware(CORSOriginReflectMiddleware)
+
+
+@app.on_event("startup")
+async def startup_seed():
+    from utils.prompts import seed_prompts
+    await seed_prompts()
 
 
 @app.on_event("shutdown")
