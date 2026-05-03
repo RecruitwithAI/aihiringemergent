@@ -4,7 +4,15 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Key, Eye, EyeOff, Check, X, AlertCircle, Loader2 } from "lucide-react";
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
@@ -14,6 +22,8 @@ export default function APIKeySettings() {
   const [showKey, setShowKey] = useState(false);
   const [hasKey, setHasKey] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [usageStats, setUsageStats] = useState(null);
 
   useEffect(() => {
@@ -52,18 +62,18 @@ export default function APIKeySettings() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to remove your API key? You'll be limited to 3 free uses per day.")) {
-      return;
-    }
-
+    setDeleting(true);
     try {
       await axios.delete(`${API}/ai/delete-api-key`, { withCredentials: true });
       toast.success("API key removed");
       setHasKey(false);
       setApiKey("");
+      setShowDeleteConfirm(false);
       fetchUsageStats();
     } catch (err) {
       toast.error("Failed to remove API key");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -127,7 +137,8 @@ export default function APIKeySettings() {
                 </div>
               </div>
               <button
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
+                data-testid="remove-api-key-btn"
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-sm font-medium transition-all"
               >
                 <X className="w-4 h-4" strokeWidth={1.5} />
@@ -200,6 +211,36 @@ export default function APIKeySettings() {
             </li>
           </ul>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle data-testid="remove-api-key-dialog-title">Remove API Key?</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to remove your API key? You'll be limited to {usageStats?.daily_usage?.limit || 3} free AI generations per day.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                data-testid="remove-api-key-cancel"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+                data-testid="remove-api-key-confirm"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <X className="w-4 h-4 mr-2" />}
+                Remove Key
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
