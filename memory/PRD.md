@@ -27,33 +27,43 @@ Implement a comprehensive API key management system, Super Admin capabilities (R
 - JD Builder, Search Strategy, Target Company List, Candidate Research, Candidate Dossier, Client Research, Talent Scout
 - SuperAdmin API key fallback for free daily limits (3/day)
 - File upload/extraction (PDF, DOCX, TXT, audio)
+- Improved error messages for OpenAI failures (quota, auth)
 
 ### DONE — System Prompt Management (May 2026)
 - Prompts moved from hardcoded dict to MongoDB (`system_prompts` collection)
 - Auto-seeded on startup (preserves edits)
 - SuperAdmin CRUD: view, edit, reset to default with version tracking
-- Frontend page at `/admin/prompts` with expand/edit/reset UI
-- `ai_tools.py` uses `get_prompt()` from MongoDB at runtime
+- Frontend page at `/admin/prompts`
 
 ### DONE — API Key Removal Bug Fix (May 2026)
 - Replaced `window.confirm()` with proper React Dialog component
-- Full flow works: remove → confirm → key deleted → UI updates
+
+### DONE — File Download Fix (May 2026)
+- Root cause: `target="_blank"` on anchor tags overriding `download` attribute
+- Fixed in AITools.js and TalentScoutTool.js with proper blob handling + MIME types
+- TalentScoutTool now uses backend for CSV/PDF/DOCX exports
+
+### DONE — Light Mode Readability Fix (May 2026)
+- Fixed Admin Panel, Profile Settings, Architecture Docs — replaced hardcoded dark backgrounds
+- Added comprehensive CSS overrides for gradients, glass-nav, dark card backgrounds
+- All pages tested and readable in both themes
+
+### DONE — Rich Text Editor for Challenges (May 2026)
+- Installed @tiptap/extension-underline
+- ChallengeDetail answer form now uses RichTextEditor (bold, italic, underline, lists, code, links)
+- Answers rendered as sanitized HTML via DOMPurify
 
 ### DONE — Other
 - Architecture Documentation page (SuperAdmin only)
 - Google OAuth + Email auth with session cookies
 - Gamification (points, badges, leaderboard)
 
-## Open Issues (Priority Order)
-1. **P0**: File download fails after AI generation (exports not saving locally)
-2. **P1**: Light mode readability issues across all pages
-3. **P1**: Rich text editor for challenges (previously rolled back)
-4. **P2**: N+1 query performance in challenges.py / dashboard.py
-
-## Upcoming Tasks
-- Build analytics dashboard for usage/engagement metrics
-- Email notifications (currently mocked as "Coming Soon")
-- Refactor AITools.js monolithic file into smaller components
+## Open/Upcoming Tasks
+1. **P2**: N+1 query optimization in challenges.py / dashboard.py
+2. **P2**: Build analytics dashboard for usage/engagement metrics
+3. **P2**: Refactor AITools.js monolithic file into smaller components
+4. **P3**: Challenge categories/pinning for admins
+5. **P3**: Email notifications (currently mocked as "Coming Soon")
 
 ## Key API Endpoints
 - `POST /api/ai/generate` — AI completion (uses SuperAdmin or user key)
@@ -66,4 +76,5 @@ Implement a comprehensive API key management system, Super Admin capabilities (R
 ## Critical Notes
 - Backend does NOT use EMERGENT_LLM_KEY — fetches SuperAdmin's stored OpenAI key
 - If AI fails with 401, SuperAdmin needs to update their OpenAI key via API Settings
+- If AI fails with 429, OpenAI quota is exceeded — add billing at platform.openai.com
 - Auth uses session cookies (not JWT tokens in body)
