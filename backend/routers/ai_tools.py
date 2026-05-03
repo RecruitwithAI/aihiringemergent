@@ -198,7 +198,24 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
     if req.context:
         full_prompt = f"{req.prompt}\n\nAdditional Context: {req.context}"
 
-    response = await chat.send_message(UserMessage(text=full_prompt))
+    try:
+        response = await chat.send_message(UserMessage(text=full_prompt))
+    except Exception as e:
+        error_msg = str(e).lower()
+        if "quota" in error_msg or "billing" in error_msg or "rate" in error_msg:
+            raise HTTPException(
+                status_code=429,
+                detail="OpenAI quota exceeded. Please check your plan and billing at platform.openai.com"
+            )
+        if "authentication" in error_msg or "api key" in error_msg or "incorrect" in error_msg:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid OpenAI API key. Please update your key in API Settings."
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI generation failed: {str(e)[:200]}"
+        )
     
     # Clean up conversational follow-ups from the response
     cleaned_response = clean_ai_response(response)
