@@ -168,8 +168,27 @@ code {
 }
 
 [data-theme="light"] .bg-\[#090914\],
-[data-theme="light"] .bg-\[#12121a\] {
-    background-color: hsl(210, 100%, 98%) !important;
+[data-theme="light"] .bg-\[#12121a\],
+[data-theme="light"] .bg-\[#0a0a1a\] {
+    background-color: hsl(210, 100%, 97%) !important;
+}
+
+/* Gradient backgrounds in light mode */
+[data-theme="light"] .bg-gradient-to-br.from-\[\#090914\] {
+    background: hsl(210, 100%, 97%) !important;
+}
+
+/* Dark card backgrounds in light mode */
+[data-theme="light"] .bg-\[#0f1020\]\/80,
+[data-theme="light"] .bg-\[#0f1020\] {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Nav glass effect in light mode */
+[data-theme="light"] .glass-nav {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Borders in light mode */

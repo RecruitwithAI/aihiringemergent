@@ -226,23 +226,23 @@ export default function AdminPanel() {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#090914] via-[#0a0a1a] to-[#090914]">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Users className="w-8 h-8 text-blue-400" />
-            <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+            <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
           </div>
-          <p className="text-slate-400">Manage users, roles, and system access</p>
+          <p className="text-muted-foreground">Manage users, roles, and system access</p>
         </div>
 
         {/* Filters */}
-        <Card className="p-4 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-4 mb-6 bg-card border border-border">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -256,7 +256,7 @@ export default function AdminPanel() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[#0f1020] border border-white/10 text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Roles</option>
               <option value="superadmin">SuperAdmin</option>
@@ -267,7 +267,7 @@ export default function AdminPanel() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[#0f1020] border border-white/10 text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -282,7 +282,7 @@ export default function AdminPanel() {
         </Card>
 
         {/* Users Table */}
-        <Card className="overflow-hidden bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="overflow-hidden bg-card border border-border">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
@@ -292,19 +292,19 @@ export default function AdminPanel() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-white/10">
-                      <TableHead className="text-slate-300">User</TableHead>
-                      <TableHead className="text-slate-300">Role</TableHead>
-                      <TableHead className="text-slate-300">Status</TableHead>
-                      <TableHead className="text-slate-300">Points</TableHead>
-                      <TableHead className="text-slate-300">API Key</TableHead>
-                      <TableHead className="text-slate-300">Joined</TableHead>
-                      <TableHead className="text-slate-300 text-right">Actions</TableHead>
+                    <TableRow className="border-border">
+                      <TableHead className="text-muted-foreground">User</TableHead>
+                      <TableHead className="text-muted-foreground">Role</TableHead>
+                      <TableHead className="text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-muted-foreground">Points</TableHead>
+                      <TableHead className="text-muted-foreground">API Key</TableHead>
+                      <TableHead className="text-muted-foreground">Joined</TableHead>
+                      <TableHead className="text-muted-foreground text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.user_id} className="border-white/5">
+                      <TableRow key={user.user_id} className="border-border/50">
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <UserAvatar user={user} size="sm" />
@@ -319,7 +319,7 @@ export default function AdminPanel() {
                         </TableCell>
                         <TableCell>{getRoleBadge(user.role)}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell className="text-slate-300">{user.points || 0}</TableCell>
+                        <TableCell className="text-foreground">{user.points || 0}</TableCell>
                         <TableCell>
                           {user.has_own_api_key ? (
                             <span className="inline-flex items-center gap-1 text-green-400 text-xs">
@@ -327,10 +327,10 @@ export default function AdminPanel() {
                               Yes
                             </span>
                           ) : (
-                            <span className="text-slate-500 text-xs">No</span>
+                            <span className="text-muted-foreground text-xs">No</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-slate-400 text-sm">
+                        <TableCell className="text-muted-foreground text-sm">
                           {new Date(user.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
@@ -423,8 +423,8 @@ export default function AdminPanel() {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
-                <div className="text-sm text-slate-400">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                <div className="text-sm text-muted-foreground">
                   Page {page} of {totalPages}
                 </div>
                 <div className="flex gap-2">
@@ -493,7 +493,7 @@ export default function AdminPanel() {
                     {userActivity.ai_history?.slice(0, 5).map((item, idx) => (
                       <div
                         key={idx}
-                        className="p-3 rounded-lg bg-[#0f1020] border border-white/5 text-sm"
+                        className="p-3 rounded-lg bg-secondary border border-border text-sm"
                       >
                         <div className="text-blue-400 font-medium">{item.tool_type}</div>
                         <div className="text-slate-400 text-xs mt-1 line-clamp-2">

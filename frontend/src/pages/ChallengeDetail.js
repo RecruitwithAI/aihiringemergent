@@ -168,18 +168,15 @@ export default function ChallengeDetail() {
         <div className={`${CARD} p-6 mt-4`} data-testid="answer-form">
           <h3 className="font-semibold text-white font-[Lexend] mb-3">Your Answer</h3>
           <form onSubmit={handleAnswer} className="space-y-3">
-            <Textarea
-              data-testid="answer-input"
+            <RichTextEditor
+              content={answerText}
+              onChange={setAnswerText}
               placeholder="Share your expertise..."
-              value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              className="min-h-[100px] resize-none bg-white/[0.05] border-white/[0.10] text-white placeholder:text-slate-600 focus-visible:border-cyan-500/50"
-              required
             />
             <button
               data-testid="submit-answer-btn"
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !answerText.trim()}
               className="px-6 h-10 rounded-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-cyan-500/20"
             >
               {submitting ? "Posting..." : "Post Answer (+10 XP)"}
@@ -224,7 +221,10 @@ export default function ChallengeDetail() {
                           )}
                           <span className="text-xs text-slate-600">{timeAgo(a.created_at)}</span>
                         </div>
-                        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{a.content}</p>
+                        <div
+                          className="text-slate-400 leading-relaxed prose prose-invert prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(a.content) }}
+                        />
                       </div>
                     </div>
                   </div>

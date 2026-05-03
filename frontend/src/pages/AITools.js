@@ -310,93 +310,48 @@ IMPORTANT INSTRUCTIONS:
 
     try {
       const filename = `${selectedTool.label}.${format}`;
-      console.log(`[DOWNLOAD] Starting download: ${format}, filename: ${filename}, content length: ${content.length}`);
 
       if (format === "txt") {
-        // TXT: Create blob and trigger download directly
-        console.log("[DOWNLOAD] Creating TXT blob...");
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        console.log("[DOWNLOAD] Blob created, size:", blob.size);
-        
         const url = window.URL.createObjectURL(blob);
-        console.log("[DOWNLOAD] Object URL created:", url);
-        
-        // Try multiple download methods
-        try {
-          // Method 1: Standard anchor download
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = filename;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          
-          // Append to body and click
-          document.body.appendChild(link);
-          link.click();
-          console.log("[DOWNLOAD] Method 1 (anchor) triggered");
-          
-          // Cleanup
-          setTimeout(() => {
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          }, 100);
-        } catch (e) {
-          console.error("[DOWNLOAD] Method 1 failed:", e);
-          // Method 2: Try window.open as fallback
-          window.open(url, "_blank");
-          console.log("[DOWNLOAD] Method 2 (window.open) triggered");
-        }
-        
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 200);
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       } else {
-        // PDF/DOCX: Get from backend
-        console.log("[DOWNLOAD] Requesting from backend...");
         const res = await axios.post(
           `${API}/ai/download`,
           { content, format, filename },
           { responseType: "blob", withCredentials: true }
         );
-        console.log(`[DOWNLOAD] Response received, size: ${res.data.size} bytes, type: ${res.data.type}`);
-        
-        // Verify we got a blob
-        if (!(res.data instanceof Blob)) {
-          throw new Error("Response is not a Blob");
-        }
-        
-        const url = window.URL.createObjectURL(res.data);
-        console.log("[DOWNLOAD] Object URL created:", url);
-        
-        // Try multiple download methods
-        try {
-          // Method 1: Standard anchor download
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = filename;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          
-          // Append to body and click
-          document.body.appendChild(link);
-          link.click();
-          console.log("[DOWNLOAD] Method 1 (anchor) triggered");
-          
-          // Cleanup
-          setTimeout(() => {
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          }, 100);
-        } catch (e) {
-          console.error("[DOWNLOAD] Method 1 failed:", e);
-          // Method 2: Try window.open as fallback
-          window.open(url, "_blank");
-          console.log("[DOWNLOAD] Method 2 (window.open) triggered");
-        }
-        
+
+        const mimeMap = {
+          pdf: "application/pdf",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          csv: "text/csv",
+        };
+        const blob = new Blob([res.data], { type: mimeMap[format] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 200);
         toast.success(`Downloaded as ${format.toUpperCase()}`);
       }
     } catch (err) {
-      console.error("[DOWNLOAD] Error:", err);
-      console.error("[DOWNLOAD] Error stack:", err.stack);
       let errorMsg = err.message;
       if (err.response?.data instanceof Blob) {
         errorMsg = await err.response.data.text();

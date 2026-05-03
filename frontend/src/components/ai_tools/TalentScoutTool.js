@@ -1,4 +1,7 @@
 import { useState } from "react";
+import axios from "axios";
+import { API } from "@/App";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,51 +137,93 @@ Please adjust the candidate search based on this feedback while maintaining the 
     }
   };
 
-  const handleDownload = (format) => {
-    // Convert candidates to appropriate format for download
-    let content;
+  const handleDownload = async (format) => {
     const filename = `talent_scout_${formData.targetRole.replace(/\s+/g, "_")}`;
 
-    if (format === "csv" || format === "txt") {
-      // For CSV and TXT, send JSON string
-      content = JSON.stringify(candidates, null, 2);
-    } else {
-      // For PDF and DOCX, create a formatted document
-      content = `# Talent Scout Results\n\n`;
-      content += `**Target Role:** ${formData.targetRole}\n`;
-      content += `**Company:** ${formData.company}\n`;
-      content += `**Geography:** ${formData.geography}\n\n`;
-      content += `## Candidates (${candidates.length})\n\n`;
+    try {
+      if (format === "txt") {
+        // TXT: dump formatted text locally
+        let content = `Talent Scout Results\n\nTarget Role: ${formData.targetRole}\nCompany: ${formData.company}\nGeography: ${formData.geography}\n\n`;
+        candidates.forEach((c, idx) => {
+          content += `${idx + 1}. ${c.name}\nTitle: ${c.current_title}\nEmployer: ${c.current_employer}\nLocation: ${c.location}\nScope: ${c.scope}\nAchievements: ${c.achievements}\nPrevious Employers: ${c.previous_employers.join(", ")}\nEducation: ${c.education}\nYears in Role: ${c.years_in_role}\nTotal Experience: ${c.total_experience}\nConfidence: ${c.data_confidence}\n${c.verification_notes ? `Notes: ${c.verification_notes}\n` : ""}\n---\n\n`;
+        });
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${filename}.txt`;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 200);
+        toast.success("Downloaded as TXT");
+      } else if (format === "csv") {
+        // CSV: send JSON array to backend which produces proper CSV
+        const res = await axios.post(
+          `${API}/ai/download`,
+          { content: JSON.stringify(candidates), format: "csv", filename },
+          { responseType: "blob", withCredentials: true }
+        );
+        const blob = new Blob([res.data], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${filename}.csv`;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 200);
+        toast.success("Downloaded as CSV");
+      } else {
+        // PDF/DOCX: send formatted markdown to backend
+        let content = `# Talent Scout Results\n\n`;
+        content += `**Target Role:** ${formData.targetRole}\n`;
+        content += `**Company:** ${formData.company}\n`;
+        content += `**Geography:** ${formData.geography}\n\n`;
+        content += `## Candidates (${candidates.length})\n\n`;
+        candidates.forEach((c, idx) => {
+          content += `### ${idx + 1}. ${c.name}\n\n`;
+          content += `**Current Title:** ${c.current_title}\n`;
+          content += `**Current Employer:** ${c.current_employer}\n`;
+          content += `**Location:** ${c.location}\n\n`;
+          content += `**Scope:** ${c.scope}\n\n`;
+          content += `**Achievements:** ${c.achievements}\n\n`;
+          content += `**Previous Employers:** ${c.previous_employers.join(", ")}\n`;
+          content += `**Education:** ${c.education}\n`;
+          content += `**Years in Role:** ${c.years_in_role}\n`;
+          content += `**Total Experience:** ${c.total_experience}\n`;
+          content += `**Data Confidence:** ${c.data_confidence}\n`;
+          if (c.verification_notes) content += `**Verification Notes:** ${c.verification_notes}\n`;
+          content += `\n---\n\n`;
+        });
 
-      candidates.forEach((candidate, idx) => {
-        content += `### ${idx + 1}. ${candidate.name}\n\n`;
-        content += `**Current Title:** ${candidate.current_title}\n`;
-        content += `**Current Employer:** ${candidate.current_employer}\n`;
-        content += `**Location:** ${candidate.location}\n\n`;
-        content += `**Scope:** ${candidate.scope}\n\n`;
-        content += `**Achievements:** ${candidate.achievements}\n\n`;
-        content += `**Previous Employers:** ${candidate.previous_employers.join(", ")}\n`;
-        content += `**Education:** ${candidate.education}\n`;
-        content += `**Years in Role:** ${candidate.years_in_role}\n`;
-        content += `**Total Experience:** ${candidate.total_experience}\n`;
-        content += `**Data Confidence:** ${candidate.data_confidence}\n`;
-        if (candidate.verification_notes) {
-          content += `**Verification Notes:** ${candidate.verification_notes}\n`;
-        }
-        content += `\n---\n\n`;
-      });
+        const mimeMap = {
+          pdf: "application/pdf",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        };
+        const res = await axios.post(
+          `${API}/ai/download`,
+          { content, format, filename },
+          { responseType: "blob", withCredentials: true }
+        );
+        const blob = new Blob([res.data], { type: mimeMap[format] || "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${filename}.${format}`;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 200);
+        toast.success(`Downloaded as ${format.toUpperCase()}`);
+      }
+    } catch (err) {
+      let errorMsg = err.message;
+      if (err.response?.data instanceof Blob) {
+        errorMsg = await err.response.data.text();
+      }
+      toast.error(`Download failed: ${errorMsg}`);
     }
-
-    // Create download link
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${filename}.${format}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const handleReset = () => {

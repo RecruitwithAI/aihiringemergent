@@ -35,7 +35,7 @@ export default function ArchitectureDocs() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#090914] via-[#0a0a1a] to-[#090914] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
       </div>
     );
@@ -44,7 +44,7 @@ export default function ArchitectureDocs() {
   if (!docs) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#090914] via-[#0a0a1a] to-[#090914]">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -76,7 +76,7 @@ export default function ArchitectureDocs() {
         </div>
 
         {/* Overview */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <Zap className="w-5 h-5 text-blue-400" />
             System Overview
@@ -102,7 +102,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* Tech Stack */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4">Technology Stack</h2>
           <div className="space-y-4">
             {/* Frontend */}
@@ -147,7 +147,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* Architecture */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <Cloud className="w-5 h-5 text-blue-400" />
             System Architecture
@@ -181,7 +181,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* Database Schema */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <Database className="w-5 h-5 text-purple-400" />
             Database Schema
@@ -218,7 +218,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* API Endpoints */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4">API Endpoints</h2>
           <div className="space-y-4">
             {Object.entries(docs.api_endpoints).map(([category, data]) => (
@@ -259,7 +259,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* RBAC System */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-purple-400" />
             Role-Based Access Control (RBAC)
@@ -298,7 +298,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* Features */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4">Features</h2>
           
           {/* AI Tools */}
@@ -364,7 +364,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* Security */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <Lock className="w-5 h-5 text-red-400" />
             Security
@@ -411,7 +411,7 @@ export default function ArchitectureDocs() {
         </Card>
 
         {/* Deployment */}
-        <Card className="p-6 mb-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+        <Card className="p-6 mb-6 bg-card border border-border">
           <h2 className="text-xl font-semibold text-white mb-4">Deployment</h2>
           <div className="space-y-4 text-sm">
             <div>

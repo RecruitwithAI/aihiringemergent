@@ -98,25 +98,25 @@ export default function ProfileSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#090914] via-[#0a0a1a] to-[#090914]">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Profile Settings</h1>
-          <p className="text-slate-400">Manage your personal information and professional details</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Profile Settings</h1>
+          <p className="text-muted-foreground">Manage your personal information and professional details</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
-          <Card className="p-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+          <Card className="p-6 bg-card border border-border">
             <div className="flex items-center gap-2 mb-6">
               <User className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">Basic Information</h2>
+              <h2 className="text-xl font-semibold text-foreground">Basic Information</h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name" className="text-slate-300">
+                <Label htmlFor="name" className="text-muted-foreground">
                   Full Name *
                 </Label>
                 <Input
@@ -131,7 +131,7 @@ export default function ProfileSettings() {
               </div>
 
               <div>
-                <Label htmlFor="linkedin_url" className="text-slate-300">
+                <Label htmlFor="linkedin_url" className="text-muted-foreground">
                   LinkedIn URL *
                 </Label>
                 <Input
@@ -149,15 +149,15 @@ export default function ProfileSettings() {
           </Card>
 
           {/* Professional Details */}
-          <Card className="p-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+          <Card className="p-6 bg-card border border-border">
             <div className="flex items-center gap-2 mb-6">
               <Briefcase className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">Professional Details</h2>
+              <h2 className="text-xl font-semibold text-foreground">Professional Details</h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-slate-300">
+                <Label htmlFor="title" className="text-muted-foreground">
                   Job Title
                 </Label>
                 <Input
@@ -171,7 +171,7 @@ export default function ProfileSettings() {
               </div>
 
               <div>
-                <Label htmlFor="company" className="text-slate-300">
+                <Label htmlFor="company" className="text-muted-foreground">
                   Company
                 </Label>
                 <Input
@@ -187,15 +187,15 @@ export default function ProfileSettings() {
           </Card>
 
           {/* Contact Information */}
-          <Card className="p-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+          <Card className="p-6 bg-card border border-border">
             <div className="flex items-center gap-2 mb-6">
               <Phone className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">Contact Information</h2>
+              <h2 className="text-xl font-semibold text-foreground">Contact Information</h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="phone_number" className="text-slate-300">
+                <Label htmlFor="phone_number" className="text-muted-foreground">
                   Phone Number
                 </Label>
                 <Input
@@ -211,7 +211,7 @@ export default function ProfileSettings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="city" className="text-slate-300">
+                  <Label htmlFor="city" className="text-muted-foreground">
                     <MapPin className="w-4 h-4 inline mr-1" />
                     City
                   </Label>
@@ -226,7 +226,7 @@ export default function ProfileSettings() {
                 </div>
 
                 <div>
-                  <Label htmlFor="country" className="text-slate-300">
+                  <Label htmlFor="country" className="text-muted-foreground">
                     <Globe className="w-4 h-4 inline mr-1" />
                     Country
                   </Label>
@@ -244,15 +244,15 @@ export default function ProfileSettings() {
           </Card>
 
           {/* About & Expertise */}
-          <Card className="p-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
+          <Card className="p-6 bg-card border border-border">
             <div className="flex items-center gap-2 mb-6">
               <FileText className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">About & Expertise</h2>
+              <h2 className="text-xl font-semibold text-foreground">About & Expertise</h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="about_me" className="text-slate-300">
+                <Label htmlFor="about_me" className="text-muted-foreground">
                   About Me
                 </Label>
                 <Textarea
@@ -266,7 +266,7 @@ export default function ProfileSettings() {
               </div>
 
               <div>
-                <Label className="text-slate-300">I Can Help Community Members With</Label>
+                <Label className="text-muted-foreground">I Can Help Community Members With</Label>
                 <div className="flex gap-2 mt-1.5">
                   <Input
                     value={helpTopicInput}
@@ -311,7 +311,7 @@ export default function ProfileSettings() {
             <Button
               type="submit"
               disabled={loading}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-8"
+              className="bg-blue-500 hover:bg-blue-600 text-foreground px-8"
             >
               {loading ? (
                 <>
