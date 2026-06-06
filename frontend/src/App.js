@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import axios from "axios";
 import LandingPage from "@/pages/LandingPage";
 import Dashboard from "@/pages/Dashboard";
-import AITools from "@/pages/AITools";
+import AIToolsLayout from "@/features/ai-tools/AIToolsLayout";
 import Challenges from "@/pages/Challenges";
 import ChallengeDetail from "@/pages/ChallengeDetail";
 import Training from "@/pages/Training";
@@ -207,7 +207,6 @@ function AppRouter() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/ai-tools-old" element={<ProtectedRoute><AITools /></ProtectedRoute>} />
       <Route path="/ai-tools" element={<ProtectedRoute><AIToolsLayout /></ProtectedRoute>} />
       <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
       <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeDetail /></ProtectedRoute>} />
