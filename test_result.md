@@ -102,10 +102,10 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the complete API Key Management feature for the Bestpl.ai application"
+user_problem_statement: "Test the refactored AI Tools application comprehensively - all 6 tools with new modular architecture"
 
 backend:
-  - task: "User Authentication (Login/Logout)"
+  - task: "User Authentication"
     implemented: true
     working: true
     file: "/app/backend/routers/auth.py"
@@ -115,9 +115,9 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "Regular user login (saba@bestpl.ai) and admin login (noorussaba.alam@gmail.com) both working correctly. Admin user has role='superadmin' field in /auth/me response. Authentication properly blocks unauthenticated requests with 401 status."
-  
-  - task: "API Key CRUD Operations"
+        comment: "Authentication working correctly. Login successful with test credentials (saba@bestpl.ai). Session management working properly."
+
+  - task: "AI Usage Stats Endpoint"
     implemented: true
     working: true
     file: "/app/backend/routers/ai_tools.py"
@@ -127,9 +127,21 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "Complete API key management working: Save API key (/ai/save-api-key), Delete API key (/ai/delete-api-key), and Get usage stats (/ai/usage) all functioning correctly. Proper validation for invalid/empty API keys with 400 status."
-  
-  - task: "Daily Usage Tracking"
+        comment: "GET /api/ai/usage endpoint working correctly. Returns daily usage stats (used/remaining/limit) and has_own_api_key flag. Tested successfully."
+
+  - task: "AI Generation - All 6 Tools"
+    implemented: true
+    working: false
+    file: "/app/backend/routers/ai_tools.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE: All AI generation endpoints (POST /api/ai/generate) returning 500 Internal Server Error. Root cause: OpenAI API key quota exceeded. Backend logs show 'RateLimitError: You exceeded your current quota'. The superadmin's master OpenAI API key stored in database has no credits remaining. This is an INFRASTRUCTURE issue, not a code bug. All 7 tool types tested: jd-builder, candidate-research, search-strategy, search-strategy-targets, talent-scout, dossier, client-research - all failing due to quota issue. Backend code logic is correct (checks user key first, falls back to superadmin key), but both keys have quota issues."
+
+  - task: "File Upload & Extraction"
     implemented: true
     working: true
     file: "/app/backend/routers/ai_tools.py"
@@ -139,9 +151,9 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "Usage tracking working correctly. Initial state shows 3/3 free uses, decrements properly after AI generation (used: 1, remaining: 2). has_own_api_key flag correctly toggles based on stored API key status."
-  
-  - task: "AI Tool Integration with API Keys"
+        comment: "File upload (POST /api/ai/upload-chunk) and extraction (POST /api/ai/extract-file) working correctly. Successfully uploaded test_context.txt file and extracted 118 characters. Chunked upload mechanism working as expected."
+
+  - task: "Document Download - Multiple Formats"
     implemented: true
     working: true
     file: "/app/backend/routers/ai_tools.py"
@@ -151,55 +163,144 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "AI generation working with master key fallback. JD Builder tool generates 4946 character response successfully. Usage properly recorded in database after generation. Master key limits enforced correctly."
+        comment: "POST /api/ai/download endpoint working for all formats. TXT: 334 bytes generated, PDF: 1417 bytes generated, DOCX: 36850 bytes generated, CSV (Talent Scout): 101 bytes generated. All download formats working correctly with proper content generation."
+
+  - task: "AI History Retrieval"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/ai_tools.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/ai/history endpoint working correctly. Successfully retrieved 36 history entries for authenticated user. History tracking functional."
+
+  - task: "API Key Management"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/ai_tools.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "API key save (POST /api/ai/save-api-key) and delete (DELETE /api/ai/delete-api-key) endpoints working correctly. Successfully saved test API key and deleted it. Proper validation in place."
 
 frontend:
-  - task: "API Settings Page Navigation"
+  - task: "AI Tools Navigation & Tool Selector"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/APIKeySettings.js"
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/AIToolsLayout.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "testing"
-        comment: "Frontend testing was not performed as per testing agent limitations. API Settings page exists at /settings/api-key route in App.js with proper authentication protection."
-      - working: true
-        agent: "testing"
-        comment: "UI testing completed successfully. Unauthenticated access correctly redirects to landing page. Login flow works (saba@bestpl.ai), user 'Saba' displayed in navbar. Navigation to /settings/api-key via user menu dropdown works perfectly. Page title 'API Key Settings' displays correctly. Navigation back to Dashboard and return to API Settings preserves page state."
-  
-  - task: "API Key Form UI Components"
+        comment: "Frontend testing not performed as per testing agent limitations. Route /ai-tools exists in App.js with AIToolsLayout component. Tool selector should display all 6 tools with proper navigation."
+
+  - task: "JD Builder Tool"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/APIKeySettings.js"
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/tools/JDBuilder/JDBuilderTool.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed. Tool supports file upload, context field, and download in TXT/PDF/DOCX formats. Backend integration blocked by API quota issue."
+
+  - task: "Candidate Research Tool"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/tools/CandidateResearch/CandidateResearchTool.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed. Standard tool with no file upload, context field enabled, TXT/PDF/DOCX downloads."
+
+  - task: "Search Strategy Tool"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/tools/SearchStrategy/SearchStrategyTool.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed. Custom UI with OutputTypeSelector component. Two modes: 'search-strategy' and 'search-strategy-targets' (target company list)."
+
+  - task: "Talent Scout Tool"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/tools/TalentScout/TalentScoutTool.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed. Custom multi-step UI with search criteria form, candidate results display, CSV export, and refinement capability."
+
+  - task: "Candidate Dossier Tool"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/tools/CandidateDossier/CandidateDossierTool.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed. Custom UI with FormatUploader component for sample output format. Supports file upload for context and format sample."
+
+  - task: "Client Research Tool"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/features/ai-tools/tools/ClientResearch/ClientResearchTool.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed. Standard tool with context field, no file upload, TXT/PDF/DOCX downloads."
+
+  - task: "Theme Toggle Functionality"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/contexts/ThemeContext.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "testing"
-        comment: "Frontend testing was not performed. UI components exist for API key input, save/remove buttons, usage display, and success/error states."
-      - working: true
-        agent: "testing"
-        comment: "Complete UI testing passed. Free Tier Usage section displays correctly with 'remaining' text and progress bar. API key input field (placeholder: sk-...) works, accepts input and focuses properly. 'Save API Key' button successfully saves test key (sk-test-from-frontend-123456789), shows success toast, displays green 'API Key Active' badge, hides input form, and shows 'Remove API Key' button. Remove functionality works with confirm dialog, shows success toast, returns to input form, and restores Free Tier Usage display. Dark theme properly applied, all text readable, buttons properly styled, mobile responsive. Toast notifications working correctly."
+        comment: "Frontend testing not performed. ThemeProvider exists in App.js wrapping all routes."
 
 metadata:
   created_by: "testing_agent"
-  version: "1.0"
-  test_sequence: 2
-  run_ui: true
+  version: "2.0"
+  test_sequence: 1
+  run_ui: false
 
 test_plan:
   current_focus:
-    - "API Settings Page Navigation"
-    - "API Key Form UI Components"
-  stuck_tasks: []
+    - "AI Generation - All 6 Tools"
+    - "OpenAI API Key Quota Issue"
+  stuck_tasks:
+    - "AI Generation - All 6 Tools"
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "testing"
-    message: "Comprehensive backend API testing completed for API Key Management feature. All core backend functionality is working correctly including: 1) User authentication with proper 401 responses for unauthorized access, 2) Complete API key CRUD operations with validation, 3) Daily usage tracking and limits, 4) AI tool integration with master key fallback, 5) Admin user authentication with superadmin role. Frontend testing was not performed due to system limitations. One minor issue: the admin user does not have explicit admin role indicators in the login response, but the role is properly exposed in the /auth/me endpoint."
-  - agent: "testing"
-    message: "Comprehensive UI testing completed for API Key Settings page. All 7 test scenarios PASSED: (1) Unauthenticated access redirect, (2) Login and navigation to API Settings via user menu, (3) Free Tier Usage display verification, (4) Add Personal API Key with success toast and UI state changes, (5) Remove API Key with confirmation and state restoration, (6) UI visual checks including mobile responsiveness, (7) Navigation between Dashboard and API Settings with state preservation. All features working perfectly. Expected 401 errors seen during unauthenticated access test only. No critical issues found. Dark theme, text readability, button styling, input fields, toast notifications, and responsive design all verified. Screenshots captured for all major states."
+    message: "Comprehensive backend testing completed for refactored AI Tools application. CRITICAL FINDING: All AI generation endpoints are failing with 500 errors due to OpenAI API quota exhaustion. The superadmin's master API key stored in the database has exceeded its quota. This is an INFRASTRUCTURE issue, not a code bug. Backend code logic is correct and working as designed. All other endpoints tested successfully: Authentication ✅, Usage Stats ✅, File Upload/Extraction ✅, Download Formats (TXT/PDF/DOCX/CSV) ✅, History ✅, API Key Management ✅. Success rate: 11/18 tests passed (61.1%). The 7 failed tests are all AI generation calls blocked by the quota issue. RECOMMENDATION: Superadmin needs to add credits to their OpenAI account or update the master API key in the database with a valid key that has available quota. Frontend testing was not performed due to system limitations."
