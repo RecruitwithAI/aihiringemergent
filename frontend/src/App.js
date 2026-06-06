@@ -14,6 +14,7 @@ import APIKeySettings from "@/pages/APIKeySettings";
 import ProfileSettings from "@/pages/ProfileSettings";
 import AdminPanel from "@/pages/AdminPanel";
 import ArchitectureDocs from "@/pages/ArchitectureDocs";
+import HooksTestPage from "@/pages/HooksTestPage";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -216,6 +217,7 @@ function AppRouter() {
       <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
       <Route path="/admin/architecture" element={<SuperAdminRoute><ArchitectureDocs /></SuperAdminRoute>} />
+      <Route path="/test-hooks" element={<ProtectedRoute><HooksTestPage /></ProtectedRoute>} />
     </Routes>
   );
 }
