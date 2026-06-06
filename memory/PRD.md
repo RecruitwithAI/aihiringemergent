@@ -13,6 +13,13 @@ A community platform for recruiting leaders combining AI-powered tools (JD Build
 - ✅ `ThemeContext` and `design-system/tokens.js`
 - ✅ Centralized `useDownload` hook for PDF/DOCX/CSV/TXT exports
 - ✅ **Feb 6, 2026** — Fixed frontend crash: removed dangling `@/pages/AITools` import in `App.js`, wired `AIToolsLayout` from new feature dir, removed broken `/ai-tools-old` route. Webpack compiles clean, landing page renders.
+- ✅ **Feb 6, 2026** — Verified file download flow end-to-end via curl + UI smoke test:
+  - TXT: 200 OK, `text/plain`, client-side blob
+  - PDF: 200 OK, `application/pdf`, valid `%PDF-1.3` magic, 1211B
+  - DOCX: 200 OK, correct MIME, valid `PK\x03\x04` zip magic, 36KB
+  - CSV: 200 OK, `text/csv`, properly flattens arrays for talent-scout export
+  - Invalid format returns 400 with error detail
+  - AI Tools page renders all 6 migrated tools with badges (File Upload / Interactive / CSV Export)
 
 ## Pending / Backlog
 ### P0
