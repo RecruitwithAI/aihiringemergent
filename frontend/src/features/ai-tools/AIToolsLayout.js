@@ -61,56 +61,62 @@ export default function AIToolsLayout() {
   }
   
   // Render tool component
-  // Note: Tool components will be created in Phase 5-6
-  // For now, show placeholder
-  return (
-    <div className={themeClasses.page}>
-      <div className={themeClasses.container}>
-        <div className="space-y-6">
-          {/* Back Button */}
-          <button 
-            onClick={handleBack} 
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span className="text-sm">← Back to Tools</span>
-          </button>
-          
-          {/* Tool Header */}
-          <div className="flex items-center gap-4">
-            <div 
-              className={`w-14 h-14 rounded-xl ${toolConfig.bg} border ${toolConfig.border} flex items-center justify-center`}
+  const ToolComponent = toolConfig.component;
+  
+  // Check if component exists
+  if (!ToolComponent) {
+    return (
+      <div className={themeClasses.page}>
+        <div className={themeClasses.container}>
+          <div className="space-y-6">
+            {/* Back Button */}
+            <button 
+              onClick={handleBack} 
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <toolConfig.icon className={`w-7 h-7 ${toolConfig.color}`} strokeWidth={1.5} />
+              <span className="text-sm">← Back to Tools</span>
+            </button>
+            
+            {/* Tool Header */}
+            <div className="flex items-center gap-4">
+              <div 
+                className={`w-14 h-14 rounded-xl ${toolConfig.bg} border ${toolConfig.border} flex items-center justify-center`}
+              >
+                <toolConfig.icon className={`w-7 h-7 ${toolConfig.color}`} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className={`text-2xl sm:text-3xl font-semibold ${themeClasses.heading}`}>
+                  {toolConfig.label}
+                </h1>
+                <p className={`text-sm sm:text-base ${themeClasses.subtext}`}>
+                  {toolConfig.description}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className={`text-2xl sm:text-3xl font-semibold ${themeClasses.heading}`}>
-                {toolConfig.label}
-              </h1>
-              <p className={`text-sm sm:text-base ${themeClasses.subtext}`}>
-                {toolConfig.description}
+            
+            {/* Placeholder - Tool component not yet migrated */}
+            <div className={`${themeClasses.card} p-8 text-center`}>
+              <p className={themeClasses.heading}>🚧 Tool Component Coming Soon</p>
+              <p className={`${themeClasses.subtext} mt-2`}>
+                This tool will be migrated in Phase 6 (Complex Tools)
+              </p>
+              <p className={`text-xs ${themeClasses.subtext} mt-4`}>
+                Tool ID: {toolConfig.id}<br />
+                Backend Type: {toolConfig.backendType}<br />
+                Features: {Object.entries(toolConfig.features)
+                  .filter(([_, enabled]) => enabled)
+                  .map(([feature]) => feature)
+                  .join(', ')}
               </p>
             </div>
           </div>
-          
-          {/* Placeholder - Tool components will be added in Phase 5-6 */}
-          <div className={`${themeClasses.card} p-8 text-center`}>
-            <p className={themeClasses.heading}>🚧 Tool Component Coming Soon</p>
-            <p className={`${themeClasses.subtext} mt-2`}>
-              This tool will be migrated in Phase 5 (Simple Tools) or Phase 6 (Complex Tools)
-            </p>
-            <p className={`text-xs ${themeClasses.subtext} mt-4`}>
-              Tool ID: {toolConfig.id}<br />
-              Backend Type: {toolConfig.backendType}<br />
-              Features: {Object.entries(toolConfig.features)
-                .filter(([_, enabled]) => enabled)
-                .map(([feature]) => feature)
-                .join(', ')}
-            </p>
-          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+  
+  // Render the tool component
+  return <ToolComponent toolConfig={toolConfig} onBack={handleBack} />;
 }
 
 /**

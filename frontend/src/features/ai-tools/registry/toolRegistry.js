@@ -1,6 +1,11 @@
 import { FileText, Search, Users, UserSearch, BookUser, Building2 } from 'lucide-react';
 import { toolColors } from '@/design-system/tokens';
 
+// Import tool components
+import JDBuilderTool from '../tools/JDBuilder';
+import CandidateResearchTool from '../tools/CandidateResearch';
+import ClientResearchTool from '../tools/ClientResearch';
+
 /**
  * Tool Registry
  * Central configuration for all AI tools
@@ -48,7 +53,7 @@ export const toolRegistry = {
     },
     
     // Component reference (will be set when components are created)
-    component: null,  // Will be: JDBuilderTool
+    component: JDBuilderTool,
     backendType: 'jd-builder'
   },
   
@@ -111,7 +116,7 @@ export const toolRegistry = {
       customUI: false
     },
     
-    component: null,  // Will be: CandidateResearchTool
+    component: CandidateResearchTool,
     backendType: 'candidate-research'
   },
   
@@ -168,7 +173,7 @@ export const toolRegistry = {
       customUI: false
     },
     
-    component: null,  // Will be: ClientResearchTool
+    component: ClientResearchTool,
     backendType: 'client-research'
   }
 };
