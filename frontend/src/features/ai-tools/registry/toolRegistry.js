@@ -3,7 +3,10 @@ import { toolColors } from '@/design-system/tokens';
 
 // Import tool components
 import JDBuilderTool from '../tools/JDBuilder';
+import SearchStrategyTool from '../tools/SearchStrategy';
+import TalentScoutTool from '../tools/TalentScout';
 import CandidateResearchTool from '../tools/CandidateResearch';
+import CandidateDossierTool from '../tools/CandidateDossier';
 import ClientResearchTool from '../tools/ClientResearch';
 
 /**
@@ -74,7 +77,7 @@ export const toolRegistry = {
       customUI: true              // Has OutputTypeSelector component
     },
     
-    component: null,  // Will be: SearchStrategyTool
+    component: SearchStrategyTool,
     backendType: 'search-strategy'  // Can become 'search-strategy-targets'
   },
   
@@ -95,7 +98,7 @@ export const toolRegistry = {
       customUI: true              // Completely custom multi-step flow
     },
     
-    component: null,  // Will be: TalentScoutTool
+    component: TalentScoutTool,
     backendType: 'talent-scout'
   },
   
@@ -152,7 +155,7 @@ export const toolRegistry = {
       label: 'Upload Sample Output Format (Optional)'
     },
     
-    component: null,  // Will be: CandidateDossierTool
+    component: CandidateDossierTool,
     backendType: 'dossier'
   },
   
