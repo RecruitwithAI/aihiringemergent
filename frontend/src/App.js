@@ -207,7 +207,8 @@ function AppRouter() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/ai-tools" element={<ProtectedRoute><AITools /></ProtectedRoute>} />
+      <Route path="/ai-tools-old" element={<ProtectedRoute><AITools /></ProtectedRoute>} />
+      <Route path="/ai-tools" element={<ProtectedRoute><AIToolsLayout /></ProtectedRoute>} />
       <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
       <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeDetail /></ProtectedRoute>} />
       <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
