@@ -86,20 +86,20 @@ code {
 @layer base {
     * { @apply border-border; }
     
-    /* Default: Dark Grey (Professional) */
+    /* Use CSS variables for theme-aware styling */
     body { 
-        @apply bg-[#1a1a1a] text-slate-100; 
-    }
-    
-    /* Light Blue Theme */
-    [data-theme="light"] body {
-        @apply bg-[#e6f4ff] text-slate-900;
+        @apply bg-background text-foreground transition-colors duration-200; 
     }
 }
 
 @layer base {
     [data-debug-wrapper="true"] { display: contents !important; }
 }
+
+/* ===== TEMPORARY LIGHT MODE OVERRIDES ===== */
+/* NOTE: These !important rules will be removed progressively as components */
+/* are migrated to use themeClasses from design-system/tokens.js */
+/* See: /app/AI_TOOLS_REFACTOR_PLAN.md - Phase 1 Step 1.4 */
 
 /* === LIGHT MODE TEXT COLOR OVERRIDES === */
 /* Override hardcoded text colors for light theme */
@@ -618,4 +618,18 @@ code {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+
+/* ===== SMOOTH THEME TRANSITIONS ===== */
+/* Apply smooth color transitions when theme toggles */
+*, *::before, *::after {
+    transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* Don't transition animations or transforms */
+.animate-spin,
+.animate-pulse,
+[data-state] {
+    transition: none !important;
 }

@@ -16,6 +16,7 @@ import AdminPanel from "@/pages/AdminPanel";
 import ArchitectureDocs from "@/pages/ArchitectureDocs";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -224,10 +225,12 @@ function AppRouter() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Toaster position="top-right" />
-        <AppRouter />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Toaster position="top-right" />
+          <AppRouter />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
