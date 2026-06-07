@@ -48,19 +48,24 @@ export default function ToolShell({
    * Automatically refreshes history after successful generation
    */
   const handleGenerateWithFiles = async (overridePrompt, overrideContext, customToolType) => {
+    // Defensive: ignore non-string args (e.g. SyntheticEvent if caller wires onClick directly)
+    const safeOverridePrompt = typeof overridePrompt === 'string' ? overridePrompt : undefined;
+    const safeOverrideContext = typeof overrideContext === 'string' ? overrideContext : undefined;
+    const safeCustomToolType = typeof customToolType === 'string' ? customToolType : undefined;
+
     // Combine file uploads with context
     const fileContext = fileUpload.getCombinedContext();
-    const fullContext = [overrideContext || generation.context, fileContext]
+    const fullContext = [safeOverrideContext || generation.context, fileContext]
       .filter(Boolean)
       .join('\n\n');
     
     console.log('[ToolShell] Generating with combined context:', {
-      promptLength: (overridePrompt || generation.prompt).length,
+      promptLength: (safeOverridePrompt || generation.prompt).length,
       contextLength: fullContext.length,
       hasFiles: fileUpload.uploadedFiles.length > 0
     });
     
-    const result = await generation.handleGenerate(overridePrompt, fullContext, customToolType);
+    const result = await generation.handleGenerate(safeOverridePrompt, fullContext, safeCustomToolType);
     
     // Refresh history on success
     if (result) {

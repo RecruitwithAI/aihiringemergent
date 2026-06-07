@@ -76,7 +76,7 @@ export default function InputSection({
       {/* Action Buttons */}
       <div className="flex items-center gap-3">
         <button
-          onClick={onGenerate}
+          onClick={() => onGenerate()}
           disabled={generating || !prompt?.trim()}
           className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-full ${themeClasses.buttonPrimary} ${
             generating || !prompt?.trim() ? themeClasses.disabled : ''

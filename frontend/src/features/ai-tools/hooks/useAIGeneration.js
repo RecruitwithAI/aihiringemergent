@@ -40,9 +40,15 @@ export const useAIGeneration = (toolConfig) => {
    * @returns {Object|null} API response data or null on error
    */
   const handleGenerate = async (overridePrompt, overrideContext, customToolType) => {
-    const actualPrompt = overridePrompt || prompt;
-    const actualContext = overrideContext || context;
-    const toolType = customToolType || toolConfig?.backendType || 'default';
+    // Defensive: only treat overrides as strings (callers sometimes wire onClick directly
+    // and pass a SyntheticEvent here). Ignore non-string values and fall back to state.
+    const safeOverridePrompt = typeof overridePrompt === 'string' ? overridePrompt : undefined;
+    const safeOverrideContext = typeof overrideContext === 'string' ? overrideContext : undefined;
+    const safeCustomToolType = typeof customToolType === 'string' ? customToolType : undefined;
+
+    const actualPrompt = safeOverridePrompt ?? prompt;
+    const actualContext = safeOverrideContext ?? context;
+    const toolType = safeCustomToolType || toolConfig?.backendType || 'default';
     
     // Validation
     if (!actualPrompt?.trim()) {

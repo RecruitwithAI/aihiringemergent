@@ -13,6 +13,13 @@ A community platform for recruiting leaders combining AI-powered tools (JD Build
 - ✅ `ThemeContext` and `design-system/tokens.js`
 - ✅ Centralized `useDownload` hook for PDF/DOCX/CSV/TXT exports
 - ✅ **Feb 6, 2026** — Fixed frontend crash: removed dangling `@/pages/AITools` import in `App.js`, wired `AIToolsLayout` from new feature dir, removed broken `/ai-tools-old` route. Webpack compiles clean, landing page renders.
+- ✅ **Feb 6, 2026** — Fixed P0 runtime crash `actualPrompt.trim is not a function` in JD Builder (and all other tools using InputSection):
+  - Root cause: `onClick={onGenerate}` in `InputSection.js` passed React SyntheticEvent as `overridePrompt`, which propagated to `handleGenerate` → `event.trim()` crashed
+  - Fix: `onClick={() => onGenerate()}` + defensive `typeof === 'string'` guards in `ToolShell.handleGenerateWithFiles` and `useAIGeneration.handleGenerate`
+- ✅ **Feb 6, 2026** — Fixed API Key removal UX bug (`Unable to remove old API`):
+  - Replaced blockable native `window.confirm()` with shadcn `AlertDialog` (`/app/frontend/src/pages/APIKeySettings.js`)
+  - Added inline **Update Key** flow — users can replace an active key without removing first
+  - Added data-testids on all buttons & dialog
 - ✅ **Feb 6, 2026** — Verified file download flow end-to-end via curl + UI smoke test:
   - TXT: 200 OK, `text/plain`, client-side blob
   - PDF: 200 OK, `application/pdf`, valid `%PDF-1.3` magic, 1211B
