@@ -933,7 +933,12 @@ const babelMetadataPlugin = ({ types: t }) => {
           if (!localName) return;
 
           // Search for usages of this component
-          importPath.parentPath.parentPath.traverse({
+          // Guard: when traversing a detached/cached AST, parentPath chains can be null
+          const usageRoot =
+            (importPath.parentPath && importPath.parentPath.parentPath) ||
+            importPath.parentPath;
+          if (!usageRoot || typeof usageRoot.traverse !== "function") return;
+          usageRoot.traverse({
             JSXOpeningElement(jsxPath) {
               if (result) return;
 
