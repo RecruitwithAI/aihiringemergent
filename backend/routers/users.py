@@ -596,6 +596,17 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                     {"method": "POST", "path": "/{answer_id}/upvote", "auth": "required", "description": "Toggle answer upvote (author ±3 XP)"}
                 ]
             },
+            "prompt_management": {
+                "prefix": "/api/admin/prompts",
+                "endpoints": [
+                    {"method": "GET", "path": "/", "auth": "superadmin", "description": "All tools: active prompt + drafts + version history (tool_prompts collection)"},
+                    {"method": "POST", "path": "/{tool_id}", "auth": "superadmin", "description": "Create new prompt version (draft or active)"},
+                    {"method": "PUT", "path": "/{prompt_id}", "auth": "superadmin", "description": "Edit a draft prompt"},
+                    {"method": "POST", "path": "/{prompt_id}/activate", "auth": "superadmin", "description": "Activate draft / restore old version (current active becomes old)"},
+                    {"method": "DELETE", "path": "/{prompt_id}", "auth": "superadmin", "description": "Delete a draft"},
+                    {"method": "POST", "path": "/{tool_id}/reset", "auth": "superadmin", "description": "Reset to original default prompt"}
+                ]
+            },
             "dashboard": {
                 "prefix": "/api",
                 "endpoints": [

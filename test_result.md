@@ -294,10 +294,25 @@ metadata:
 
 test_plan:
   current_focus:
-    - "DB Optimization Phase 2+3 - $lookup aggregations + efficient rank"
+    - "SuperAdmin Prompt Management (tool_prompts collection + /admin/prompts API + UI)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+
+  - task: "SuperAdmin Prompt Management (tool_prompts collection + /admin/prompts API + UI)"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/prompts.py, /app/backend/utils/prompt_store.py, /app/backend/utils/default_prompts.py, /app/backend/routers/ai_tools.py, /app/frontend/src/pages/PromptManager.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New tool_prompts collection (prompt_id, tool_id, system_prompt, status active/old/draft, version, updated_by, timestamps). Idempotent seed on startup from utils/default_prompts.py (TOOL_PROMPTS moved out of ai_tools.py). ai_generate now reads ACTIVE prompt from DB w/ hardcoded fallback. Superadmin-only endpoints: GET /api/admin/prompts (grouped), POST /{tool_id} (draft|active), PUT /{prompt_id} (edit draft), POST /{prompt_id}/activate (activate/restore), DELETE /{prompt_id} (draft only), POST /{tool_id}/reset. Partial unique index ensures one active per tool. Frontend /admin/prompts page (SuperAdminRoute) + link from AdminPanel. Manually smoke-tested full cycle: seed/list/draft/edit/activate/restore/reset/403-guard all pass."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE BACKEND TEST PASSED (32/32 tests, 100% success). All SuperAdmin Prompt Management features verified working correctly. SEEDING: All 7 tools (jd-builder, search-strategy, search-strategy-targets, candidate-research, dossier, client-research, talent-scout) have active prompts with correct status, version, and non-empty system_prompt. FULL LIFECYCLE (client-research): Draft creation ✅, draft editing ✅, draft activation ✅, previous active demoted to 'old' ✅, MongoDB verification confirms exactly 1 active per tool ✅, restore old version ✅. VALIDATION/GUARDS: PUT on active prompt returns 400 ✅, DELETE on active prompt returns 400 ✅, DELETE draft succeeds ✅, POST to unknown tool returns 404 ✅, short prompt (<10 chars) returns 422 ✅, invalid status returns 400 ✅, all endpoints as regular user return 403 ✅, all endpoints unauthenticated return 401 ✅. RESET: Reset to default creates+activates version with original default text ✅. INTEGRATION: utils.prompt_store.get_active_system_prompt('client-research') returns active DB prompt ✅, fake tool_id returns fallback 'You are a helpful recruiting AI assistant.' ✅. REGRESSION: GET /api/challenges and GET /api/dashboard/stats still working (200) ✅. Partial unique index 'uniq_active_per_tool' enforcing one active per tool verified in MongoDB. No issues found. Feature is production-ready."
 
   - task: "DB Optimization Phase 2+3 - $lookup aggregations + efficient rank"
     implemented: true
@@ -355,3 +370,5 @@ agent_communication:
     message: "Code review fixes regression testing COMPLETE - ALL TESTS PASSED (12/12, 100%). Behavior-preserving refactor verified: API responses identical to before. DOWNLOADS: All formats working (TXT/PDF/DOCX/CSV) with correct magic bytes and content. PDF: 1762B with %PDF header. DOCX: 37223B with PK\\x03\\x04 ZIP signature. CSV: JSON arrays flattened correctly. FILE EXTRACTION: TXT extraction working (63 chars), error mapping preserved (unsupported .xyz → 400, non-existent upload_id → 404). DASHBOARD: All required keys present (total_members, total_challenges, total_answers, user_points, user_badge, user_rank, recent_challenges with author.badge, last_ai_tool, last_challenge, activity_feed with typed items). LEADERBOARD & PROFILE: All working with correct structure. Refactored modules (utils/file_extraction.py, utils/document_export.py, dashboard.py helpers) maintain identical behavior. No regressions found. Code review changes are production-ready."
   - agent: "testing"
     message: "Phase 2+3 DB Optimization regression testing COMPLETE - ALL TESTS PASSED (16/16, 100%). N+1 query elimination verified working correctly. PHASE 2 CHANGES: GET /api/challenges now uses single aggregation with $lookup for authors and answer counts (eliminates N+1 queries). Response structure correct: all required fields present, no internal fields (_id, _answer_counts) leaked, answers_count correctly aggregated as integer, sorted newest first. Search and tag filters working. GET /api/challenges/{id} uses 2 aggregations (challenge+author, answers+authors), all responses include author with badge, answers sorted by upvotes desc, 404 preserved for non-existent challenges. PHASE 3 CHANGES: Dashboard user_rank now uses efficient count_documents with $gt filter (competition ranking working correctly, top points = rank 1). recent_challenges and activity_feed built via $lookup aggregations, all include author with badge. Activity feed correctly structured: challenge items have 'title', answer items have 'challenge_title', sorted newest first. SHARED HELPERS: AUTHOR_LOOKUP, finalize_author, UNKNOWN_AUTHOR in utils/helpers.py working correctly. All API contracts unchanged. No regressions found. Phase 2+3 changes are production-ready."
+  - agent: "testing"
+    message: "SuperAdmin Prompt Management testing COMPLETE - ALL TESTS PASSED (32/32, 100%). Comprehensive backend verification confirms all features working correctly. SEEDING: All 7 AI tools have active prompts seeded on startup (jd-builder, search-strategy, search-strategy-targets, candidate-research, dossier, client-research, talent-scout). FULL LIFECYCLE: Draft creation, editing, activation, and restoration all working. MongoDB constraint verified: exactly 1 active prompt per tool enforced by partial unique index. Previous active correctly demoted to 'old' status on new activation. VALIDATION: All guards working (400 for editing/deleting active prompts, 404 for unknown tools, 422 for short prompts, 403 for non-superadmin, 401 for unauthenticated). RESET: Reset to default functionality working correctly. INTEGRATION: utils.prompt_store.get_active_system_prompt() correctly returns DB active prompt with fallback for unknown tools. REGRESSION: Existing endpoints (challenges, dashboard) unaffected. Feature is production-ready. NOTE: Frontend UI testing not performed (system limitations)."

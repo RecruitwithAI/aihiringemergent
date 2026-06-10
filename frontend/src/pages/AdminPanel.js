@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import logger from "@/lib/logger";
 import { toast } from "sonner";
-import { Users } from "lucide-react";
+import { Users, BrainCog } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import UserFilters from "@/components/admin/UserFilters";
 import UserTable from "@/components/admin/UserTable";
@@ -12,6 +14,7 @@ import UserEditModal from "@/components/admin/UserEditModal";
 
 export default function AdminPanel() {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -148,12 +151,25 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-gradient-to-br from-[#090914] via-[#0a0a1a] to-[#090914]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="w-8 h-8 text-blue-400" />
-            <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+        <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Users className="w-8 h-8 text-blue-400" />
+              <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+            </div>
+            <p className="text-slate-400">Manage users, roles, and system access</p>
           </div>
-          <p className="text-slate-400">Manage users, roles, and system access</p>
+          {isSuperAdmin && (
+            <Button
+              variant="outline"
+              onClick={() => navigate("/admin/prompts")}
+              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+              data-testid="open-prompt-manager-btn"
+            >
+              <BrainCog className="w-4 h-4 mr-2" />
+              System Prompts
+            </Button>
+          )}
         </div>
 
         <UserFilters

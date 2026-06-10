@@ -96,6 +96,18 @@ INDEX_REGISTRY = {
         {"keys": [("user_id", ASCENDING), ("date", ASCENDING)],
          "options": {"name": "uniq_user_date", "unique": True}},
     ],
+
+    "tool_prompts": [
+        # Hot path: ai_generate fetches the active prompt per tool
+        {"keys": [("tool_id", ASCENDING), ("status", ASCENDING)],
+         "options": {"name": "ix_tool_status"}},
+        {"keys": [("prompt_id", ASCENDING)],
+         "options": {"name": "uniq_prompt_id", "unique": True}},
+        # Invariant: at most one ACTIVE prompt per tool (partial unique)
+        {"keys": [("tool_id", ASCENDING)],
+         "options": {"name": "uniq_active_per_tool", "unique": True,
+                     "partialFilterExpression": {"status": "active"}}},
+    ],
 }
 
 

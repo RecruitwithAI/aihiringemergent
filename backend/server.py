@@ -13,9 +13,10 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import routers
-from routers import auth, challenges, answers, ai_tools, dashboard, users
+from routers import auth, challenges, answers, ai_tools, dashboard, users, prompts
 from utils.database import client
 from utils.indexes import ensure_indexes
+from utils.prompt_store import seed_default_prompts
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -30,6 +31,7 @@ api_router.include_router(answers.router)
 api_router.include_router(ai_tools.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(users.router)
+api_router.include_router(prompts.router)
 
 # Wire up the main API router
 app.include_router(api_router)
@@ -83,6 +85,7 @@ app.add_middleware(CORSOriginReflectMiddleware)
 async def startup_ensure_indexes():
     """Idempotent index creation — registry lives in utils/indexes.py (see /app/aboutindexes.md)."""
     await ensure_indexes()
+    await seed_default_prompts()  # ensure every AI tool has an active system prompt
 
 
 @app.on_event("shutdown")
