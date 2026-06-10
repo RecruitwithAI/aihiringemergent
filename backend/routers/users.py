@@ -353,12 +353,23 @@ async def get_user_activity(
 async def get_architecture_docs(current_user=Depends(require_superadmin)):
     """
     Get comprehensive system architecture documentation.
-    SuperAdmin only.
+    SuperAdmin only. Counts are computed live from the database.
     """
-    
+    # ── Live database stats (no more stale hardcoded numbers) ──
+    role_counts = {
+        r["_id"]: r["n"]
+        for r in await db.users.aggregate(
+            [{"$group": {"_id": "$role", "n": {"$sum": 1}}}]
+        ).to_list(10)
+    }
+    col_counts = {}
+    for col in ("users", "user_sessions", "challenges", "answers", "ai_history", "api_usage"):
+        col_counts[col] = await db[col].count_documents({})
+    admin_user = await db.users.find_one({"role": "admin"}, {"_id": 0, "email": 1})
+
     docs = {
         "title": "Bestpl.ai - System Architecture Documentation",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "accessed_by": current_user.get("name"),
         
@@ -378,6 +389,9 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                 "icons": "Lucide React",
                 "http_client": "Axios",
                 "notifications": "Sonner (toast)",
+                "logging": "src/lib/logger.js (dev-aware, replaces console.*)",
+                "ai_tools_architecture": "Modular feature dir (features/ai-tools) — registry-driven via toolRegistry.js, shared ToolShell + hooks (useAIGeneration/useFileUpload/useDownload/useHistory)",
+                "theming": "Global ThemeContext (light/dark) + design-system/tokens.js",
                 "package_manager": "Yarn"
             },
             "backend": {
@@ -390,14 +404,15 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                 "process_manager": "Supervisor"
             },
             "database": {
-                "database": "MongoDB (async)",
+                "database": "MongoDB 7.0 (async)",
                 "driver": "Motor",
-                "indexes": "8 performance indexes"
+                "indexes": "19 indexes auto-created on startup via INDEX_REGISTRY (utils/indexes.py) incl. TTL session auto-cleanup — reference: /app/aboutindexes.md",
+                "query_optimization": "$lookup aggregations (no N+1), indexed competition-rank computation"
             },
             "external_integrations": {
-                "ai": "OpenAI GPT-5.2 (via Emergent LLM Key)",
+                "ai": "OpenAI GPT-4o (user's own key or SuperAdmin master key — 3 free uses/day)",
                 "auth": "Emergent-managed Google OAuth",
-                "file_processing": ["pypdfium2", "python-docx", "fpdf2"],
+                "file_processing": ["pypdf", "python-docx", "fpdf2"],
                 "audio": "OpenAI Whisper (emergentintegrations)"
             }
         },
@@ -441,38 +456,40 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                         "name (String)",
                         "password_hash (String | null)",
                         "picture (String | null)",
-                        "linkedin_url (String | null) - NEW",
-                        "title (String | null) - NEW",
-                        "company (String | null) - NEW",
-                        "phone_number (String | null) - NEW",
-                        "city (String | null) - NEW",
-                        "country (String | null) - NEW",
-                        "about_me (String | null) - NEW",
-                        "help_topics (Array<String>) - NEW",
-                        "role (String: superadmin|admin|user, indexed) - NEW",
-                        "status (String: active|suspended|banned, indexed) - NEW",
+                        "linkedin_url (String | null)",
+                        "title (String | null)",
+                        "company (String | null)",
+                        "phone_number (String | null)",
+                        "city (String | null)",
+                        "country (String | null)",
+                        "about_me (String | null)",
+                        "help_topics (Array<String>)",
+                        "role (String: superadmin|admin|user, indexed)",
+                        "status (String: active|suspended|banned, indexed)",
                         "openai_api_key (String | null) - PRIVATE",
                         "has_own_api_key (Boolean)",
-                        "points (Number)",
+                        "points (Number, indexed desc)",
                         "created_at (ISO DateTime, indexed)",
-                        "updated_at (ISO DateTime) - NEW",
-                        "last_login_at (ISO DateTime) - NEW"
+                        "updated_at (ISO DateTime)",
+                        "last_login_at (ISO DateTime)"
                     ],
-                    "indexes": ["email (unique)", "role", "status", "created_at (desc)"],
-                    "total_documents": "15 users"
+                    "indexes": ["uniq_user_id", "uniq_email", "ix_role", "ix_status", "ix_points_desc (leaderboard/rank)", "ix_created_desc"],
+                    "total_documents": f"{col_counts['users']} users (live)"
                 },
                 "user_sessions": {
-                    "description": "Authentication sessions",
+                    "description": "Authentication sessions (auto-expired by MongoDB TTL)",
                     "key_fields": [
                         "session_token (String, unique, indexed)",
                         "user_id (String, indexed)",
-                        "expires_at (ISO DateTime, TTL index)",
+                        "expires_at (BSON Date — TTL index auto-deletes expired sessions)",
                         "created_at (ISO DateTime)"
                     ],
-                    "ttl": "7 days"
+                    "indexes": ["uniq_session_token (hot path: every request)", "ix_user_id", "ttl_expires_at (expireAfterSeconds=0)"],
+                    "ttl": "7 days",
+                    "total_documents": f"{col_counts['user_sessions']} sessions (live)"
                 },
                 "api_usage": {
-                    "description": "AI API usage tracking",
+                    "description": "AI API usage tracking (daily free-tier limit)",
                     "key_fields": [
                         "user_id (String)",
                         "date (String YYYY-MM-DD)",
@@ -480,7 +497,8 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                         "own_key_count (Number)",
                         "total_count (Number)"
                     ],
-                    "indexes": ["(user_id, date) unique compound"]
+                    "indexes": ["uniq_user_date (compound unique)"],
+                    "total_documents": f"{col_counts['api_usage']} records (live)"
                 },
                 "ai_history": {
                     "description": "AI tool generation history",
@@ -492,28 +510,35 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                         "response (String)",
                         "created_at (ISO DateTime, indexed)"
                     ],
-                    "indexes": ["(user_id, created_at) compound"]
+                    "indexes": ["ix_user_created (compound)"],
+                    "total_documents": f"{col_counts['ai_history']} records (live)"
                 },
                 "challenges": {
                     "description": "Community challenges (Q&A)",
                     "key_fields": [
                         "challenge_id (String, unique)",
-                        "title (String)",
-                        "description (String)",
-                        "author_id (String)",
-                        "tags (Array<String>)",
-                        "created_at (ISO DateTime)"
-                    ]
+                        "title (String, text-indexed)",
+                        "description (String, text-indexed)",
+                        "author_id (String, indexed)",
+                        "tags (Array<String>, multikey indexed)",
+                        "upvotes (Number) + upvoted_by (Array<String>)",
+                        "created_at (ISO DateTime, indexed)"
+                    ],
+                    "indexes": ["uniq_challenge_id", "ix_created_desc", "ix_author_created (compound)", "ix_tags", "txt_title_description (text, ready for $text search)"],
+                    "total_documents": f"{col_counts['challenges']} challenges (live)"
                 },
                 "answers": {
                     "description": "Challenge responses",
                     "key_fields": [
                         "answer_id (String, unique)",
-                        "challenge_id (String)",
-                        "author_id (String)",
+                        "challenge_id (String, indexed)",
+                        "author_id (String, indexed)",
                         "content (String)",
-                        "created_at (ISO DateTime)"
-                    ]
+                        "upvotes (Number) + upvoted_by (Array<String>)",
+                        "created_at (ISO DateTime, indexed)"
+                    ],
+                    "indexes": ["uniq_answer_id", "ix_challenge_upvotes (compound: detail page sort)", "ix_author_created (compound)", "ix_created_desc"],
+                    "total_documents": f"{col_counts['answers']} answers (live)"
                 }
             }
         },
@@ -545,38 +570,38 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
             "ai_tools": {
                 "prefix": "/api/ai",
                 "endpoints": [
-                    {"method": "POST", "path": "/generate", "auth": "required", "description": "Generate AI content"},
+                    {"method": "POST", "path": "/generate", "auth": "required", "description": "Generate AI content (GPT-4o)"},
                     {"method": "GET", "path": "/history", "auth": "required", "description": "Get user's AI history"},
-                    {"method": "POST", "path": "/upload-chunk", "auth": "required", "description": "Upload file chunks"},
-                    {"method": "POST", "path": "/extract-file", "auth": "required", "description": "Extract text from files"},
-                    {"method": "POST", "path": "/download", "auth": "required", "description": "Download as CSV/PDF/DOCX/TXT"},
-                    {"method": "PUT", "path": "/api-key", "auth": "required", "description": "Save user's API key"},
-                    {"method": "DELETE", "path": "/api-key", "auth": "required", "description": "Remove user's API key"},
-                    {"method": "GET", "path": "/api-key", "auth": "required", "description": "Get API key status"}
+                    {"method": "GET", "path": "/usage", "auth": "required", "description": "Daily usage stats (free-tier limit)"},
+                    {"method": "POST", "path": "/upload-chunk", "auth": "required", "description": "Upload file chunks (1MB)"},
+                    {"method": "POST", "path": "/extract-file", "auth": "required", "description": "Extract text (txt/pdf/docx/doc/audio via utils/file_extraction)"},
+                    {"method": "POST", "path": "/download", "auth": "required", "description": "Download as TXT/CSV/DOCX/PDF (utils/document_export)"},
+                    {"method": "POST", "path": "/save-api-key", "auth": "required", "description": "Save user's own OpenAI key"},
+                    {"method": "DELETE", "path": "/delete-api-key", "auth": "required", "description": "Remove user's OpenAI key"}
                 ]
             },
             "challenges": {
                 "prefix": "/api/challenges",
                 "endpoints": [
-                    {"method": "GET", "path": "/", "auth": "required", "description": "List challenges"},
-                    {"method": "POST", "path": "/", "auth": "required", "description": "Create challenge"},
-                    {"method": "GET", "path": "/{id}", "auth": "required", "description": "Get challenge details"},
-                    {"method": "PUT", "path": "/{id}", "auth": "required", "description": "Update challenge"},
-                    {"method": "DELETE", "path": "/{id}", "auth": "required", "description": "Delete challenge"}
+                    {"method": "GET", "path": "/", "auth": "required", "description": "List challenges (?search, ?tags) — single $lookup aggregation: authors + answer counts"},
+                    {"method": "POST", "path": "/", "auth": "required", "description": "Create challenge (+5 XP)"},
+                    {"method": "GET", "path": "/{id}", "auth": "required", "description": "Challenge detail + answers w/ authors (aggregations)"},
+                    {"method": "POST", "path": "/{id}/answers", "auth": "required", "description": "Answer a challenge (+10 XP)"},
+                    {"method": "POST", "path": "/{id}/upvote", "auth": "required", "description": "Toggle upvote (author ±3 XP)"}
                 ]
             },
             "answers": {
                 "prefix": "/api/answers",
                 "endpoints": [
-                    {"method": "POST", "path": "/", "auth": "required", "description": "Create answer"},
-                    {"method": "PUT", "path": "/{id}", "auth": "required", "description": "Update answer"},
-                    {"method": "DELETE", "path": "/{id}", "auth": "required", "description": "Delete answer"}
+                    {"method": "POST", "path": "/{answer_id}/upvote", "auth": "required", "description": "Toggle answer upvote (author ±3 XP)"}
                 ]
             },
             "dashboard": {
-                "prefix": "/api/dashboard",
+                "prefix": "/api",
                 "endpoints": [
-                    {"method": "GET", "path": "/", "auth": "required", "description": "Get dashboard stats"}
+                    {"method": "GET", "path": "/dashboard/stats", "auth": "required", "description": "Dashboard stats — $lookup aggregations + indexed rank"},
+                    {"method": "GET", "path": "/leaderboard", "auth": "required", "description": "Top 50 by points (indexed sort)"},
+                    {"method": "GET", "path": "/profile/stats", "auth": "required", "description": "Own contribution stats"}
                 ]
             }
         },
@@ -586,19 +611,19 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                 "superadmin": {
                     "description": "Full system access",
                     "permissions": ["All operations", "User management", "Role management", "System docs access"],
-                    "count": 1
+                    "count": role_counts.get("superadmin", 0)
                 },
                 "admin": {
                     "description": "User management and database access",
                     "permissions": ["View all users", "Edit users", "Change roles (limited)", "Suspend/ban users", "View analytics"],
                     "restrictions": ["Cannot promote to superadmin", "Cannot modify superadmin accounts", "Cannot view API keys"],
-                    "count": 1
+                    "count": role_counts.get("admin", 0)
                 },
                 "user": {
                     "description": "Standard user access",
                     "permissions": ["AI tools", "Challenges", "Own profile", "Own data"],
                     "restrictions": ["Cannot view other users", "Cannot access admin panel"],
-                    "count": 13
+                    "count": role_counts.get("user", 0)
                 }
             },
             "status_types": ["active", "suspended", "banned"],
@@ -617,39 +642,39 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
                         "id": "jd-builder",
                         "name": "JD Builder",
                         "description": "Generate professional job descriptions",
-                        "ai_model": "GPT-5.2"
+                        "ai_model": "GPT-4o"
                     },
                     {
                         "id": "search-strategy",
                         "name": "Search Strategy",
                         "description": "Create recruitment search strategies",
-                        "ai_model": "GPT-5.2"
+                        "ai_model": "GPT-4o"
                     },
                     {
                         "id": "talent-scout",
                         "name": "Talent Scout",
                         "description": "Interactive candidate identification with feedback loops",
-                        "ai_model": "GPT-5.2",
+                        "ai_model": "GPT-4o",
                         "special_features": ["Iterative refinement", "5 candidates at a time", "CSV export"]
                     },
                     {
                         "id": "candidate-research",
                         "name": "Candidate Research",
                         "description": "Research candidate backgrounds",
-                        "ai_model": "GPT-5.2"
+                        "ai_model": "GPT-4o"
                     },
                     {
                         "id": "dossier",
                         "name": "Candidate Dossier",
                         "description": "Create professional candidate presentations",
-                        "ai_model": "GPT-5.2",
+                        "ai_model": "GPT-4o",
                         "special_features": ["Custom format upload", "Sample format matching"]
                     },
                     {
                         "id": "client-research",
                         "name": "Client Research",
                         "description": "Research potential client companies",
-                        "ai_model": "GPT-5.2"
+                        "ai_model": "GPT-4o"
                     }
                 ],
                 "export_formats": ["CSV", "PDF", "DOCX", "TXT"],
@@ -659,7 +684,7 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
             "community": {
                 "challenges": "Q&A platform for recruiting questions",
                 "answers": "Community responses with points system",
-                "gamification": "Points, badges (Bronze/Silver/Gold), leaderboard"
+                "gamification": "XP points (+5 challenge, +10 answer, ±3 upvote), badges (Bronze <100 / Silver 100+ / Gold 200+ / Diamond 500+), leaderboard"
             },
             "user_management": {
                 "profile_fields": 11,
@@ -724,13 +749,16 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
         
         "performance": {
             "optimizations": [
-                "MongoDB indexes (8 total)",
+                "19 MongoDB indexes auto-created on startup (INDEX_REGISTRY in utils/indexes.py — see /app/aboutindexes.md)",
+                "TTL index auto-deletes expired sessions (no cron needed)",
+                "N+1 queries eliminated: challenges list = 1 $lookup aggregation (was up to 201 queries); challenge detail = 2; dashboard feed = 3",
+                "User rank via indexed count_documents(points $gt) — O(log n), was loading 1000 docs",
                 "Async I/O (Motor driver)",
                 "Connection pooling",
                 "Pagination (users, challenges)"
             ],
             "known_issues": [
-                "N+1 queries in challenges/dashboard endpoints",
+                "Challenge search uses unindexed $regex (text index txt_title_description ready for $text switch — whole-word semantics tradeoff)",
                 "No caching layer",
                 "No CDN for static assets"
             ]
@@ -738,26 +766,39 @@ async def get_architecture_docs(current_user=Depends(require_superadmin)):
         
         "file_structure": {
             "backend": {
-                "entry_point": "server.py",
+                "entry_point": "server.py (routers + CORS + startup index creation)",
                 "routers": ["auth.py", "users.py", "ai_tools.py", "challenges.py", "answers.py", "dashboard.py"],
-                "utils": ["database.py", "auth.py", "rbac.py", "helpers.py"],
-                "models": ["schemas.py"]
+                "utils": [
+                    "database.py (Motor client)",
+                    "auth.py (get_current_user, points)",
+                    "rbac.py (role guards)",
+                    "helpers.py (badges, IDs, AUTHOR_LOOKUP/finalize_author aggregation helpers)",
+                    "indexes.py (INDEX_REGISTRY + ensure_indexes, runs at startup)",
+                    "file_extraction.py (per-type text extraction: txt/pdf/docx/doc/audio)",
+                    "document_export.py (markdown_to_docx / markdown_to_pdf)"
+                ],
+                "models": ["schemas.py"],
+                "scripts": ["seed_superadmin.py (idempotent, credentials from .env)"]
             },
             "frontend": {
-                "entry_point": "App.js",
-                "pages": ["LandingPage.js", "Dashboard.js", "AITools.js", "Challenges.js", "Profile.js", "ProfileSettings.js", "AdminPanel.js", "APIKeySettings.js"],
-                "components": ["Navbar.js", "ThemeToggle.js", "ai_tools/*", "ui/*"]
+                "entry_point": "App.js (AuthProvider, ThemeProvider, routes incl. AdminRoute/SuperAdminRoute)",
+                "features": ["ai-tools/ (modular: toolRegistry.js, ToolShell, hooks: useAIGeneration/useFileUpload/useDownload/useHistory, 6 tools)"],
+                "pages": ["LandingPage.js", "Dashboard.js", "Challenges.js", "ChallengeDetail.js", "Profile.js", "ProfileSettings.js", "AdminPanel.js", "APIKeySettings.js", "LeaderboardPage.js", "ArchitectureDocs.js", "Training.js"],
+                "contexts": ["ThemeContext.js (global light/dark)"],
+                "lib": ["logger.js (dev-aware logging)"],
+                "components": ["Navbar.js", "ThemeToggle.js", "RichTextEditor.js", "ui/* (shadcn)"]
             }
         },
         
         "credentials": {
             "superadmin": {
                 "email": "noorussaba.alam@gmail.com",
-                "role": "superadmin"
+                "role": "superadmin",
+                "note": "Re-seed/reset via: python seed_superadmin.py (reads SUPERADMIN_* from backend/.env)"
             },
             "test_users": {
-                "admin": {"email": "saba@bestpl.ai", "role": "admin"},
-                "regular_user": {"count": 13, "role": "user"}
+                "admin": {"email": admin_user["email"] if admin_user else "none configured", "role": "admin"},
+                "regular_user": {"count": role_counts.get("user", 0), "role": "user"}
             }
         }
     }
