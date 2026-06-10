@@ -10,6 +10,7 @@ A community platform for recruiting leaders combining AI-powered tools (JD Build
 
 ## Completed
 - ✅ Phases 1–7 AI Tools refactor (modular features dir, shared hooks/components, 6 tools migrated, legacy `AITools.js` + `components/ai_tools/` deleted)
+- ✅ **Jun 10, 2026 — DB Optimization Phase 1**: Declarative `INDEX_REGISTRY` + idempotent `ensure_indexes()` in `/app/backend/utils/indexes.py`, runs on FastAPI startup. 19 indexes across 6 collections incl. TTL auto-cleanup on `user_sessions.expires_at` (auth.py now stores it as BSON datetime). Documented in `/app/aboutindexes.md`. 21/21 backend regression tests passed. NOTE: DB was wiped on container restart — see updated `/app/memory/test_credentials.md`.
 - ✅ `ThemeContext` and `design-system/tokens.js`
 - ✅ Centralized `useDownload` hook for PDF/DOCX/CSV/TXT exports
 - ✅ **Feb 6, 2026** — Fixed frontend crash: removed dangling `@/pages/AITools` import in `App.js`, wired `AIToolsLayout` from new feature dir, removed broken `/ai-tools-old` route. Webpack compiles clean, landing page renders.
@@ -39,7 +40,7 @@ A community platform for recruiting leaders combining AI-powered tools (JD Build
 - Re-implement rich text editor for challenge answers + admin pinning/categories (previously rolled back).
 
 ### P2
-- Fix N+1 queries in `routers/challenges.py` and `routers/dashboard.py` (use `$lookup`).
+- DB Optimization Phase 2/3: rewrite N+1 queries in `routers/challenges.py` and `routers/dashboard.py` with `$lookup` aggregations; efficient rank via indexed count; optionally switch challenge search to `$text` (index `txt_title_description` already in place).
 - Analytics dashboard for usage/engagement.
 
 ### P3
