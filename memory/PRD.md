@@ -11,6 +11,7 @@ A community platform for recruiting leaders combining AI-powered tools (JD Build
 ## Completed
 - ✅ Phases 1–7 AI Tools refactor (modular features dir, shared hooks/components, 6 tools migrated, legacy `AITools.js` + `components/ai_tools/` deleted)
 - ✅ **Jun 10, 2026 — DB Optimization Phase 1**: Declarative `INDEX_REGISTRY` + idempotent `ensure_indexes()` in `/app/backend/utils/indexes.py`, runs on FastAPI startup. 19 indexes across 6 collections incl. TTL auto-cleanup on `user_sessions.expires_at` (auth.py now stores it as BSON datetime). Documented in `/app/aboutindexes.md`. 21/21 backend regression tests passed. NOTE: DB was wiped on container restart — see updated `/app/memory/test_credentials.md`.
+- ✅ **Jun 10, 2026 — DB Optimization Phase 2+3** (16/16 regression tests passed): GET /challenges → 1 `$lookup` aggregation (authors + answer counts; was up to 201 queries/load); GET /challenges/{id} → 2 aggregations; dashboard `user_rank` via indexed `count_documents(points $gt)` (competition ranking, was loading 1000 users); `recent_challenges` + `activity_feed` via `$lookup` (was ~20 queries → 2). Shared `AUTHOR_LOOKUP`/`finalize_author` in `utils/helpers.py`. MongoDB 7.0.
 - ✅ **Jun 10, 2026 — Code Review Fixes (Option C scope)**:
   - Backend refactors (behavior-preserving, 12/12 regression tests passed): `utils/file_extraction.py` (per-type extract handlers), `utils/document_export.py` (`markdown_to_docx`/`markdown_to_pdf` decomposed), `routers/dashboard.py` stats split into helpers; `ai_tools.py` slimmed 828→~470 lines. TEST_USER_PASSWORD moved to backend/.env.
   - Frontend safe fixes: `src/lib/logger.js` (dev-aware logger, replaced 30+ console.*), hook dependency fixes (Challenges/ChallengeDetail/AdminPanel via useCallback; AdminPanel uses searchRef to keep explicit-submit search behavior), ThemeContext `applyTheme` hoisted to module scope, empty catches now logged (App.js logout, useDownload blob parse), 12 index-as-key → stable keys, JSX unescaped entities fixed. Webpack compiles clean.
@@ -44,7 +45,7 @@ A community platform for recruiting leaders combining AI-powered tools (JD Build
 - Re-implement rich text editor for challenge answers + admin pinning/categories (previously rolled back).
 
 ### P2
-- DB Optimization Phase 2/3: rewrite N+1 queries in `routers/challenges.py` and `routers/dashboard.py` with `$lookup` aggregations; efficient rank via indexed count; optionally switch challenge search to `$text` (index `txt_title_description` already in place).
+- ~~DB Optimization Phase 2/3~~ DONE Jun 10, 2026 (see Completed). Remaining optional: switch challenge search from `$regex` to `$text` (index `txt_title_description` ready; note `$text` is whole-word matching — would change partial-match behavior).
 - Analytics dashboard for usage/engagement.
 
 ### P3

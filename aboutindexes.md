@@ -101,6 +101,10 @@ To **remove** an index: delete from registry **and** drop manually once
 
 ## 4. Notes & future candidates
 
+- **Phase 2/3 (Jun 10, 2026):** the routers now use `$lookup` aggregations
+  (`utils/helpers.py :: AUTHOR_LOOKUP`) — these joins hit `users.uniq_user_id`
+  and `answers.ix_challenge_upvotes`; dashboard rank uses `users.ix_points_desc`
+  via `count_documents({points: {$gt: …}})`.
 - `created_at` fields (except session `expires_at`) are stored as **ISO-8601 strings**;
   lexicographic order == chronological order, so DESC index sorts work correctly.
   If they're ever migrated to BSON Dates, index definitions don't need changes.
