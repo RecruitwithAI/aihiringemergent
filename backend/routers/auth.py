@@ -54,7 +54,7 @@ async def register(user: UserCreate, response: Response):
     await db.user_sessions.insert_one({
         "user_id": user_id,
         "session_token": session_token,
-        "expires_at": (now + timedelta(days=7)).isoformat(),
+        "expires_at": now + timedelta(days=7),  # BSON Date — required for TTL auto-cleanup index
         "created_at": now.isoformat(),
     })
 
@@ -84,7 +84,7 @@ async def login(user: UserLogin, response: Response):
     await db.user_sessions.insert_one({
         "user_id": existing["user_id"],
         "session_token": session_token,
-        "expires_at": (now + timedelta(days=7)).isoformat(),
+        "expires_at": now + timedelta(days=7),  # BSON Date — required for TTL auto-cleanup index
         "created_at": now.isoformat(),
     })
 
@@ -175,7 +175,7 @@ async def exchange_session(session_id: str, response: Response):
     await db.user_sessions.insert_one({
         "user_id": user_id,
         "session_token": session_token,
-        "expires_at": (now + timedelta(days=7)).isoformat(),
+        "expires_at": now + timedelta(days=7),  # BSON Date — required for TTL auto-cleanup index
         "created_at": now.isoformat(),
     })
 

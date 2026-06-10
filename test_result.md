@@ -294,13 +294,30 @@ metadata:
 
 test_plan:
   current_focus:
-    - "AI Generation - All 6 Tools"
-    - "OpenAI API Key Quota Issue"
-  stuck_tasks:
-    - "AI Generation - All 6 Tools"
+    - "Phase 1 DB Optimization - Startup index creation + TTL sessions"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
+  - task: "Phase 1 DB Optimization - Startup index creation + TTL sessions"
+    implemented: true
+    working: true
+    file: "/app/backend/utils/indexes.py, /app/backend/server.py, /app/backend/routers/auth.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added declarative INDEX_REGISTRY + idempotent ensure_indexes() in utils/indexes.py, wired to FastAPI startup event. 19 indexes verified live across 6 collections incl. TTL on user_sessions.expires_at. Changed auth.py to store expires_at as BSON datetime (3 insert points) instead of ISO string so TTL works — utils/auth.py reader already handles both formats. Needs auth flow regression test (register/login/me/logout) + smoke of challenges/dashboard endpoints. NOTE: DB is fresh/empty — testing agent should register new users."
+      - working: true
+        agent: "testing"
+        comment: "REGRESSION TEST PASSED (21/21 tests, 100% success). Auth flow verified: register/login/me/logout all working correctly. CRITICAL VERIFICATION: Session expires_at is correctly stored as BSON datetime (not ISO string) in MongoDB at all 3 insert points (register, login, Google OAuth). TTL index 'ttl_expires_at' confirmed present on user_sessions.expires_at with expireAfterSeconds=0. Unique index enforcement working: duplicate email registration correctly rejected with 400 (not 500). Core endpoints smoke test passed: challenges CRUD (create/list/detail/search/tags), answers, upvotes, dashboard stats, leaderboard, profile stats all working. Index verification: All 19 indexes from INDEX_REGISTRY confirmed present across 6 collections (users: 6, user_sessions: 3, challenges: 5, answers: 4, ai_history: 1, api_usage: 1). Test user created: regression_test_20260610_113725@bestpl.ai / SecurePass2026!"
+
 agent_communication:
+  - agent: "main"
+    message: "Phase 1 DB optimization done: startup index creation (utils/indexes.py registry) + session expires_at now stored as datetime for TTL. Documented in /app/aboutindexes.md. Backend restarted clean, indexes confirmed in live DB. Please regression-test auth (session create/validate/expiry path) and smoke-test main endpoints. Do NOT test AI generation (OpenAI keys exhausted, known issue)."
   - agent: "testing"
     message: "Comprehensive backend testing completed for refactored AI Tools application. CRITICAL FINDING: All AI generation endpoints are failing with 500 errors due to OpenAI API quota exhaustion. The superadmin's master API key stored in the database has exceeded its quota. This is an INFRASTRUCTURE issue, not a code bug. Backend code logic is correct and working as designed. All other endpoints tested successfully: Authentication ✅, Usage Stats ✅, File Upload/Extraction ✅, Download Formats (TXT/PDF/DOCX/CSV) ✅, History ✅, API Key Management ✅. Success rate: 11/18 tests passed (61.1%). The 7 failed tests are all AI generation calls blocked by the quota issue. RECOMMENDATION: Superadmin needs to add credits to their OpenAI account or update the master API key in the database with a valid key that has available quota. Frontend testing was not performed due to system limitations."
+  - agent: "testing"
+    message: "Phase 1 DB Optimization regression testing COMPLETE - ALL TESTS PASSED (21/21, 100%). Session storage change verified: expires_at is BSON datetime at all 3 insert points (register/login/OAuth). TTL index confirmed working (expireAfterSeconds=0). Unique email index enforcing correctly (400 not 500). All 19 indexes from INDEX_REGISTRY present. Core endpoints smoke test passed: challenges, answers, dashboard, leaderboard, profile all working. Auth flow fully functional: register → /me → login → /me → logout → 401. No issues found. Phase 1 changes are production-ready."

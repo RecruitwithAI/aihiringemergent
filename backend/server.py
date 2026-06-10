@@ -15,6 +15,7 @@ load_dotenv(ROOT_DIR / '.env')
 # Import routers
 from routers import auth, challenges, answers, ai_tools, dashboard, users
 from utils.database import client
+from utils.indexes import ensure_indexes
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -76,6 +77,12 @@ app.add_middleware(
 )
 # This wraps CORSMiddleware — runs AFTER CORS sets headers, rewrites "*" to actual origin
 app.add_middleware(CORSOriginReflectMiddleware)
+
+
+@app.on_event("startup")
+async def startup_ensure_indexes():
+    """Idempotent index creation — registry lives in utils/indexes.py (see /app/aboutindexes.md)."""
+    await ensure_indexes()
 
 
 @app.on_event("shutdown")
