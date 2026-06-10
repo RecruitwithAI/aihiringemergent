@@ -45,19 +45,22 @@ export const useDownload = () => {
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
-    link.target = '_blank';
+    // NOTE: do NOT set target="_blank" here — combined with the `download`
+    // attribute it makes some browsers treat this as a popup (silently
+    // blocked) instead of a file save.
     link.rel = 'noopener noreferrer';
     
     // Append to body to ensure it works in all browsers
     document.body.appendChild(link);
     link.click();
     
-    // Cleanup after download initiated
+    // Cleanup after download initiated (delay long enough for slower browsers
+    // — revoking the blob URL too early can cancel the save in Safari/Firefox)
     setTimeout(() => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       logger.debug('[useDownload] Cleanup complete');
-    }, 100);
+    }, 1000);
   };
   
   /**
