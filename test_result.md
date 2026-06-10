@@ -294,10 +294,25 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Code review fixes - backend refactor (file_extraction, document_export, dashboard helpers)"
+    - "DB Optimization Phase 2+3 - $lookup aggregations + efficient rank"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+
+  - task: "DB Optimization Phase 2+3 - $lookup aggregations + efficient rank"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/challenges.py, /app/backend/routers/dashboard.py, /app/backend/utils/helpers.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 2: GET /challenges now 1 aggregation ($lookup authors + answer counts, was up to 201 queries); GET /challenges/{id} now 2 aggregations (challenge+author, answers+authors). Phase 3: dashboard rank via indexed count_documents(points $gt) — competition ranking (ties share rank, slight improvement over arbitrary tie order); recent_challenges + activity_feed via $lookup aggregations. Shared AUTHOR_LOOKUP/finalize_author in utils/helpers.py. Smoke-tested manually: identical response shapes, 404s preserved. MongoDB 7.0 confirmed."
+      - working: true
+        agent: "testing"
+        comment: "REGRESSION TEST PASSED (16/16 tests, 100% success). Phase 2+3 DB optimization verified working correctly. CHALLENGES ENDPOINT: GET /api/challenges returns correct structure with all required fields (challenge_id, title, description, tags, author_id, upvotes, upvoted_by, created_at, answers_count, author with user_id/name/picture/points/badge). No internal fields (_id, _answer_counts) leaked. Sorted newest first. Search (?search=) and tag filter (?tags=) working correctly. answers_count correctly aggregated (0 for new challenge, 1 after adding answer). CHALLENGE DETAIL: GET /api/challenges/{id} returns challenge with author+badge and answers array with author+badge for each answer, sorted by upvotes desc. 404 correctly returned for non-existent challenge. UPVOTE TOGGLE: POST /api/challenges/{id}/upvote correctly toggles (first call returns upvoted:true, second returns upvoted:false). DASHBOARD STATS: GET /api/dashboard/stats returns all required keys (total_members, total_challenges, total_answers, user_points, user_badge, user_rank, recent_challenges, last_ai_tool, last_challenge, activity_feed). user_rank ≥ 1 and consistent with leaderboard (top points = rank 1). recent_challenges include author with badge. activity_feed correctly structured: challenge items have 'title', answer items have 'challenge_title', all items have author with badge, sorted newest first. LEADERBOARD & PROFILE: GET /api/leaderboard and GET /api/profile/stats return correct structures unchanged. All aggregations working efficiently. No issues found."
 
   - task: "Code review fixes - backend refactor (file_extraction, document_export, dashboard helpers)"
     implemented: true
@@ -338,3 +353,5 @@ agent_communication:
     message: "Phase 1 DB Optimization regression testing COMPLETE - ALL TESTS PASSED (21/21, 100%). Session storage change verified: expires_at is BSON datetime at all 3 insert points (register/login/OAuth). TTL index confirmed working (expireAfterSeconds=0). Unique email index enforcing correctly (400 not 500). All 19 indexes from INDEX_REGISTRY present. Core endpoints smoke test passed: challenges, answers, dashboard, leaderboard, profile all working. Auth flow fully functional: register → /me → login → /me → logout → 401. No issues found. Phase 1 changes are production-ready."
   - agent: "testing"
     message: "Code review fixes regression testing COMPLETE - ALL TESTS PASSED (12/12, 100%). Behavior-preserving refactor verified: API responses identical to before. DOWNLOADS: All formats working (TXT/PDF/DOCX/CSV) with correct magic bytes and content. PDF: 1762B with %PDF header. DOCX: 37223B with PK\\x03\\x04 ZIP signature. CSV: JSON arrays flattened correctly. FILE EXTRACTION: TXT extraction working (63 chars), error mapping preserved (unsupported .xyz → 400, non-existent upload_id → 404). DASHBOARD: All required keys present (total_members, total_challenges, total_answers, user_points, user_badge, user_rank, recent_challenges with author.badge, last_ai_tool, last_challenge, activity_feed with typed items). LEADERBOARD & PROFILE: All working with correct structure. Refactored modules (utils/file_extraction.py, utils/document_export.py, dashboard.py helpers) maintain identical behavior. No regressions found. Code review changes are production-ready."
+  - agent: "testing"
+    message: "Phase 2+3 DB Optimization regression testing COMPLETE - ALL TESTS PASSED (16/16, 100%). N+1 query elimination verified working correctly. PHASE 2 CHANGES: GET /api/challenges now uses single aggregation with $lookup for authors and answer counts (eliminates N+1 queries). Response structure correct: all required fields present, no internal fields (_id, _answer_counts) leaked, answers_count correctly aggregated as integer, sorted newest first. Search and tag filters working. GET /api/challenges/{id} uses 2 aggregations (challenge+author, answers+authors), all responses include author with badge, answers sorted by upvotes desc, 404 preserved for non-existent challenges. PHASE 3 CHANGES: Dashboard user_rank now uses efficient count_documents with $gt filter (competition ranking working correctly, top points = rank 1). recent_challenges and activity_feed built via $lookup aggregations, all include author with badge. Activity feed correctly structured: challenge items have 'title', answer items have 'challenge_title', sorted newest first. SHARED HELPERS: AUTHOR_LOOKUP, finalize_author, UNKNOWN_AUTHOR in utils/helpers.py working correctly. All API contracts unchanged. No regressions found. Phase 2+3 changes are production-ready."

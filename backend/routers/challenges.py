@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import uuid
 
 from utils.database import db
-from utils.helpers import get_badge
+from utils.helpers import AUTHOR_LOOKUP, finalize_author
 from utils.auth import get_current_user, add_points
 from models.schemas import ChallengeCreate, AnswerCreate
 
@@ -29,16 +29,27 @@ async def get_challenges(user=Depends(get_current_user), search: str = "", tags:
         if tag_list:
             query["tags"] = {"$in": tag_list}
     
-    challenges = await db.challenges.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    # Single aggregation: challenges + author + answer count (replaces N+1 queries)
+    pipeline = [
+        {"$match": query},
+        {"$sort": {"created_at": -1}},
+        {"$limit": 100},
+        AUTHOR_LOOKUP,
+        {"$lookup": {
+            "from": "answers",
+            "localField": "challenge_id",
+            "foreignField": "challenge_id",
+            "as": "_answer_counts",
+            "pipeline": [{"$count": "n"}],
+        }},
+        {"$addFields": {
+            "answers_count": {"$ifNull": [{"$first": "$_answer_counts.n"}, 0]},
+        }},
+        {"$project": {"_id": 0, "_answer_counts": 0}},
+    ]
+    challenges = await db.challenges.aggregate(pipeline).to_list(100)
     for c in challenges:
-        author = await db.users.find_one(
-            {"user_id": c.get("author_id")},
-            {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
-        )
-        if author:
-            author["badge"] = get_badge(author.get("points", 0))
-        c["author"] = author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
-        c["answers_count"] = await db.answers.count_documents({"challenge_id": c["challenge_id"]})
+        finalize_author(c)
     return challenges
 
 
@@ -62,27 +73,27 @@ async def create_challenge(challenge: ChallengeCreate, user=Depends(get_current_
 
 @router.get("/{challenge_id}")
 async def get_challenge(challenge_id: str, user=Depends(get_current_user)):
-    challenge = await db.challenges.find_one({"challenge_id": challenge_id}, {"_id": 0})
-    if not challenge:
+    # Challenge + author in one aggregation
+    challenge_list = await db.challenges.aggregate([
+        {"$match": {"challenge_id": challenge_id}},
+        {"$limit": 1},
+        AUTHOR_LOOKUP,
+        {"$project": {"_id": 0}},
+    ]).to_list(1)
+    if not challenge_list:
         raise HTTPException(status_code=404, detail="Challenge not found")
+    challenge = finalize_author(challenge_list[0])
 
-    author = await db.users.find_one(
-        {"user_id": challenge.get("author_id")},
-        {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
-    )
-    if author:
-        author["badge"] = get_badge(author.get("points", 0))
-    challenge["author"] = author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
-
-    answers = await db.answers.find({"challenge_id": challenge_id}, {"_id": 0}).sort("upvotes", -1).to_list(100)
+    # All answers + their authors in one aggregation (replaces per-answer lookups)
+    answers = await db.answers.aggregate([
+        {"$match": {"challenge_id": challenge_id}},
+        {"$sort": {"upvotes": -1}},
+        {"$limit": 100},
+        AUTHOR_LOOKUP,
+        {"$project": {"_id": 0}},
+    ]).to_list(100)
     for a in answers:
-        ans_author = await db.users.find_one(
-            {"user_id": a.get("author_id")},
-            {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
-        )
-        if ans_author:
-            ans_author["badge"] = get_badge(ans_author.get("points", 0))
-        a["author"] = ans_author or {"name": "Unknown", "picture": None, "badge": "Bronze"}
+        finalize_author(a)
     challenge["answers"] = answers
     return challenge
 

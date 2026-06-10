@@ -1,29 +1,15 @@
 from fastapi import APIRouter, Depends
 from utils.database import db
-from utils.helpers import get_badge
+from utils.helpers import get_badge, AUTHOR_LOOKUP, finalize_author
 from utils.auth import get_current_user
 
 
 router = APIRouter(tags=["dashboard"])
 
-_UNKNOWN_AUTHOR = {"name": "Unknown", "picture": None, "badge": "Bronze"}
-
 
 # ============================================================
 # Dashboard stats helpers (each independently testable)
 # ============================================================
-
-async def _get_author(user_id: str):
-    """Fetch a lightweight author profile with badge, or a fallback."""
-    author = await db.users.find_one(
-        {"user_id": user_id},
-        {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "points": 1},
-    )
-    if author:
-        author["badge"] = get_badge(author.get("points", 0))
-        return author
-    return dict(_UNKNOWN_AUTHOR)
-
 
 async def _get_global_counts() -> dict:
     return {
@@ -34,17 +20,24 @@ async def _get_global_counts() -> dict:
 
 
 async def _get_recent_challenges(limit: int = 5) -> list:
-    recent = await db.challenges.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    """Recent challenges with authors joined in a single aggregation."""
+    recent = await db.challenges.aggregate([
+        {"$sort": {"created_at": -1}},
+        {"$limit": limit},
+        AUTHOR_LOOKUP,
+        {"$project": {"_id": 0}},
+    ]).to_list(limit)
     for c in recent:
-        c["author"] = await _get_author(c.get("author_id"))
+        finalize_author(c)
     return recent
 
 
-async def _get_user_rank(user_id: str) -> int:
-    user_rank_list = await db.users.find(
-        {}, {"_id": 0, "user_id": 1, "points": 1}
-    ).sort("points", -1).to_list(1000)
-    return next((i + 1 for i, u in enumerate(user_rank_list) if u["user_id"] == user_id), 0)
+async def _get_user_rank(user_points: int) -> int:
+    """Competition rank: 1 + number of users with strictly more points.
+
+    Uses the ix_points_desc index — O(log n) instead of loading 1000 users."""
+    higher = await db.users.count_documents({"points": {"$gt": user_points}})
+    return higher + 1
 
 
 async def _get_last_ai_tool(user_id: str):
@@ -94,34 +87,50 @@ async def _get_last_challenge_interaction(user_id: str):
 
 
 async def _build_activity_feed(limit: int = 10) -> list:
-    """Recent community events (challenges + answers from all users), newest first."""
-    feed_challenges = await db.challenges.find(
-        {}, {"_id": 0, "challenge_id": 1, "title": 1, "author_id": 1, "created_at": 1}
-    ).sort("created_at", -1).to_list(8)
+    """Recent community events (challenges + answers), newest first.
 
-    feed_answers = await db.answers.find(
-        {}, {"_id": 0, "answer_id": 1, "challenge_id": 1, "author_id": 1, "created_at": 1}
-    ).sort("created_at", -1).to_list(8)
+    Two aggregations total (authors + challenge titles joined via $lookup),
+    replacing the previous per-item lookups (~17 queries -> 2)."""
+    feed_challenges = await db.challenges.aggregate([
+        {"$sort": {"created_at": -1}},
+        {"$limit": 8},
+        AUTHOR_LOOKUP,
+        {"$project": {"_id": 0, "challenge_id": 1, "title": 1, "created_at": 1, "author": 1}},
+    ]).to_list(8)
+
+    feed_answers = await db.answers.aggregate([
+        {"$sort": {"created_at": -1}},
+        {"$limit": 8},
+        AUTHOR_LOOKUP,
+        {"$lookup": {
+            "from": "challenges",
+            "localField": "challenge_id",
+            "foreignField": "challenge_id",
+            "as": "_challenge",
+            "pipeline": [{"$project": {"_id": 0, "title": 1}}],
+        }},
+        {"$project": {"_id": 0, "answer_id": 1, "challenge_id": 1, "created_at": 1,
+                      "author": 1, "_challenge": 1}},
+    ]).to_list(8)
 
     activity_feed = []
     for ch in feed_challenges:
+        finalize_author(ch)
         activity_feed.append({
             "type": "challenge",
             "challenge_id": ch["challenge_id"],
             "title": ch["title"],
-            "author": await _get_author(ch["author_id"]),
+            "author": ch["author"],
             "created_at": ch["created_at"],
         })
     for ans in feed_answers:
-        challenge_doc = await db.challenges.find_one(
-            {"challenge_id": ans["challenge_id"]},
-            {"_id": 0, "title": 1, "challenge_id": 1}
-        )
+        finalize_author(ans)
+        challenge_list = ans.pop("_challenge", None) or []
         activity_feed.append({
             "type": "answer",
             "challenge_id": ans["challenge_id"],
-            "challenge_title": challenge_doc["title"] if challenge_doc else "a challenge",
-            "author": await _get_author(ans["author_id"]),
+            "challenge_title": challenge_list[0]["title"] if challenge_list else "a challenge",
+            "author": ans["author"],
             "created_at": ans["created_at"],
         })
 
@@ -140,7 +149,7 @@ async def get_dashboard_stats(user=Depends(get_current_user)):
         **counts,
         "user_points": user.get("points", 0),
         "user_badge": get_badge(user.get("points", 0)),
-        "user_rank": await _get_user_rank(user["user_id"]),
+        "user_rank": await _get_user_rank(user.get("points", 0)),
         "recent_challenges": await _get_recent_challenges(),
         "last_ai_tool": await _get_last_ai_tool(user["user_id"]),
         "last_challenge": await _get_last_challenge_interaction(user["user_id"]),
