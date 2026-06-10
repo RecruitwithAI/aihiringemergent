@@ -97,7 +97,14 @@ To **remove** an index: delete from registry **and** drop manually once
 ### `api_usage`
 | Name | Keys | Options | Why |
 |---|---|---|---|
-| `uniq_user_date` | `user_id ↑, date ↑` | unique | One doc per user per day (free-tier 3/day limit); supports atomic upsert |
+| `ix_user_masterkey_ts` | `user_id ↑, used_master_key ↑, timestamp ↓` | | Daily free-tier limit count in `check_daily_usage()` (`user_id + used_master_key + timestamp >= today`). One doc per usage EVENT — must NOT be unique. |
+
+> ⚠️ **Post-mortem (Jun 10, 2026):** the original Phase 1 index `uniq_user_date`
+> (unique on `user_id + date`) was copied from the legacy migration script, but the
+> actual write path stores `timestamp`, not `date` — so every doc indexed as
+> `date: null` and the **second** `/ai/generate` per user failed with
+> DuplicateKeyError ("Generation failed"). Lesson: always validate index
+> definitions against the real insert/update code paths, not legacy scripts.
 
 ### `tool_prompts`  ← SuperAdmin-editable AI system prompts
 | Name | Keys | Options | Why |

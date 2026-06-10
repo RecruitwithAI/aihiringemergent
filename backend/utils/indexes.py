@@ -92,9 +92,12 @@ INDEX_REGISTRY = {
     ],
 
     "api_usage": [
-        # One usage doc per user per day (daily free-tier limit)
-        {"keys": [("user_id", ASCENDING), ("date", ASCENDING)],
-         "options": {"name": "uniq_user_date", "unique": True}},
+        # Event-based usage records: {user_id, used_master_key, tool_type, timestamp}.
+        # Supports check_daily_usage() count: {user_id, used_master_key, timestamp >= today}.
+        # NOTE: must NOT be unique — one doc per usage event.
+        # (Replaced wrong `uniq_user_date` unique index that broke /ai/generate on 2nd use.)
+        {"keys": [("user_id", ASCENDING), ("used_master_key", ASCENDING), ("timestamp", DESCENDING)],
+         "options": {"name": "ix_user_masterkey_ts"}},
     ],
 
     "tool_prompts": [

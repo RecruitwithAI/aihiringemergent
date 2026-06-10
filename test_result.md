@@ -359,6 +359,18 @@ test_plan:
         agent: "testing"
         comment: "REGRESSION TEST PASSED (21/21 tests, 100% success). Auth flow verified: register/login/me/logout all working correctly. CRITICAL VERIFICATION: Session expires_at is correctly stored as BSON datetime (not ISO string) in MongoDB at all 3 insert points (register, login, Google OAuth). TTL index 'ttl_expires_at' confirmed present on user_sessions.expires_at with expireAfterSeconds=0. Unique index enforcement working: duplicate email registration correctly rejected with 400 (not 500). Core endpoints smoke test passed: challenges CRUD (create/list/detail/search/tags), answers, upvotes, dashboard stats, leaderboard, profile stats all working. Index verification: All 19 indexes from INDEX_REGISTRY confirmed present across 6 collections (users: 6, user_sessions: 3, challenges: 5, answers: 4, ai_history: 1, api_usage: 1). Test user created: regression_test_20260610_113725@bestpl.ai / SecurePass2026!"
 
+  - task: "Bug fix: /ai/generate DuplicateKeyError on api_usage (uniq_user_date)"
+    implemented: true
+    working: true
+    file: "/app/backend/utils/indexes.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "User reported 'Generation failed' in JD Builder. Root cause: Phase 1 index uniq_user_date (unique on user_id+date) didn't match actual api_usage schema (docs store 'timestamp', no 'date' field) -> every doc indexed date:null -> 2nd generation per user hit DuplicateKeyError 500 AFTER successful LLM call. Fix: dropped uniq_user_date, replaced with non-unique ix_user_masterkey_ts (user_id, used_master_key, timestamp desc) matching check_daily_usage query. Verified: 3 consecutive /ai/generate calls return 200 with full JD output (OpenAI key now funded)."
+
 agent_communication:
   - agent: "main"
     message: "Phase 1 DB optimization done: startup index creation (utils/indexes.py registry) + session expires_at now stored as datetime for TTL. Documented in /app/aboutindexes.md. Backend restarted clean, indexes confirmed in live DB. Please regression-test auth (session create/validate/expiry path) and smoke-test main endpoints. Do NOT test AI generation (OpenAI keys exhausted, known issue)."
