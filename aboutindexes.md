@@ -99,6 +99,13 @@ To **remove** an index: delete from registry **and** drop manually once
 |---|---|---|---|
 | `uniq_user_date` | `user_id ↑, date ↑` | unique | One doc per user per day (free-tier 3/day limit); supports atomic upsert |
 
+### `tool_prompts`  ← SuperAdmin-editable AI system prompts
+| Name | Keys | Options | Why |
+|---|---|---|---|
+| `ix_tool_status` | `tool_id ↑, status ↑` | | Hot path: `ai_generate` fetches the active prompt per tool on every AI request |
+| `uniq_prompt_id` | `prompt_id ↑` | unique | Direct version lookups (edit/activate/delete) |
+| `uniq_active_per_tool` | `tool_id ↑` | unique, partial: `{status: "active"}` | DB-level invariant: at most one ACTIVE prompt per tool |
+
 ## 4. Notes & future candidates
 
 - **Phase 2/3 (Jun 10, 2026):** the routers now use `$lookup` aggregations
