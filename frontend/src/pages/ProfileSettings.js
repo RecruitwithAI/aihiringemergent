@@ -288,7 +288,7 @@ export default function ProfileSettings() {
                 <div className="flex flex-wrap gap-2 mt-3">
                   {formData.help_topics.map((topic, idx) => (
                     <span
-                      key={idx}
+                      key={topic}
                       className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm"
                     >
                       {topic}

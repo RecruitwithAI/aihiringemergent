@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
 import axios from "axios";
+import logger from '@/lib/logger';
 import {
   Brain, MessageSquare, Trophy, Users, ArrowRight, Zap,
   Sparkles, Award, GraduationCap, MessageCircleMore, FileText,
@@ -69,7 +70,7 @@ export default function Dashboard() {
       try {
         const res = await axios.get(`${API}/dashboard/stats`, { withCredentials: true });
         setStats(res.data);
-      } catch (err) { console.error(err); }
+      } catch (err) { logger.error(err); }
       finally { setLoading(false); }
     })();
   }, []);
@@ -337,7 +338,7 @@ export default function Dashboard() {
                 <div className="space-y-4 overflow-y-auto max-h-[420px] pr-1 scrollbar-thin">
                   {stats.activity_feed.map((item, i) => (
                     <Link
-                      key={i}
+                      key={`${item.type}-${item.challenge_id}-${item.created_at}`}
                       to={`/challenges/${item.challenge_id}`}
                       className="flex items-start gap-3 group"
                       data-testid={`feed-item-${i}`}

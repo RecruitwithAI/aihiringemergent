@@ -294,10 +294,25 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Phase 1 DB Optimization - Startup index creation + TTL sessions"
+    - "Code review fixes - backend refactor (file_extraction, document_export, dashboard helpers)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+
+  - task: "Code review fixes - backend refactor (file_extraction, document_export, dashboard helpers)"
+    implemented: true
+    working: true
+    file: "/app/backend/utils/file_extraction.py, /app/backend/utils/document_export.py, /app/backend/routers/ai_tools.py, /app/backend/routers/dashboard.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Behavior-preserving complexity refactor: extract_file now dispatches to utils/file_extraction.py (per-type handlers); markdown→DOCX/PDF parsers moved to utils/document_export.py (decomposed into small helpers, markdown_to_docx/markdown_to_pdf); dashboard stats split into composed helper functions. API contracts unchanged. TEST_USER_PASSWORD moved from test code to backend/.env. Needs regression: /api/ai/extract-file, /api/ai/download (txt/csv/docx/pdf magic bytes), /api/dashboard/stats, /api/leaderboard, /api/profile/stats."
+      - working: true
+        agent: "testing"
+        comment: "REGRESSION TEST PASSED (12/12 tests, 100% success). All refactored endpoints maintain identical API behavior. DOWNLOADS: TXT (200, text/plain, content matches), PDF (200, application/pdf, %PDF magic bytes, 1762B), DOCX (200, openxml MIME, PK\\x03\\x04 ZIP magic, 37223B), CSV with JSON array (200, arrays flattened correctly), CSV non-JSON fallback (200), invalid format (400). FILE EXTRACTION: TXT upload+extract (200, 63 chars extracted correctly), unsupported .xyz extension (400 as expected), non-existent upload_id (404 as expected). DASHBOARD: GET /api/dashboard/stats (200) with ALL required keys present (total_members, total_challenges, total_answers, user_points, user_badge, user_rank, recent_challenges with author.badge, last_ai_tool, last_challenge with interaction_type, activity_feed with typed items). LEADERBOARD: GET /api/leaderboard (200) with rank and badge. PROFILE: GET /api/profile/stats (200) with challenges_posted, answers_given, ai_tools_used, points, badge. Refactored code in utils/file_extraction.py (per-type handlers), utils/document_export.py (markdown→DOCX/PDF helpers), and dashboard.py (helper functions) working correctly. No issues found."
 
   - task: "Phase 1 DB Optimization - Startup index creation + TTL sessions"
     implemented: true
@@ -321,3 +336,5 @@ agent_communication:
     message: "Comprehensive backend testing completed for refactored AI Tools application. CRITICAL FINDING: All AI generation endpoints are failing with 500 errors due to OpenAI API quota exhaustion. The superadmin's master API key stored in the database has exceeded its quota. This is an INFRASTRUCTURE issue, not a code bug. Backend code logic is correct and working as designed. All other endpoints tested successfully: Authentication ✅, Usage Stats ✅, File Upload/Extraction ✅, Download Formats (TXT/PDF/DOCX/CSV) ✅, History ✅, API Key Management ✅. Success rate: 11/18 tests passed (61.1%). The 7 failed tests are all AI generation calls blocked by the quota issue. RECOMMENDATION: Superadmin needs to add credits to their OpenAI account or update the master API key in the database with a valid key that has available quota. Frontend testing was not performed due to system limitations."
   - agent: "testing"
     message: "Phase 1 DB Optimization regression testing COMPLETE - ALL TESTS PASSED (21/21, 100%). Session storage change verified: expires_at is BSON datetime at all 3 insert points (register/login/OAuth). TTL index confirmed working (expireAfterSeconds=0). Unique email index enforcing correctly (400 not 500). All 19 indexes from INDEX_REGISTRY present. Core endpoints smoke test passed: challenges, answers, dashboard, leaderboard, profile all working. Auth flow fully functional: register → /me → login → /me → logout → 401. No issues found. Phase 1 changes are production-ready."
+  - agent: "testing"
+    message: "Code review fixes regression testing COMPLETE - ALL TESTS PASSED (12/12, 100%). Behavior-preserving refactor verified: API responses identical to before. DOWNLOADS: All formats working (TXT/PDF/DOCX/CSV) with correct magic bytes and content. PDF: 1762B with %PDF header. DOCX: 37223B with PK\\x03\\x04 ZIP signature. CSV: JSON arrays flattened correctly. FILE EXTRACTION: TXT extraction working (63 chars), error mapping preserved (unsupported .xyz → 400, non-existent upload_id → 404). DASHBOARD: All required keys present (total_members, total_challenges, total_answers, user_points, user_badge, user_rank, recent_challenges with author.badge, last_ai_tool, last_challenge, activity_feed with typed items). LEADERBOARD & PROFILE: All working with correct structure. Refactored modules (utils/file_extraction.py, utils/document_export.py, dashboard.py helpers) maintain identical behavior. No regressions found. Code review changes are production-ready."

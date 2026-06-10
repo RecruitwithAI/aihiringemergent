@@ -282,7 +282,7 @@ export default function LandingPage() {
             <div className="space-y-3 animate-float-in stagger-2">
               {previewCards.map((card, i) => (
                 <div
-                  key={i}
+                  key={card.label}
                   className="bg-white/[0.04] border border-white/[0.07] rounded-xl p-4 flex items-center gap-4 hover:border-blue-500/20 hover:bg-white/[0.06] transition-all duration-300"
                   style={{ animationDelay: `${i * 0.15}s` }}
                 >
@@ -321,7 +321,7 @@ export default function LandingPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map((f, i) => (
             <div
-              key={i}
+              key={f.title}
               className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-6 group hover:border-blue-500/20 hover:bg-white/[0.06] transition-all duration-300 animate-float-in"
               style={{ animationDelay: `${i * 0.08}s` }}
               data-testid={`feature-card-${i}`}

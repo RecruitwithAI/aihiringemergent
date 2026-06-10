@@ -3,6 +3,7 @@ import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
 import axios from "axios";
 import { MessageSquare, Brain, Award, TrendingUp, User } from "lucide-react";
+import logger from '@/lib/logger';
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
@@ -17,7 +18,7 @@ export default function Profile() {
         const res = await axios.get(`${API}/profile/stats`, { withCredentials: true });
         setStats(res.data);
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }

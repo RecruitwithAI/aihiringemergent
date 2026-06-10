@@ -33,7 +33,7 @@ export default function FormatUploader({ file, uploading, uploadProgress, onFile
           Upload Sample Output Format <span className="text-muted-foreground">(Optional)</span>
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Provide a sample format for the dossier to follow (e.g., your company's standard CV template)
+          Provide a sample format for the dossier to follow (e.g., your company&apos;s standard CV template)
         </p>
       </div>
       

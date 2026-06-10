@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getToolConfig, getAllTools } from './registry/toolRegistry';
 import { themeClasses } from '@/design-system/tokens';
+import logger from '@/lib/logger';
 
 /**
  * AIToolsLayout Component
@@ -22,12 +23,12 @@ export default function AIToolsLayout() {
   const [selectedToolId, setSelectedToolId] = useState(null);
   
   const handleSelectTool = (toolId) => {
-    console.log('[AIToolsLayout] Tool selected:', toolId);
+    logger.debug('[AIToolsLayout] Tool selected:', toolId);
     setSelectedToolId(toolId);
   };
   
   const handleBack = () => {
-    console.log('[AIToolsLayout] Returning to tool selector');
+    logger.debug('[AIToolsLayout] Returning to tool selector');
     setSelectedToolId(null);
   };
   
@@ -46,7 +47,7 @@ export default function AIToolsLayout() {
           <div className={`${themeClasses.card} p-8 text-center`}>
             <p className={themeClasses.heading}>Tool not found</p>
             <p className={`${themeClasses.subtext} mt-2`}>
-              The tool "{selectedToolId}" does not exist.
+              The tool &quot;{selectedToolId}&quot; does not exist.
             </p>
             <button 
               onClick={handleBack}

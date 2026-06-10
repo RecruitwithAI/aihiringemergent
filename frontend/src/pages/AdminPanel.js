@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
+import logger from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -65,23 +66,21 @@ export default function AdminPanel() {
   const isAdmin = currentUser?.role === "admin" || currentUser?.role === "superadmin";
   const isSuperAdmin = currentUser?.role === "superadmin";
 
+  // Search is applied only on explicit submit (Enter/button) — keep it out of
+  // fetchUsers deps via a ref so typing doesn't trigger fetches.
+  const searchRef = useRef(search);
   useEffect(() => {
-    if (!isAdmin) {
-      window.location.href = "/dashboard";
-      return;
-    }
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, roleFilter, statusFilter]);
+    searchRef.current = search;
+  }, [search]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
       });
-      if (search) params.append("search", search);
+      if (searchRef.current) params.append("search", searchRef.current);
       if (roleFilter) params.append("role", roleFilter);
       if (statusFilter) params.append("status", statusFilter);
 
@@ -91,11 +90,20 @@ export default function AdminPanel() {
       setUsers(response.data.users);
       setTotalPages(response.data.pages);
     } catch (err) {
+      logger.error("Failed to fetch users:", err);
       toast.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      window.location.href = "/dashboard";
+      return;
+    }
+    fetchUsers();
+  }, [isAdmin, fetchUsers]);
 
   const handleSearch = () => {
     setPage(1);

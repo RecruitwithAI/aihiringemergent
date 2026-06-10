@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
@@ -7,6 +7,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { ArrowLeft, ChevronUp, Clock, MessageSquare, Pin } from "lucide-react";
 import DOMPurify from 'dompurify';
+import logger from '@/lib/logger';
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
@@ -18,18 +19,18 @@ export default function ChallengeDetail() {
   const [answerText, setAnswerText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchChallenge = async () => {
+  const fetchChallenge = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/challenges/${id}`, { withCredentials: true });
       setChallenge(res.data);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { fetchChallenge(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchChallenge(); }, [fetchChallenge]);
 
   const handleAnswer = async (e) => {
     e.preventDefault();

@@ -2,6 +2,15 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+/** Apply theme to the document root (module-scope: stable across renders). */
+const applyTheme = (newTheme) => {
+  if (newTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+};
+
 /**
  * useTheme Hook
  * Access theme state and controls from any component
@@ -50,8 +59,8 @@ export function ThemeProvider({ children }) {
     // Observe changes from ThemeToggle component
     // This ensures sync when user clicks the theme toggle button
     const observer = new MutationObserver(() => {
-      const currentTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
-      setTheme(currentTheme);
+      const observedTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
+      setTheme(observedTheme);
     });
     
     observer.observe(document.documentElement, { 
@@ -60,15 +69,7 @@ export function ThemeProvider({ children }) {
     });
     
     return () => observer.disconnect();
-  }, []);
-
-  const applyTheme = (newTheme) => {
-    if (newTheme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
-  };
+  }, []); // mount-only: applyTheme is module-scope (stable), setTheme is stable
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';

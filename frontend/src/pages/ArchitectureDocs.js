@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2, FileCode, Database, Shield, Cloud, Zap, Lock, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import logger from '@/lib/logger';
 
 export default function ArchitectureDocs() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export default function ArchitectureDocs() {
       });
       setDocs(response.data);
     } catch (err) {
-      console.error("Failed to fetch docs:", err);
+      logger.error("Failed to fetch docs:", err);
     } finally {
       setLoading(false);
     }
@@ -154,7 +155,7 @@ export default function ArchitectureDocs() {
           </h2>
           <div className="space-y-4">
             {docs.architecture.layers.map((layer, idx) => (
-              <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/10">
+              <div key={layer.name} className="p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-medium text-white">{layer.name}</h3>
                   <span className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-400">
@@ -170,8 +171,8 @@ export default function ArchitectureDocs() {
                 <div>
                   <p className="text-sm text-slate-400 mb-1">Responsibilities:</p>
                   <ul className="list-disc list-inside text-sm text-slate-300">
-                    {layer.responsibilities.map((resp, i) => (
-                      <li key={i}>{resp}</li>
+                    {layer.responsibilities.map((resp) => (
+                      <li key={resp}>{resp}</li>
                     ))}
                   </ul>
                 </div>
@@ -199,8 +200,8 @@ export default function ArchitectureDocs() {
                 <div className="mb-3">
                   <p className="text-sm font-medium text-slate-300 mb-2">Key Fields:</p>
                   <div className="space-y-1">
-                    {details.key_fields.map((field, i) => (
-                      <p key={i} className="text-xs text-slate-400 font-mono">
+                    {details.key_fields.map((field) => (
+                      <p key={field} className="text-xs text-slate-400 font-mono">
                         {field}
                       </p>
                     ))}
@@ -229,7 +230,7 @@ export default function ArchitectureDocs() {
                 <div className="space-y-2">
                   {data.endpoints.map((endpoint, idx) => (
                     <div
-                      key={idx}
+                      key={`${endpoint.method}-${endpoint.path}`}
                       className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10 text-sm"
                     >
                       <span
@@ -276,8 +277,8 @@ export default function ArchitectureDocs() {
                   <div>
                     <p className="text-sm font-medium text-green-400 mb-2">Permissions:</p>
                     <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
-                      {details.permissions.map((perm, i) => (
-                        <li key={i}>{perm}</li>
+                      {details.permissions.map((perm) => (
+                        <li key={perm}>{perm}</li>
                       ))}
                     </ul>
                   </div>
@@ -285,8 +286,8 @@ export default function ArchitectureDocs() {
                     <div>
                       <p className="text-sm font-medium text-red-400 mb-2">Restrictions:</p>
                       <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
-                        {details.restrictions.map((rest, i) => (
-                          <li key={i}>{rest}</li>
+                        {details.restrictions.map((rest) => (
+                          <li key={rest}>{rest}</li>
                         ))}
                       </ul>
                     </div>
@@ -308,7 +309,7 @@ export default function ArchitectureDocs() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {docs.features.ai_tools.tools.map((tool, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-white/5 border border-white/10">
+                <div key={tool.name} className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <h4 className="text-white font-medium mb-1">{tool.name}</h4>
                   <p className="text-xs text-slate-400 mb-2">{tool.description}</p>
                   <p className="text-xs text-slate-500">Model: {tool.ai_model}</p>
@@ -316,7 +317,7 @@ export default function ArchitectureDocs() {
                     <div className="mt-2 flex flex-wrap gap-1">
                       {tool.special_features.map((feature, i) => (
                         <span
-                          key={i}
+                          key={feature}
                           className="px-2 py-0.5 rounded text-xs bg-purple-500/20 text-purple-400"
                         >
                           {feature}
@@ -461,8 +462,8 @@ export default function ArchitectureDocs() {
                 {docs.credentials.test_users.admin.role})
               </p>
               <p className="text-slate-300">
-                Regular Users: {docs.credentials.test_users.regular_user.count} users with role "
-                {docs.credentials.test_users.regular_user.role}"
+                Regular Users: {docs.credentials.test_users.regular_user.count} users with role &quot;
+                {docs.credentials.test_users.regular_user.role}&quot;
               </p>
             </div>
           </div>

@@ -8,12 +8,17 @@ import pytest
 import requests
 import os
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load test credentials from backend .env (never hardcode secrets in code)
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ai-recruitment-flow.preview.emergentagent.com').rstrip('/')
 API = f"{BASE_URL}/api"
 
-TEST_USER_EMAIL = "testdash@bestpl.ai"
-TEST_USER_PASSWORD = "Test1234!"
+TEST_USER_EMAIL = os.environ.get("TEST_USER_EMAIL", "testdash@bestpl.ai")
+TEST_USER_PASSWORD = os.environ["TEST_USER_PASSWORD"]  # required — set in backend/.env
 
 # ==================== Fixtures ====================
 

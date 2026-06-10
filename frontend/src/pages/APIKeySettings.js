@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Key, Eye, EyeOff, Check, X, AlertCircle, RefreshCw } from "lucide-react";
+import logger from '@/lib/logger';
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
@@ -39,7 +40,7 @@ export default function APIKeySettings() {
       setUsageStats(res.data);
       setHasKey(res.data.has_own_api_key);
     } catch (err) {
-      console.error("Failed to fetch usage stats:", err);
+      logger.error("Failed to fetch usage stats:", err);
     }
   };
 

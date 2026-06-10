@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, ChevronUp, MessageSquare, Clock, Sparkles, Search, X, Filter } from "lucide-react";
+import logger from '@/lib/logger';
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
@@ -24,7 +25,7 @@ export default function Challenges() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
 
-  const fetchChallenges = async () => {
+  const fetchChallenges = useCallback(async () => {
     try {
       const params = {};
       if (searchQuery.trim()) params.search = searchQuery.trim();
@@ -38,13 +39,13 @@ export default function Challenges() {
       res.data.forEach(c => c.tags?.forEach(t => tags.add(t)));
       setAllTags(Array.from(tags).sort());
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, selectedTags]);
 
-  useEffect(() => { fetchChallenges(); }, [searchQuery, selectedTags]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchChallenges(); }, [fetchChallenges]);
 
   const handleCreate = async (e) => {
     e.preventDefault();

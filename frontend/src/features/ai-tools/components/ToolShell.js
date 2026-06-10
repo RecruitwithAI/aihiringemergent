@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { themeClasses } from '@/design-system/tokens';
 import { useAIGeneration, useFileUpload, useDownload, useHistory } from '../hooks';
+import logger from '@/lib/logger';
 
 /**
  * ToolShell Component
@@ -59,7 +60,7 @@ export default function ToolShell({
       .filter(Boolean)
       .join('\n\n');
     
-    console.log('[ToolShell] Generating with combined context:', {
+    logger.debug('[ToolShell] Generating with combined context:', {
       promptLength: (safeOverridePrompt || generation.prompt).length,
       contextLength: fullContext.length,
       hasFiles: fileUpload.uploadedFiles.length > 0
@@ -69,7 +70,7 @@ export default function ToolShell({
     
     // Refresh history on success
     if (result) {
-      console.log('[ToolShell] Generation successful, refreshing history');
+      logger.debug('[ToolShell] Generation successful, refreshing history');
       history.refreshHistory();
     }
     

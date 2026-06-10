@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { API } from '@/App';
+import logger from '@/lib/logger';
 
 /**
  * useDownload Hook
@@ -38,7 +39,7 @@ export const useDownload = () => {
    * @param {string} filename - Name for downloaded file
    */
   const triggerBrowserDownload = (blob, filename) => {
-    console.log(`[useDownload] Triggering download: ${filename}, size: ${blob.size} bytes`);
+    logger.debug(`[useDownload] Triggering download: ${filename}, size: ${blob.size} bytes`);
     
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -55,7 +56,7 @@ export const useDownload = () => {
     setTimeout(() => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      console.log('[useDownload] Cleanup complete');
+      logger.debug('[useDownload] Cleanup complete');
     }, 100);
   };
   
@@ -77,16 +78,16 @@ export const useDownload = () => {
     
     try {
       const safeFilename = filename.replace(/[^a-zA-Z0-9-_]/g, '_');
-      console.log(`[useDownload] Starting download: ${format}, filename: ${safeFilename}`);
+      logger.debug(`[useDownload] Starting download: ${format}, filename: ${safeFilename}`);
       
       if (format === 'txt') {
         // Client-side TXT download (instant)
-        console.log('[useDownload] Creating TXT blob');
+        logger.debug('[useDownload] Creating TXT blob');
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         triggerBrowserDownload(blob, `${safeFilename}.txt`);
       } else {
         // Server-side PDF/DOCX/CSV generation
-        console.log('[useDownload] Requesting server-side generation');
+        logger.debug('[useDownload] Requesting server-side generation');
         const res = await axios.post(
           `${API}/ai/download`,
           { content, format, filename: safeFilename },
@@ -98,14 +99,14 @@ export const useDownload = () => {
           throw new Error('Invalid response format from server');
         }
         
-        console.log(`[useDownload] Received blob: ${res.data.size} bytes, type: ${res.data.type}`);
+        logger.debug(`[useDownload] Received blob: ${res.data.size} bytes, type: ${res.data.type}`);
         triggerBrowserDownload(res.data, `${safeFilename}.${format}`);
       }
       
       toast.success(`Downloaded as ${format.toUpperCase()}`);
       return true;
     } catch (err) {
-      console.error('[useDownload] Download failed:', err);
+      logger.error('[useDownload] Download failed:', err);
       
       let errorMsg = 'Download failed. Please try again.';
       
@@ -115,8 +116,9 @@ export const useDownload = () => {
           const text = await err.response.data.text();
           const errorData = JSON.parse(text);
           errorMsg = errorData.detail || errorMsg;
-        } catch (e) {
-          // If can't parse, use default message
+        } catch (parseErr) {
+          // Blob wasn't JSON — keep the default message but record why
+          logger.debug('[useDownload] Could not parse error blob:', parseErr);
         }
       } else if (err.response?.data?.detail) {
         errorMsg = err.response.data.detail;

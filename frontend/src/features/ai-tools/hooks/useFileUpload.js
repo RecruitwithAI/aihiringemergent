@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { API } from '@/App';
+import logger from '@/lib/logger';
 
 const CHUNK_SIZE = 1 * 1024 * 1024; // 1 MB
 
@@ -57,7 +58,7 @@ export const useFileUpload = (config = {}) => {
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
     try {
-      console.log(`[useFileUpload] Processing file: ${file.name}, chunks: ${totalChunks}`);
+      logger.debug(`[useFileUpload] Processing file: ${file.name}, chunks: ${totalChunks}`);
       
       // Upload chunks
       for (let i = 0; i < totalChunks; i++) {
@@ -80,7 +81,7 @@ export const useFileUpload = (config = {}) => {
         setUploadProgress(progress);
       }
 
-      console.log(`[useFileUpload] All chunks uploaded, extracting text...`);
+      logger.debug(`[useFileUpload] All chunks uploaded, extracting text...`);
       
       // Extract file content
       const res = await axios.post(
@@ -89,7 +90,7 @@ export const useFileUpload = (config = {}) => {
         { withCredentials: true }
       );
 
-      console.log(`[useFileUpload] Text extracted, ${res.data.char_count} characters`);
+      logger.debug(`[useFileUpload] Text extracted, ${res.data.char_count} characters`);
 
       return {
         name: file.name,
@@ -97,7 +98,7 @@ export const useFileUpload = (config = {}) => {
         extractedText: res.data.extracted_text,
       };
     } catch (err) {
-      console.error('[useFileUpload] Processing failed:', err);
+      logger.error('[useFileUpload] Processing failed:', err);
       toast.error(err.response?.data?.detail || 'File processing failed');
       return null;
     }

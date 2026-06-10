@@ -10,6 +10,8 @@ from pathlib import Path
 from utils.database import db
 from utils.helpers import get_badge
 from utils.auth import get_current_user, add_points
+from utils.file_extraction import extract_text, UnsupportedFileType
+from utils.document_export import markdown_to_docx, markdown_to_pdf
 from models.schemas import AIToolRequest, DownloadRequest, ExtractFileRequest, UserAPIKeyUpdate
 
 
@@ -336,6 +338,7 @@ async def upload_chunk(
 
 @router.post("/extract-file")
 async def extract_file(req: ExtractFileRequest, user=Depends(get_current_user)):
+    """Reassemble uploaded chunks and extract text (per-type handlers in utils/file_extraction)."""
     chunk_dir = UPLOAD_DIR / f"{user['user_id']}_{req.upload_id}"
     if not chunk_dir.exists():
         raise HTTPException(status_code=404, detail="Upload session not found")
@@ -349,69 +352,10 @@ async def extract_file(req: ExtractFileRequest, user=Depends(get_current_user)):
         c.unlink()
     chunk_dir.rmdir()
 
-    ext = req.filename.lower().rsplit(".", 1)[-1] if "." in req.filename else ""
-    extracted = ""
-
     try:
-        if ext == "txt":
-            extracted = content.decode("utf-8", errors="ignore")
-
-        elif ext == "pdf":
-            import pypdf
-            reader = pypdf.PdfReader(io.BytesIO(content))
-            
-            # Extract text with better formatting preservation
-            pages_text = []
-            for page_num, page in enumerate(reader.pages, 1):
-                page_text = page.extract_text() or ""
-                if page_text.strip():
-                    # Add page marker for multi-page documents to preserve structure
-                    if len(reader.pages) > 1:
-                        pages_text.append(f"[Page {page_num}]\n{page_text}")
-                    else:
-                        pages_text.append(page_text)
-            
-            extracted = "\n\n".join(pages_text)
-            
-            # Clean up common PDF extraction artifacts while preserving structure
-            # Remove excessive whitespace but keep paragraph breaks
-            extracted = re.sub(r'\n{3,}', '\n\n', extracted)  # Max 2 newlines
-            extracted = re.sub(r'[ \t]+', ' ', extracted)  # Normalize spaces
-            extracted = extracted.strip()
-
-        elif ext == "docx":
-            from docx import Document as DocxDoc
-            doc = DocxDoc(io.BytesIO(content))
-            extracted = "\n".join(p.text for p in doc.paragraphs)
-
-        elif ext == "doc":
-            try:
-                from docx import Document as DocxDoc
-                doc = DocxDoc(io.BytesIO(content))
-                extracted = "\n".join(p.text for p in doc.paragraphs)
-            except Exception:
-                text = content.decode("latin-1", errors="ignore")
-                extracted = " ".join(re.findall(r'[\x20-\x7E\n\r\t]{4,}', text))
-
-        elif ext in ("mp3", "wav", "m4a", "ogg", "aac", "flac", "mp4", "mpeg", "mpga", "webm"):
-            from emergentintegrations.llm.openai import OpenAISpeechToText
-            stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
-            with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
-                tmp.write(content)
-                tmp_path = tmp.name
-            try:
-                with open(tmp_path, "rb") as audio_file:
-                    resp = await stt.transcribe(
-                        file=audio_file, model="whisper-1", response_format="json", language="en",
-                        prompt="Recruiting, job descriptions, executive search, candidate profiles.",
-                    )
-                extracted = resp.text
-            finally:
-                os.unlink(tmp_path)
-
-        else:
-            raise HTTPException(status_code=400, detail=f"Unsupported file type: .{ext}")
-
+        extracted = await extract_text(content, req.filename, llm_key=EMERGENT_LLM_KEY)
+    except UnsupportedFileType as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
@@ -422,308 +366,6 @@ async def extract_file(req: ExtractFileRequest, user=Depends(get_current_user)):
 
     return {"extracted_text": extracted.strip(), "filename": req.filename, "char_count": len(extracted)}
 
-
-# ── Document Download Generation ──
-
-def _add_bold_runs(paragraph, text: str):
-    parts = re.split(r"\*\*(.*?)\*\*", text)
-    for i, part in enumerate(parts):
-        paragraph.add_run(part).bold = (i % 2 == 1)
-
-
-def _parse_md_to_docx(content: str) -> bytes:
-    from docx import Document
-    from docx.shared import Pt, RGBColor
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    
-    doc = Document()
-    lines = content.split("\n")
-    i = 0
-    
-    while i < len(lines):
-        s = lines[i].strip()
-        
-        # Check if this is a table (markdown table starts with |)
-        if s.startswith("|") and "|" in s:
-            # Collect all table lines
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i].strip())
-                i += 1
-            
-            # Parse table
-            if len(table_lines) >= 2:  # Need at least header and separator
-                # Parse header
-                header = [cell.strip() for cell in table_lines[0].split("|")[1:-1]]
-                
-                # Skip separator line (the one with ---)
-                data_lines = table_lines[2:] if len(table_lines) > 2 else []
-                
-                # Create table
-                num_cols = len(header)
-                num_rows = len(data_lines) + 1  # +1 for header
-                
-                if num_cols > 0 and num_rows > 0:
-                    table = doc.add_table(rows=num_rows, cols=num_cols)
-                    table.style = 'Light Grid Accent 1'
-                    
-                    # Add header
-                    for col_idx, header_text in enumerate(header):
-                        cell = table.rows[0].cells[col_idx]
-                        cell.text = header_text
-                        # Make header bold
-                        for paragraph in cell.paragraphs:
-                            for run in paragraph.runs:
-                                run.bold = True
-                    
-                    # Add data rows
-                    for row_idx, line in enumerate(data_lines, start=1):
-                        cells = [cell.strip() for cell in line.split("|")[1:-1]]
-                        for col_idx, cell_text in enumerate(cells):
-                            if col_idx < num_cols:
-                                table.rows[row_idx].cells[col_idx].text = cell_text
-                    
-                    doc.add_paragraph()  # Add spacing after table
-            continue
-        
-        # Regular line processing
-        if not s:
-            doc.add_paragraph("")
-        elif s.startswith("### "):
-            doc.add_heading(s[4:], level=3)
-        elif s.startswith("## "):
-            doc.add_heading(s[3:], level=2)
-        elif s.startswith("# "):
-            doc.add_heading(s[2:], level=1)
-        elif s.startswith(("- ", "* ", "\u2022 ")):
-            p = doc.add_paragraph(style="List Bullet")
-            _add_bold_runs(p, s[2:])
-        else:
-            p = doc.add_paragraph()
-            _add_bold_runs(p, s)
-        
-        i += 1
-    
-    buf = io.BytesIO()
-    doc.save(buf)
-    buf.seek(0)
-    return buf.read()
-
-
-def _parse_md_to_pdf(content: str) -> bytes:
-    from fpdf import FPDF
-
-    def safe(t: str) -> str:
-        # Replace problematic characters and encode safely
-        t = t.replace('\u2022', '-').replace('\u2019', "'").replace('\u2018', "'")
-        t = t.replace('\u201c', '"').replace('\u201d', '"').replace('\u2014', '-')
-        t = t.replace('\u2013', '-').replace('\u00a0', ' ')
-        # Handle other unicode characters more gracefully
-        t = t.encode("latin-1", errors="replace").decode("latin-1")
-        return t
-
-    pdf = FPDF(orientation="P", unit="mm", format="A4")
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_margins(15, 15, 15)
-
-    # Page width minus margins
-    effective_width = 210 - 30  # A4 width (210mm) minus left+right margins (15+15)
-    
-    lines = content.split("\n")
-    i = 0
-    
-    while i < len(lines):
-        s = lines[i].strip()
-        
-        # Check if this is a table (markdown table starts with |)
-        if s.startswith("|") and "|" in s:
-            # Collect all table lines
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i].strip())
-                i += 1
-            
-            # Parse table
-            if len(table_lines) >= 2:
-                # Parse header
-                header = [cell.strip() for cell in table_lines[0].split("|")[1:-1]]
-                
-                # Skip separator line (the one with ---)
-                data_lines = table_lines[2:] if len(table_lines) > 2 else []
-                
-                num_cols = len(header)
-                if num_cols > 0:
-                    # Calculate column width - make slightly smaller for better fit
-                    col_width = effective_width / num_cols
-                    cell_height = 6
-                    
-                    # Add table header
-                    pdf.set_font("Helvetica", "B", 8)
-                    pdf.set_fill_color(200, 200, 200)
-                    
-                    x_start = pdf.get_x()
-                    y_start = pdf.get_y()
-                    
-                    for col_idx, header_text in enumerate(header):
-                        pdf.set_xy(x_start + (col_idx * col_width), y_start)
-                        # Truncate long headers
-                        max_chars = int(col_width * 2.2)
-                        text = safe(header_text)[:max_chars]
-                        pdf.cell(col_width, cell_height, text, border=1, align='L', fill=True)
-                    
-                    pdf.set_xy(x_start, y_start + cell_height)
-                    
-                    # Add data rows
-                    pdf.set_font("Helvetica", "", 7)
-                    for line in data_lines:
-                        cells = [cell.strip() for cell in line.split("|")[1:-1]]
-                        
-                        # Calculate row height based on content
-                        row_height = cell_height
-                        for cell_text in cells[:num_cols]:
-                            # Estimate lines needed
-                            max_chars_per_line = int(col_width * 2.5)
-                            if len(cell_text) > max_chars_per_line:
-                                lines_needed = (len(cell_text) // max_chars_per_line) + 1
-                                estimated_height = lines_needed * 4
-                                row_height = max(row_height, estimated_height)
-                        
-                        y_start = pdf.get_y()
-                        
-                        # Draw all cells in the row
-                        for col_idx, cell_text in enumerate(cells[:num_cols]):
-                            if col_idx >= num_cols:
-                                break
-                                
-                            x_pos = x_start + (col_idx * col_width)
-                            
-                            # Draw cell border
-                            pdf.rect(x_pos, y_start, col_width, row_height)
-                            
-                            # Add text with padding
-                            pdf.set_xy(x_pos + 1, y_start + 1)
-                            
-                            # Calculate available width for text (with padding)
-                            text_width = col_width - 2
-                            
-                            # Truncate or wrap text
-                            text = safe(cell_text)
-                            max_chars = int(text_width * 2.5)
-                            
-                            if len(text) > max_chars:
-                                # Multi-line text - split into lines
-                                words = text.split()
-                                lines_list = []
-                                current_line = ""
-                                
-                                for word in words:
-                                    test_line = current_line + " " + word if current_line else word
-                                    if len(test_line) <= max_chars:
-                                        current_line = test_line
-                                    else:
-                                        if current_line:
-                                            lines_list.append(current_line)
-                                        current_line = word
-                                
-                                if current_line:
-                                    lines_list.append(current_line)
-                                
-                                # Draw each line
-                                line_y = y_start + 1
-                                for text_line in lines_list[:int(row_height/4)]:  # Limit lines to fit
-                                    pdf.set_xy(x_pos + 1, line_y)
-                                    pdf.cell(text_width, 4, text_line[:max_chars], border=0, align='L')
-                                    line_y += 4
-                            else:
-                                # Single line
-                                pdf.cell(text_width, 4, text, border=0, align='L')
-                        
-                        # Move to next row
-                        pdf.set_xy(x_start, y_start + row_height)
-                    
-                    pdf.ln(5)  # Add spacing after table
-            continue
-        
-        # Regular line processing (existing logic)
-        if not s:
-            pdf.ln(3)
-            i += 1
-            continue
-        
-        # Remove markdown bold markers for display
-        clean = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
-        
-        # Skip lines that are just special characters
-        if not clean or len(clean.strip()) == 0:
-            pdf.ln(2)
-            i += 1
-            continue
-
-        # Process different line types
-        if s.startswith("# ") and not s.startswith("##"):
-            # H1 - Main heading
-            pdf.set_font("Helvetica", "B", 16)
-            text = safe(clean[2:].strip())
-            if text:
-                pdf.multi_cell(effective_width, 8, text, align='L')
-                pdf.ln(3)
-                
-        elif s.startswith("### "):
-            # H3 - Sub-subheading
-            pdf.set_font("Helvetica", "B", 11)
-            text = safe(clean[4:].strip())
-            if text:
-                pdf.multi_cell(effective_width, 6, text, align='L')
-                pdf.ln(1)
-                
-        elif s.startswith("## "):
-            # H2 - Subheading
-            pdf.set_font("Helvetica", "B", 13)
-            text = safe(clean[3:].strip())
-            if text:
-                pdf.multi_cell(effective_width, 7, text, align='L')
-                pdf.ln(2)
-                
-        elif s.startswith(("- ", "* ", "\u2022 ")):
-            # Bullet point
-            pdf.set_font("Helvetica", "", 10)
-            bullet_text = clean[2:].strip()
-            if bullet_text:
-                # Save current position
-                x_start = pdf.l_margin
-                y_start = pdf.get_y()
-                
-                # Draw bullet character
-                pdf.set_xy(x_start, y_start)
-                pdf.cell(5, 5, txt=chr(149), ln=0)  # Use bullet character (•)
-                
-                # Calculate text area (full width minus bullet indent)
-                text_x = x_start + 7
-                text_width = effective_width - 7
-                
-                # Position for text and use multi_cell for wrapping
-                pdf.set_xy(text_x, y_start)
-                text = safe(bullet_text)
-                
-                # Create a temporary position to measure text height
-                # We need to manually handle the multi_cell positioning
-                pdf.multi_cell(text_width, 5, text, align='L', ln=1)
-                
-                # Reset X margin for next line
-                pdf.set_x(x_start)
-                
-        else:
-            # Regular paragraph text
-            pdf.set_font("Helvetica", "", 10)
-            text = safe(clean)
-            if text:
-                pdf.multi_cell(effective_width, 5, text, align='L')
-                pdf.ln(1)
-        
-        i += 1
-
-    return bytes(pdf.output())
 
 
 @router.post("/download")
@@ -781,14 +423,14 @@ async def download_document(req: DownloadRequest, user=Depends(get_current_user)
     
     elif req.format == "docx":
         return Response(
-            content=_parse_md_to_docx(req.content),
+            content=markdown_to_docx(req.content),
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.docx"'},
         )
     
     elif req.format == "pdf":
         return Response(
-            content=_parse_md_to_pdf(req.content),
+            content=markdown_to_pdf(req.content),
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
         )

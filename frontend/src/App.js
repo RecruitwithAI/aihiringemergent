@@ -18,6 +18,7 @@ import HooksTestPage from "@/pages/HooksTestPage";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import logger from "@/lib/logger";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -59,8 +60,9 @@ function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      // Non-fatal: session may already be expired server-side; we still clear locally
+      logger.warn("Logout request failed (clearing local session anyway):", err);
     }
     setUser(null);
   };

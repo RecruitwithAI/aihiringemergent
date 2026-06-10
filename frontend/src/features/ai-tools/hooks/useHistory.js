@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { API } from '@/App';
+import logger from '@/lib/logger';
 
 /**
  * useHistory Hook
@@ -40,13 +41,13 @@ export const useHistory = (toolId) => {
    */
   const fetchHistory = useCallback(async () => {
     if (!toolId) {
-      console.log('[useHistory] No toolId provided, skipping fetch');
+      logger.debug('[useHistory] No toolId provided, skipping fetch');
       return;
     }
     
     setLoading(true);
     try {
-      console.log(`[useHistory] Fetching history for tool: ${toolId}`);
+      logger.debug(`[useHistory] Fetching history for tool: ${toolId}`);
       
       const res = await axios.get(`${API}/ai/history`, { 
         withCredentials: true 
@@ -55,10 +56,10 @@ export const useHistory = (toolId) => {
       // Filter by tool type
       const filtered = res.data.filter((h) => h.tool_type === toolId);
       
-      console.log(`[useHistory] Fetched ${filtered.length} items for ${toolId}`);
+      logger.debug(`[useHistory] Fetched ${filtered.length} items for ${toolId}`);
       setHistory(filtered);
     } catch (err) {
-      console.error('[useHistory] Failed to load history:', err);
+      logger.error('[useHistory] Failed to load history:', err);
       setHistory([]);
     } finally {
       setLoading(false);
@@ -78,7 +79,7 @@ export const useHistory = (toolId) => {
    * Open history panel
    */
   const openHistory = () => {
-    console.log('[useHistory] Opening history panel');
+    logger.debug('[useHistory] Opening history panel');
     setIsOpen(true);
   };
   
@@ -86,7 +87,7 @@ export const useHistory = (toolId) => {
    * Close history panel
    */
   const closeHistory = () => {
-    console.log('[useHistory] Closing history panel');
+    logger.debug('[useHistory] Closing history panel');
     setIsOpen(false);
   };
   
@@ -95,7 +96,7 @@ export const useHistory = (toolId) => {
    * Useful after generating new content
    */
   const refreshHistory = () => {
-    console.log('[useHistory] Manually refreshing history');
+    logger.debug('[useHistory] Manually refreshing history');
     fetchHistory();
   };
   
@@ -107,7 +108,7 @@ export const useHistory = (toolId) => {
    * @returns {Object} History item data
    */
   const loadHistoryItem = (item) => {
-    console.log(`[useHistory] Loading history item: ${item.history_id}`);
+    logger.debug(`[useHistory] Loading history item: ${item.history_id}`);
     closeHistory();
     return item;
   };

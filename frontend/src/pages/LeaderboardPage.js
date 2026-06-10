@@ -3,6 +3,7 @@ import { useAuth, API } from "@/App";
 import { UserAvatar } from "@/components/Navbar";
 import axios from "axios";
 import { Trophy, Crown, Medal, Award } from "lucide-react";
+import logger from '@/lib/logger';
 
 const CARD = "bg-white/[0.04] border border-white/[0.07] rounded-2xl";
 
@@ -16,7 +17,7 @@ export default function LeaderboardPage() {
       try {
         const res = await axios.get(`${API}/leaderboard`, { withCredentials: true });
         setLeaders(res.data);
-      } catch (err) { console.error(err); }
+      } catch (err) { logger.error(err); }
       finally { setLoading(false); }
     })();
   }, []);

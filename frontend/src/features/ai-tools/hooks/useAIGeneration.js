@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { API } from '@/App';
+import logger from '@/lib/logger';
 
 /**
  * useAIGeneration Hook
@@ -60,7 +61,7 @@ export const useAIGeneration = (toolConfig) => {
     setResult('');
     
     try {
-      console.log('[useAIGeneration] Generating with tool type:', toolType);
+      logger.debug('[useAIGeneration] Generating with tool type:', toolType);
       
       const res = await axios.post(
         `${API}/ai/generate`,
@@ -72,13 +73,13 @@ export const useAIGeneration = (toolConfig) => {
         { withCredentials: true }
       );
       
-      console.log('[useAIGeneration] Generation successful, response length:', res.data.response?.length);
+      logger.debug('[useAIGeneration] Generation successful, response length:', res.data.response?.length);
       
       setResult(res.data.response);
       toast.success('Generated successfully');
       return res.data;
     } catch (err) {
-      console.error('[useAIGeneration] Generation failed:', err);
+      logger.error('[useAIGeneration] Generation failed:', err);
       
       const errorMsg = err.response?.data?.detail || 'Generation failed';
       toast.error(errorMsg);
