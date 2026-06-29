@@ -202,7 +202,23 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
     if req.context:
         full_prompt = f"{req.prompt}\n\nAdditional Context: {req.context}"
 
-    response = await chat.send_message(UserMessage(text=full_prompt))
+    try:
+        response = await chat.send_message(UserMessage(text=full_prompt))
+    except Exception as e:
+        # Map upstream provider failures to friendly client errors instead of raw 500.
+        err_name = type(e).__name__
+        msg = str(e).lower()
+        if "ratelimit" in err_name.lower() or "rate limit" in msg or "quota" in msg or "insufficient_quota" in msg:
+            raise HTTPException(
+                status_code=429,
+                detail="AI provider is rate-limited or out of quota. Please try again later or add your own OpenAI API key in Profile → API Key.",
+            )
+        if "authentication" in msg or "invalid api key" in msg or "incorrect api key" in msg:
+            raise HTTPException(
+                status_code=401,
+                detail="The OpenAI API key in use is invalid. Please update it in Profile → API Key.",
+            )
+        raise HTTPException(status_code=502, detail=f"AI provider error: {err_name}")
     
     # Clean up conversational follow-ups from the response
     cleaned_response = clean_ai_response(response)

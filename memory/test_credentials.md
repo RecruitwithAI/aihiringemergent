@@ -14,3 +14,10 @@
 
 > Note: No funded OpenAI key configured — AI generation returns 429/500 until a
 > funded key is added (SuperAdmin Profile → API Key or per-user key).
+
+## Security hardening (Feb 6, 2026)
+- OpenAI API keys are **encrypted at rest** with Fernet — `users.openai_api_key`
+  is prefixed `enc:v1:`. Key lives in `backend/.env` as `API_KEY_ENCRYPTION_KEY`.
+- Login lockout: 5 failed attempts on the same email (lowercased) within 15 min
+  → HTTP 429 for 15 min. To clear during testing:
+  `MongoClient(MONGO_URL)[DB_NAME].login_attempts.delete_many({"email":"<lowercased>"})`.
