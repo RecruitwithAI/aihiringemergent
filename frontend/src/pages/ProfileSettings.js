@@ -7,11 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { User, Briefcase, Phone, MapPin, Globe, FileText, Save, Loader2 } from "lucide-react";
+import { User, Briefcase, Phone, MapPin, Globe, FileText, Save, Loader2, Camera, Trash2 } from "lucide-react";
+import { UserAvatar } from "@/components/Navbar";
+import AvatarUploadModal from "@/components/AvatarUploadModal";
 
 export default function ProfileSettings() {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     linkedin_url: "",
@@ -62,6 +67,37 @@ export default function ProfileSettings() {
     });
   };
 
+  const handleAvatarSave = async (dataUrl) => {
+    setSavingAvatar(true);
+    try {
+      const res = await axios.put(
+        `${API}/users/me/picture`,
+        { picture: dataUrl },
+        { withCredentials: true }
+      );
+      setUser(res.data);
+      toast.success("Profile picture updated");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to update picture");
+      throw err;
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    setRemovingAvatar(true);
+    try {
+      const res = await axios.delete(`${API}/users/me/picture`, { withCredentials: true });
+      setUser(res.data);
+      toast.success("Profile picture removed");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to remove picture");
+    } finally {
+      setRemovingAvatar(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -107,6 +143,51 @@ export default function ProfileSettings() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Profile Picture */}
+          <Card className="p-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10" data-testid="profile-picture-card">
+            <div className="flex items-center gap-2 mb-6">
+              <Camera className="w-5 h-5 text-blue-400" />
+              <h2 className="text-xl font-semibold text-white">Profile Picture</h2>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div data-testid="profile-picture-preview">
+                <UserAvatar user={user} size="lg" />
+              </div>
+              <div className="flex-1 space-y-3 text-center sm:text-left">
+                <p className="text-sm text-slate-400">
+                  This picture appears next to your name across the community — challenges, answers, leaderboard, and activity feed.
+                </p>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setAvatarModalOpen(true)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    data-testid="change-photo-btn"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    {user?.picture ? "Change photo" : "Upload photo"}
+                  </Button>
+                  {user?.picture && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAvatarRemove}
+                      disabled={removingAvatar}
+                      data-testid="remove-photo-btn"
+                    >
+                      {removingAvatar ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+
           {/* Basic Information */}
           <Card className="p-6 bg-[#0f1020]/80 backdrop-blur-xl border border-white/10">
             <div className="flex items-center gap-2 mb-6">
@@ -328,6 +409,13 @@ export default function ProfileSettings() {
           </div>
         </form>
       </div>
+
+      <AvatarUploadModal
+        open={avatarModalOpen}
+        onOpenChange={setAvatarModalOpen}
+        onSave={handleAvatarSave}
+        saving={savingAvatar}
+      />
     </div>
   );
 }

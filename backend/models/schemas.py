@@ -122,6 +122,28 @@ class UserAPIKeyUpdate(BaseModel):
     api_key: str  # User's personal OpenAI API key
 
 
+class UserPictureUpdate(BaseModel):
+    """Profile picture upload — base64 data URL (data:image/<png|jpeg|webp>;base64,...)."""
+    picture: str  # data URL string
+
+    @validator('picture')
+    def validate_picture(cls, v):
+        if not v or not isinstance(v, str):
+            raise ValueError('Picture is required')
+        if not v.startswith('data:image/'):
+            raise ValueError('Picture must be a data URL (data:image/...;base64,...)')
+        if ';base64,' not in v:
+            raise ValueError('Picture must be base64-encoded')
+        # Reject anything larger than ~400 KB (data URL chars, not bytes — generous)
+        if len(v) > 400_000:
+            raise ValueError('Picture exceeds maximum size (~300 KB). Please use a smaller image.')
+        # Allowed mime types
+        mime = v.split(';')[0].replace('data:', '')
+        if mime not in ('image/jpeg', 'image/png', 'image/webp'):
+            raise ValueError('Unsupported image type. Use JPEG, PNG, or WebP.')
+        return v
+
+
 
 class DownloadRequest(BaseModel):
     content: str

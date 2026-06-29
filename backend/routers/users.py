@@ -20,10 +20,49 @@ from utils.rbac import (
     UserStatus,
     is_admin
 )
-from models.schemas import UserProfileUpdate, UserRoleUpdate, UserStatusUpdate
+from models.schemas import UserProfileUpdate, UserRoleUpdate, UserStatusUpdate, UserPictureUpdate
 
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+# ── Profile Picture (must be defined BEFORE /{user_id} routes to avoid path collision) ──
+
+@router.put("/me/picture")
+async def update_my_picture(
+    payload: UserPictureUpdate,
+    current_user=Depends(get_current_user),
+):
+    """Set the current user's profile picture (base64 data URL stored in `users.picture`)."""
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {
+            "picture": payload.picture,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    updated = await db.users.find_one(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0, "password_hash": 0},
+    )
+    return updated
+
+
+@router.delete("/me/picture")
+async def delete_my_picture(current_user=Depends(get_current_user)):
+    """Remove the current user's profile picture (falls back to initials avatar)."""
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {
+            "picture": None,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    updated = await db.users.find_one(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0, "password_hash": 0},
+    )
+    return updated
 
 
 @router.get("")
