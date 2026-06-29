@@ -111,6 +111,16 @@ INDEX_REGISTRY = {
          "options": {"name": "uniq_active_per_tool", "unique": True,
                      "partialFilterExpression": {"status": "active"}}},
     ],
+
+    "login_attempts": [
+        # Lookup: failed attempts per email in the last WINDOW_MINUTES
+        {"keys": [("email", ASCENDING), ("timestamp", DESCENDING)],
+         "options": {"name": "ix_email_ts"}},
+        # TTL: Mongo auto-deletes attempts older than 1 hour (well past the
+        # 15-min window, but keeps the collection small).
+        {"keys": [("timestamp", ASCENDING)],
+         "options": {"name": "ttl_attempt", "expireAfterSeconds": 3600}},
+    ],
 }
 
 

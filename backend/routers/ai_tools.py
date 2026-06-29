@@ -12,6 +12,7 @@ from utils.helpers import get_badge
 from utils.auth import get_current_user, add_points
 from utils.file_extraction import extract_text, UnsupportedFileType
 from utils.document_export import markdown_to_docx, markdown_to_pdf
+from utils.crypto import encrypt as encrypt_key, decrypt as decrypt_key
 from models.schemas import AIToolRequest, DownloadRequest, ExtractFileRequest, UserAPIKeyUpdate
 
 
@@ -163,10 +164,10 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
         api_key_to_use = req.own_api_key
         using_master_key = False
     else:
-        # Check if user has a saved API key
+        # Check if user has a saved API key (encrypted at rest)
         user_data = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "openai_api_key": 1})
         if user_data and user_data.get("openai_api_key"):
-            api_key_to_use = user_data["openai_api_key"]
+            api_key_to_use = decrypt_key(user_data["openai_api_key"])
             using_master_key = False
         else:
             # Use SuperAdmin's API key for free usages - check daily limit
@@ -177,10 +178,10 @@ async def ai_generate(req: AIToolRequest, user=Depends(get_current_user)):
                     detail=f"Daily free API limit reached ({DAILY_FREE_LIMIT} uses per day). Please add your own OpenAI API key to continue."
                 )
             
-            # Get SuperAdmin's API key
+            # Get SuperAdmin's API key (encrypted at rest)
             superadmin = await db.users.find_one({"role": "superadmin"}, {"_id": 0, "openai_api_key": 1})
             if superadmin and superadmin.get("openai_api_key"):
-                api_key_to_use = superadmin["openai_api_key"]
+                api_key_to_use = decrypt_key(superadmin["openai_api_key"])
                 using_master_key = True
             else:
                 raise HTTPException(
@@ -354,11 +355,11 @@ async def save_user_api_key(req: UserAPIKeyUpdate, user=Depends(get_current_user
     if not req.api_key or len(req.api_key.strip()) < 10:
         raise HTTPException(status_code=400, detail="Invalid API key")
     
-    # Update user's API key in database (stored securely)
+    # Update user's API key in database (encrypted at rest via Fernet)
     await db.users.update_one(
         {"user_id": user["user_id"]},
         {"$set": {
-            "openai_api_key": req.api_key.strip(),
+            "openai_api_key": encrypt_key(req.api_key.strip()),
             "has_own_api_key": True,
             "api_key_updated_at": datetime.now(timezone.utc)
         }}

@@ -1,0 +1,102 @@
+{
+  "summary": "Backend-only regression for 3 security hardenings (Fernet at-rest encryption, security-headers middleware, login throttle/lockout). 20/20 pytest tests pass. All hardenings verified; existing endpoints (auth, dashboard, challenges, leaderboard, profile, AI generate decrypt path) all working. One minor observation: when upstream OpenAI returns a quota error, our /api/ai/generate surfaces it as HTTP 500 instead of mapping to 429/503 — not a security bug, but worth fixing as polish.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/ai/generate",
+        "issue": "Upstream OpenAI RateLimitError (account quota exhausted) is not caught and surfaces as raw 500 Internal Server Error. Decryption itself works (key is read & decrypted successfully). Recommend wrapping LlmChat.send_message in try/except to map openai/litellm RateLimitError -> 429 with a friendly detail."
+      }
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": {
+    "backend": [
+      "TestLoginStillWorks::test_superadmin_login - SuperAdmin login 200 with role=superadmin",
+      "TestLoginStillWorks::test_admin_login - Regression user login 200",
+      "TestLoginStillWorks::test_success_clears_failed_attempts - 2 failed attempts inserted, successful login clears login_attempts collection",
+      "TestBruteForceLockout::test_lockout_after_5_failures_on_6th - 5 x 401 then 6th = 429 with 'Too many failed login attempts ... 15 minute(s).'",
+      "TestBruteForceLockout::test_lockout_blocks_correct_password_too - During lockout, even correct password returns 429",
+      "TestBruteForceLockout::test_lockout_does_not_affect_other_email - Different email still returns 401 (not 429)",
+      "TestBruteForceLockout::test_lockout_collection_has_required_indexes - login_attempts has ix_email_ts AND ttl_attempt (expireAfterSeconds=3600)",
+      "TestApiKeyEncryption::test_save_api_key_stores_ciphertext - POST /api/ai/save-api-key stores 'enc:v1:...' Fernet ciphertext; plaintext 'sk-test-ABC123' NOT in DB",
+      "TestApiKeyEncryption::test_delete_api_key - DELETE /api/ai/delete-api-key removes openai_api_key and sets has_own_api_key=false",
+      "TestApiKeyEncryption::test_superadmin_key_is_encrypted_at_rest - SuperAdmin's openai_api_key starts with 'enc:v1:' in DB",
+      "TestSecurityHeaders::test_headers_on_auth_me_unauth - All 6 required headers present on 401 response",
+      "TestSecurityHeaders::test_headers_on_dashboard_stats - All 6 required headers present on authenticated 200",
+      "TestSecurityHeaders::test_headers_on_challenges_list - All 6 required headers present",
+      "TestEncryptedKeyDecryptPath::test_ai_generate_with_encrypted_superadmin_key - decrypt round-trip works end-to-end (key reaches OpenAI; rate-limit error proves successful lookup)",
+      "TestRegression::test_auth_me - GET /api/auth/me 200",
+      "TestRegression::test_dashboard_stats - GET /api/dashboard/stats 200",
+      "TestRegression::test_challenges_list - GET /api/challenges 200",
+      "TestRegression::test_leaderboard - GET /api/leaderboard 200",
+      "TestRegression::test_profile_stats - GET /api/profile/stats 200",
+      "TestRegression::test_update_profile_picture - PUT /api/users/me/picture 200"
+    ]
+  },
+
+  "verified_security_properties": {
+    "headers_observed": [
+      "strict-transport-security: max-age=63072000; includeSubDomains; preload",
+      "x-content-type-options: nosniff",
+      "x-frame-options: SAMEORIGIN",
+      "referrer-policy: strict-origin-when-cross-origin",
+      "permissions-policy: camera=(), microphone=(), geolocation=(), payment=()",
+      "cross-origin-opener-policy: same-origin"
+    ],
+    "lockout_constants": "MAX_FAILED_ATTEMPTS=5, WINDOW_MINUTES=15, LOCKOUT_MINUTES=15, TTL=3600s",
+    "encryption_prefix": "enc:v1: (Fernet, AES-128-CBC + HMAC-SHA256)",
+    "db_observed_superadmin_key_prefix": "enc:v1:gAAAAABq..."
+  },
+
+  "test_report_links": [
+    "/app/backend/tests/test_security_hardenings.py",
+    "/app/test_reports/pytest/security_hardenings_results.xml"
+  ],
+
+  "action_items": [
+    "(Polish, optional) Map upstream litellm/openai RateLimitError -> HTTP 429 (or 503) in routers/ai_tools.py ai_generate() so callers see a friendly error instead of raw 500. Currently /api/ai/generate returns 500 when the SuperAdmin OpenAI account is over quota.",
+    "(Docs) /app/memory/test_credentials.md references 'saba@bestpl.ai / Bestpl2026!' but that account does NOT exist in the current DB. Either re-seed it or remove the reference. The review_request also lists it — testing fell back to the regression_test_20260610_113725@bestpl.ai user."
+  ],
+
+  "critical_code_review_comments": [
+    "utils/crypto.py: clean Fernet wrapper with ENCRYPTED_PREFIX='enc:v1:' sentinel; legacy plaintext keys pass through decrypt() unchanged (good for migration window). _get_fernet is lazy-init and fails fast if env key is missing — correct.",
+    "utils/login_throttle.py: per-email normalization (.lower().strip()) prevents case-bypass. is_locked_out uses (count >= MAX) + (now < last+LOCKOUT) — correct rolling-window semantics.",
+    "utils/indexes.py: login_attempts has correct ix_email_ts compound + TTL ttl_attempt (3600s). TTL > window+lockout (30 min) is intentional and acceptable.",
+    "routers/auth.py: lockout check runs BEFORE bcrypt verify (good — protects against CPU DoS on bcrypt). Google-SSO accounts (no password_hash) intentionally NOT counted toward lockout (review_request confirms this is by design). clear_attempts called on success — verified.",
+    "routers/ai_tools.py: decrypt_key called on BOTH user-saved key and SuperAdmin master key paths (lines ~170 & ~184) — correct. save-api-key encrypts before storing — verified.",
+    "server.py: SecurityHeadersMiddleware uses ASGI raw-bytes header injection (avoids double-set by checking 'existing' set first). CORS reflect wrapper runs after CORS middleware so credentialed CORS still works.",
+    "Minor: ai_generate has no try/except around LlmChat.send_message — upstream provider errors (quota, transient failures) become raw 500. Suggested fix above."
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_security_hardenings.py (new file - 20 tests covering all 3 hardenings + regression)"
+  ],
+
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "not tested (backend-only per review_request)"
+  },
+
+  "test_credentials": {
+    "superadmin": "noorussaba.alam@gmail.com / #VibeCon2026 (works, key encrypted at rest)",
+    "admin_listed_in_review_does_not_exist": "saba@bestpl.ai (MISSING in DB)",
+    "regression_user_used_instead": "regression_test_20260610_113725@bestpl.ai / SecurePass2026!"
+  },
+
+  "seed_data_creation": "Inserted/cleaned login_attempts rows for lockout-test@example.com and admin email during throttle tests; cleaned up via teardown. Briefly set+deleted a TEST_ encrypted key on the regression user (left clean).",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "All 3 security hardenings (Fernet at-rest encryption with 'enc:v1:' prefix, 6 security headers, login throttle 5/15min->429 with 15min lockout + 3600s TTL) verified end-to-end via /app/backend/tests/test_security_hardenings.py. SuperAdmin's OpenAI key in DB is currently encrypted (prefix 'enc:v1:gAAAAABq...'). The OpenAI account behind that key is OUT OF QUOTA — /api/ai/generate returns 500 (raw, unmapped) when invoked. Decryption itself works; the request reaches OpenAI and OpenAI rejects with RateLimitError. To clear any lockout: `from pymongo import MongoClient; MongoClient(os.environ['MONGO_URL'])[os.environ['DB_NAME']].login_attempts.delete_many({'email': '<lowercased-email>'})`.",
+
+  "rca_of_issue": "No security bugs found. The only finding is a non-security polish item: when the upstream OpenAI account is over quota, routers/ai_tools.py::ai_generate doesn't catch litellm.exceptions.RateLimitError and surfaces it as HTTP 500. Repro: login as SuperAdmin (whose key is encrypted) and POST /api/ai/generate. Mitigation: wrap LlmChat.send_message in try/except RateLimitError -> raise HTTPException(429, detail='Upstream AI provider rate-limited or quota exceeded. Try again later or use your own key.')."
+}

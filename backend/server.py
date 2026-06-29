@@ -17,6 +17,7 @@ from routers import auth, challenges, answers, ai_tools, dashboard, users, promp
 from utils.database import client
 from utils.indexes import ensure_indexes
 from utils.prompt_store import seed_default_prompts
+from utils.key_migration import encrypt_legacy_api_keys
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -81,11 +82,63 @@ app.add_middleware(
 app.add_middleware(CORSOriginReflectMiddleware)
 
 
+# ==================== SECURITY HEADERS MIDDLEWARE ====================
+
+class SecurityHeadersMiddleware:
+    """Append modern security headers to every HTTP response.
+
+    Headers:
+      - Strict-Transport-Security: force HTTPS for 2 years incl. subdomains
+      - X-Content-Type-Options: block MIME-sniffing
+      - X-Frame-Options: SAMEORIGIN so Emergent preview iframe still works
+      - Referrer-Policy: avoid leaking full URLs to 3rd parties
+      - Permissions-Policy: lock down dangerous browser APIs we don't use
+      - Cross-Origin-Opener-Policy: isolate browsing context (XS-Leak defense)
+    NOTE: We intentionally do NOT set Content-Security-Policy here — the React
+    app currently uses inline styles + data: URLs (avatars) + cross-origin
+    images, and a misconfigured CSP would break the UI. CSP belongs on the
+    frontend host (set in index.html / Emergent's edge config) once the policy
+    is profiled.
+    """
+    HEADERS = {
+        b"strict-transport-security": b"max-age=63072000; includeSubDomains; preload",
+        b"x-content-type-options": b"nosniff",
+        b"x-frame-options": b"SAMEORIGIN",
+        b"referrer-policy": b"strict-origin-when-cross-origin",
+        b"permissions-policy": b"camera=(), microphone=(), geolocation=(), payment=()",
+        b"cross-origin-opener-policy": b"same-origin",
+    }
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                existing = {h[0] for h in headers}
+                for name, value in self.HEADERS.items():
+                    if name not in existing:
+                        headers.append((name, value))
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+
 @app.on_event("startup")
 async def startup_ensure_indexes():
     """Idempotent index creation — registry lives in utils/indexes.py (see /app/aboutindexes.md)."""
     await ensure_indexes()
     await seed_default_prompts()  # ensure every AI tool has an active system prompt
+    await encrypt_legacy_api_keys()  # one-shot: encrypt any plaintext OpenAI keys at rest
 
 
 @app.on_event("shutdown")

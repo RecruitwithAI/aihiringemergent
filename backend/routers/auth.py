@@ -6,6 +6,10 @@ import bcrypt
 from utils.database import db
 from utils.helpers import get_badge, make_session_token, make_user_id
 from utils.auth import get_current_user
+from utils.login_throttle import (
+    is_locked_out, record_failed_attempt, clear_attempts,
+    MAX_FAILED_ATTEMPTS, LOCKOUT_MINUTES,
+)
 from models.schemas import UserCreate, UserLogin
 
 
@@ -64,13 +68,31 @@ async def register(user: UserCreate, response: Response):
 
 @router.post("/login")
 async def login(user: UserLogin, response: Response):
+    # Brute-force lockout check (per-email, rolling window)
+    locked, seconds_left = await is_locked_out(user.email)
+    if locked:
+        minutes_left = max(1, (seconds_left + 59) // 60)
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Too many failed login attempts. Please try again in "
+                f"{minutes_left} minute(s)."
+            ),
+        )
+
     existing = await db.users.find_one({"email": user.email}, {"_id": 0})
     if not existing:
+        await record_failed_attempt(user.email)
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not existing.get("password_hash"):
+        # Don't count this against the lockout — it's a real account using SSO
         raise HTTPException(status_code=401, detail="Please use Google login for this account")
     if not bcrypt.checkpw(user.password.encode(), existing["password_hash"].encode()):
+        await record_failed_attempt(user.email)
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # Successful login — clear all failed-attempt markers for this email
+    await clear_attempts(user.email)
 
     now = datetime.now(timezone.utc)
     
